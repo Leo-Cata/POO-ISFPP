@@ -16,7 +16,8 @@ public enum Calificacion {
     }
 
     // getter del puntaje
-    public int getPuntaje() {
-        return puntaje;
-    }
+//    public int getPuntaje() {
+//        return puntaje;
+//        
+//    }
 }
