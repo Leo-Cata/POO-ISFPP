@@ -5,13 +5,15 @@ public abstract class Vehiculo {
     private String modelo;
     private boolean aceptaPasajeros;
     private boolean aceptaCarga;
+    private Servicio servicio;
 
     // constuctor del objeto vehiculo
-    public Vehiculo(String patente, String modelo, boolean aceptaPasajeros, boolean aceptaCarga) {
+    public Vehiculo(String patente, String modelo, boolean aceptaPasajeros, boolean aceptaCarga, Servicio servicio) {
         this.patente = patente;
         this.modelo = modelo;
         this.aceptaPasajeros = aceptaPasajeros;
         this.aceptaCarga = aceptaCarga;
+        this.servicio = servicio;
     }
 
     // getters y setters del objeto vehiculo
@@ -47,7 +49,18 @@ public abstract class Vehiculo {
         this.aceptaCarga = aceptaCarga;
     }
 
+    public Servicio getServicio() {
+        return servicio;
+    }
+
+    public void setServicio(Servicio servicio) {
+        this.servicio = servicio;
+    }
+
     // hash y equals del objeto vehiculo
+    // dos vehiculos son iguales si tienen la misma patente
+    // no se si se deberia chequear por el tipo de servicio siguiendo la idea de que
+    // los servicios serian carga y pasajeros
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -77,6 +90,6 @@ public abstract class Vehiculo {
     @Override
     public String toString() {
         return "Vehiculo [patente=" + patente + ", modelo=" + modelo + ", aceptaPasajeros=" + aceptaPasajeros
-                + ", aceptaCarga=" + aceptaCarga + "]";
+                + ", aceptaCarga=" + aceptaCarga + ", servicio=" + servicio + "]";
     }
 }
