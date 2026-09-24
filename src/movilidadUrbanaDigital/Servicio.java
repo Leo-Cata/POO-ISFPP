@@ -57,15 +57,8 @@ public class Servicio {
         this.tipoServicio = tipoServicio;
     }
 
-    // LEO
-
-    // metodo toString
-    @Override
-    public String toString() {
-        return "Servicio [nombre=" + nombre + ", tarifaBase=" + tarifaBase + ", precioPorKm=" + precioPorKm
-                + ", precioPorMinuto=" + precioPorMinuto + ", tipoServicio=" + tipoServicio + "]";
-    }
-
+    // dos servicios son iguales si comparten el mismo nombre y el mismo tipo de
+    // servicio
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -75,8 +68,6 @@ public class Servicio {
         return result;
     }
 
-    // dos servicios son iguales si comparten el mismo nombre y el mismo tipo de
-    // servicio
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -94,5 +85,12 @@ public class Servicio {
         if (tipoServicio != other.tipoServicio)
             return false;
         return true;
+    }
+
+    // metodo toString
+    @Override
+    public String toString() {
+        return "Servicio [nombre=" + nombre + ", tarifaBase=" + tarifaBase + ", precioPorKm=" + precioPorKm
+                + ", precioPorMinuto=" + precioPorMinuto + ", tipoServicio=" + tipoServicio + "]";
     }
 }
