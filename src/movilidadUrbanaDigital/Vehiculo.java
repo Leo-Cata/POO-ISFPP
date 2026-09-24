@@ -6,17 +6,28 @@ public abstract class Vehiculo {
     private boolean aceptaPasajeros;
     private boolean aceptaCarga;
     private Servicio servicio;
+    private Ubicacion ubicacion;
 
     // constuctor del objeto vehiculo
-    public Vehiculo(String patente, String modelo, boolean aceptaPasajeros, boolean aceptaCarga, Servicio servicio) {
+    public Vehiculo(String patente, String modelo, boolean aceptaPasajeros, boolean aceptaCarga, Servicio servicio,
+            Ubicacion ubicacion) {
         this.patente = patente;
         this.modelo = modelo;
         this.aceptaPasajeros = aceptaPasajeros;
         this.aceptaCarga = aceptaCarga;
         this.servicio = servicio;
+        this.ubicacion = ubicacion;
     }
 
     // getters y setters del objeto vehiculo
+    public Ubicacion getUbicacion() {
+        return ubicacion;
+    }
+
+    public void setUbicacion(Ubicacion ubicacion) {
+        this.ubicacion = ubicacion;
+    }
+
     public String getPatente() {
         return patente;
     }
@@ -86,10 +97,9 @@ public abstract class Vehiculo {
         return true;
     }
 
-    // toString del objeto vehiculo
     @Override
     public String toString() {
         return "Vehiculo [patente=" + patente + ", modelo=" + modelo + ", aceptaPasajeros=" + aceptaPasajeros
-                + ", aceptaCarga=" + aceptaCarga + ", servicio=" + servicio + "]";
+                + ", aceptaCarga=" + aceptaCarga + ", servicio=" + servicio + ", ubicacion=" + ubicacion + "]";
     }
 }
