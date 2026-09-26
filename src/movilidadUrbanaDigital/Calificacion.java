@@ -6,7 +6,7 @@ public enum Calificacion {
     REGULAR(2),
     BUENO(3),
     MUY_BUENO(4),
-    EXCELENTO(5);
+    EXCELENTE(5);
 
     private final int puntaje;
 
