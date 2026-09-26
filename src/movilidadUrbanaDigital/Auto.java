@@ -3,8 +3,6 @@ package movilidadUrbanaDigital;
 public class Auto extends Vehiculo {
 
 	private int capacidadPasajeros;
-	private static double precioPorKm = 500;
-	private static double tarifaBase = 2000;
 
 	public Auto(String patente, String modelo, boolean aceptaPasajeros, boolean aceptaCarga, Servicio servicio,
 			Ubicacion ubicacion, int capacidadPasajeros) {
@@ -12,13 +10,19 @@ public class Auto extends Vehiculo {
 		this.capacidadPasajeros = capacidadPasajeros;
 	}
 
-	// implementar el calculo
+	/**
+	 * (non-Javadoc)
+	 * 
+	 * @see movilidadUrbanaDigital.Vehiculo#calcularCostoViaje(double)
+	 */
 	@Override
 	public double calcularCostoViaje(double distancia) {
 		if (distancia < 0) {
 			throw new IllegalArgumentException("la distancia no puede ser menor a 0");
 		}
-		return tarifaBase + (precioPorKm * distancia);
+
+		Servicio servicio = getServicio();
+		return servicio.getTarifaBase() + (servicio.getPrecioPorKm() * distancia);
 	}
 
 	public int getCapacidadPasajeros() {
