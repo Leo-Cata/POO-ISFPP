@@ -39,6 +39,8 @@ public class Viaje {
         this.tiempoEstimado = tiempoEstimado;
         this.estado = Estado.SOLICITADO; // el estado del viaje inicia siempre en solicitado
         this.costoViaje = this.calcularCostoViaje(); // se fija el costo del viaje al solicitarlo
+
+        this.conductor = null; // el conductor sera null hasta que sea asignado en aceptarViaje()
     }
 
     /**
@@ -107,6 +109,7 @@ public class Viaje {
 
         if (estado == Estado.FINALIZADO)
             throw new IllegalStateException("No es posible cancelar un viaje finalizado.");
+
         if (estado == Estado.CANCELADO)
             throw new IllegalStateException("El viaje ya se encuentra cancelado.");
 
