@@ -21,6 +21,14 @@ public abstract class Vehiculo {
 
     // metodo abstracto cada subclase calcula su costo
     // CAMBIO: de int a double para poder calcular los metros, eje 500m serian 0.5
+    /**
+     * retorna el costo del viaje, calculando la distancia por el precio por km + la
+     * tarifa base en caso de que el tipo de vehiculo posea una
+     * 
+     * @param distancia
+     * @return double costo del viaje
+     * @throws IllegalArgumentException Si la distancia es un valor negativo.
+     */
     public abstract double calcularCostoViaje(double distancia);
 
     // getters y setters del objeto vehiculo
