@@ -98,18 +98,20 @@ public abstract class Usuario {
     }
 
     // metodos
+
     /**
-     * metodo para que el usuario (cliente o conductor) pueda calificar el viaje
+     * Metodo para agregar una calificacion al viaje
+     * para el conductor y el cliente
      * 
-     * @param Calificacion enum de acuerdo a la calificacion
+     * @param calificacion
+     * @throws IllegalArgumentException si la calificacion es invalda
      */
     public void calificarViaje(Calificacion calificacion) {
-        if (calificacion != null) {
-            // se podria sacar crear un metodo de agregarCalificaciones para que haga esto
-            // pero no se
-            this.calificaciones.add(calificacion);
-            this.totalCalificaciones++;
+        if (calificacion == null) {
+            throw new IllegalArgumentException("Calificacion invalida.");
         }
+        this.calificaciones.add(calificacion);
+        this.totalCalificaciones++;
     }
 
     /**
