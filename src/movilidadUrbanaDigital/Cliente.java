@@ -1,7 +1,7 @@
 package movilidadUrbanaDigital;
 
 public class Cliente extends Usuario {
-    private final int limiteCalificaciones = 100;
+    private static int limiteCalificaciones = 100;
 
     public Cliente(String nombre, String documento, String telefono, String email) {
         super(nombre, documento, telefono, email);
