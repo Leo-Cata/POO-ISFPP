@@ -70,6 +70,6 @@ public class Conductor extends Usuario {
     // toString de conductor
     @Override
     public String toString() {
-        return super.toString() + "Conductor [disponible=" + disponible + ", vehiculo=" + vehiculo + "]";
+        return super.toString() + " Conductor [disponible=" + disponible + ", vehiculo=" + vehiculo + "]";
     }
 }
