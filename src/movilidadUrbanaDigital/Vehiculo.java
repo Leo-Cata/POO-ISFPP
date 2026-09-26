@@ -18,7 +18,10 @@ public abstract class Vehiculo {
         this.servicio = servicio;
         this.ubicacion = ubicacion;
     }
-
+    
+    //metodo abstracto cada subclase calcula su costo
+    public abstract double calcularCostoViaje(int distancia);
+    
     // getters y setters del objeto vehiculo
     public Ubicacion getUbicacion() {
         return ubicacion;
