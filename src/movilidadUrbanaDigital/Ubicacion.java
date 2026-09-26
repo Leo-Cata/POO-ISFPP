@@ -17,6 +17,40 @@ public class Ubicacion {
 		this.direccion = direccion;
 	}
 
+	// Método que calcula la distancia real entre el origen y destino usando Haversine
+	/**
+	 * 
+	 * @param destino
+	 * @return la distancia entre la ubicacion de origen y el destino
+	 */
+		public int calcularDistanciaA(Ubicacion destino) {
+			// Radio medio de la Tierra en kilómetros
+			final double RADIO_TIERRA = 6371.0;
+
+			// 1. Convertir las latitudes y longitudes de grados a radianes
+			double lat1 = Math.toRadians(this.latitud);
+			double lon1 = Math.toRadians(this.longitud);
+			double lat2 = Math.toRadians(destino.getLatitud());
+			double lon2 = Math.toRadians(destino.getLongitud());
+
+			//Calcular la diferencia entre las coordenadas
+			double dLat = lat2 - lat1;
+			double dLon = lon2 - lon1;
+
+			//Aplicar la Fórmula de Haversine
+			double a = Math.pow(Math.sin(dLat / 2), 2)
+					 + Math.cos(lat1) * Math.cos(lat2) 
+					 * Math.pow(Math.sin(dLon / 2), 2);
+			
+			double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+			//Obtener la distancia exacta en kilómetros con decimales
+			double distanciaKm = RADIO_TIERRA * c;
+
+			//Redondear a entero porque el método devuelve un 'int'
+			return (int) Math.round(distanciaKm);
+		}
+	
 	//getters y setters
 	public double getLatitud() {
 		return latitud;
