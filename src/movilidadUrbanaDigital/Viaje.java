@@ -1,12 +1,13 @@
 package movilidadUrbanaDigital;
 
-import java.time.LocalDate;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 public class Viaje {
 
     private int tiempoEstimado;
     private double factorDemora;
-    private LocalDate fechaHora; // deberia ser LocalDateTime ya que menciona hora pero en el diagrama apareceasi
+    private LocalDateTime fechaHora; // es LocalDateTime obtener el momento exacto del viaje sino probablemente haya colision
     private double costoViaje;
     private Conductor conductor;
     private Cliente cliente;
@@ -14,6 +15,8 @@ public class Viaje {
     private Ubicacion origen, destino;
     private Estado estado;
     private Vehiculo vehiculo;
+     //atributo necesario para registrar la hora exacta en el que el viaje fue aceptado
+    private LocalDateTime horaAceptacion;	//se le asigna en el momento que el viaje es aceptado en aceptarViaje()
 
     /**
      * * Constructor de la clase Viaje.
@@ -28,7 +31,7 @@ public class Viaje {
      * @param factorDemora
      * @param tiempoEstimado
      */
-    public Viaje(LocalDate fechaHora, Cliente cliente, Ubicacion origen, Ubicacion destino, Vehiculo vehiculo,
+    public Viaje(LocalDateTime fechaHora, Cliente cliente, Ubicacion origen, Ubicacion destino, Vehiculo vehiculo,
             double factorDemora, int tiempoEstimado) {
         this.fechaHora = fechaHora;
         this.cliente = cliente;
@@ -66,6 +69,40 @@ public class Viaje {
         return tarifaFinal;
     }
 
+    /**
+     * Calcula el costo proporcional al tiempo y la distancia 
+     * si un viaje es cancelado luego de aceptado o en curso.
+     * 
+     * 
+     * @return El costo total calculado por la cancelacion del viaje.
+     */
+    // no lo menciona en el diagrama pero en la consigna pide cobrar un costo proporcional
+    // private porque solo se usa dentro de esta clase.
+    private double calcularCostoCancelacion() {
+       if (horaAceptacion == null) {
+    	   throw new IllegalStateException("No se puede calcular el costo de cancelacion sin una hora de aceptacion registrada.");
+       }
+    	 
+       // TIEMPO transcurrido del viaje en minutos.
+    	Duration tiempoTranscurrido = Duration.between(horaAceptacion, LocalDateTime.now());	
+        long minutosTranscurridos = tiempoTranscurrido.toMinutes();
+
+        double fraccionTranscurrida = Math.min(1.0, (double) minutosTranscurridos / tiempoEstimado);	// si el viaje duro mas de lo estimado evita que supere el 100%
+
+        // un estimado de la DISTANCIA que transcurrio
+        double distanciaTotal = origen.calcularDistanciaA(destino);
+        double distanciaRecorridaEstimada = distanciaTotal * fraccionTranscurrida;
+
+        // incluye tarifaBase si es Auto, no la incluye si es Moto
+        double costoPorRecorrido = vehiculo.calcularCostoViaje(distanciaRecorridaEstimada);
+
+        Servicio servicio = vehiculo.getServicio();
+        double costoPorTiempo = minutosTranscurridos * servicio.getPrecioPorMinuto();
+
+        return (costoPorRecorrido + costoPorTiempo) * factorDemora;
+    }
+    
+    
     // recibir el conductor que acepta el viaje (modificacion)
     /**
      * 
@@ -79,6 +116,8 @@ public class Viaje {
 
         // asiganmos conductor
         this.conductor = conductor;
+        // guarda la hora exacta de aceptacion
+        this.horaAceptacion = LocalDateTime.now();
         // luego cambiamos el estado del viaje
         estado = Estado.ACEPTADO;
     }
@@ -100,8 +139,7 @@ public class Viaje {
     /**
      * Cancela el viaje aplicando las reglas de penalidad de negocio:
      * - Si está SOLICITADO: El costo se reduce a 0.
-     * - Si está ACEPTADO o EN_CURSO: Se cobra una penalidad del 50% del valor
-     * original.
+     * - Si está ACEPTADO o EN_CURSO: se cobra un costo proporcional al tiempo y distancia recorridos.
      * 
      * @throws IllegalStateException Si el viaje ya se encuentra FINALIZADO.
      */
@@ -117,7 +155,7 @@ public class Viaje {
             this.costoViaje = 0;
 
         if (estado == Estado.ACEPTADO || estado == Estado.EN_CURSO)
-            this.costoViaje = this.costoViaje * 0.50;
+            this.costoViaje = calcularCostoCancelacion();
 
         this.estado = Estado.CANCELADO;
     }
@@ -141,12 +179,19 @@ public class Viaje {
     }
 
     // getters y setters
+    public LocalDateTime getHoraAceptacion() {
+		return horaAceptacion;
+	}
 
-    public int getTiempoEstimado() {
-        return tiempoEstimado;
-    }
+	public void setHoraAceptacion(LocalDateTime horaAceptacion) {
+		this.horaAceptacion = horaAceptacion;
+	}
 
-    public void setTiempoEstimado(int tiempoEstimado) {
+	public int getTiempoEstimado() {
+		return tiempoEstimado;
+	}
+
+	public void setTiempoEstimado(int tiempoEstimado) {
         this.tiempoEstimado = tiempoEstimado;
     }
 
@@ -158,11 +203,11 @@ public class Viaje {
         this.factorDemora = factorDemora;
     }
 
-    public LocalDate getFechaHora() {
+    public LocalDateTime getFechaHora() {
         return fechaHora;
     }
 
-    public void setFechaHora(LocalDate fechaHora) {
+    public void setFechaHora(LocalDateTime fechaHora) {
         this.fechaHora = fechaHora;
     }
 
@@ -240,14 +285,13 @@ public class Viaje {
 
     // Métodos Object (hashCode, equals, toString)
 
-    // dos viajes son iguales si tienen la misma fechaHora, el mismo conductor y el
+    // dos viajes son iguales si tienen la misma fechaHora y el
     // mismo cleinte
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((fechaHora == null) ? 0 : fechaHora.hashCode());
-        result = prime * result + ((conductor == null) ? 0 : conductor.hashCode());
         result = prime * result + ((cliente == null) ? 0 : cliente.hashCode());
         return result;
     }
@@ -265,11 +309,6 @@ public class Viaje {
             if (other.fechaHora != null)
                 return false;
         } else if (!fechaHora.equals(other.fechaHora))
-            return false;
-        if (conductor == null) {
-            if (other.conductor != null)
-                return false;
-        } else if (!conductor.equals(other.conductor))
             return false;
         if (cliente == null) {
             if (other.cliente != null)
