@@ -53,7 +53,7 @@ public class Viaje {
      */
     public double calcularCostoViaje() {
 
-        int distancia = origen.calcularDistanciaA(destino);
+        double distancia = origen.calcularDistanciaA(destino);
 
         double tarifaDelVehiculo = vehiculo.calcularCostoViaje(distancia);
 

@@ -23,7 +23,7 @@ public class Ubicacion {
 	 * @param destino
 	 * @return la distancia entre la ubicacion de origen y el destino
 	 */
-		public int calcularDistanciaA(Ubicacion destino) {
+		public double calcularDistanciaA(Ubicacion destino) {
 			// Radio medio de la Tierra en kilómetros
 			final double RADIO_TIERRA = 6371.0;
 
@@ -48,7 +48,7 @@ public class Ubicacion {
 			double distanciaKm = RADIO_TIERRA * c;
 
 			//Redondear a entero porque el método devuelve un 'int'
-			return (int) Math.round(distanciaKm);
+			return distanciaKm;
 		}
 	
 	//getters y setters

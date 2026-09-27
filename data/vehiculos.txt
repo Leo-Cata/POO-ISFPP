@@ -1,0 +1,2 @@
+AUTO;AB123CD;Toyota Corolla;true;false;Auto Estandar;800.0;120.0;15.0;PASAJEROS;-42.76;-65.03;Av. Roca 100;4
+MOTO;XY987ZZ;Honda Wave;true;false;Moto Estandar;400.0;70.0;8.0;PASAJEROS;-42.77;-65.04;Belgrano 200;-
