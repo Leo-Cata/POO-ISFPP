@@ -8,11 +8,11 @@ public class Vehiculo {
     private Ubicacion ubicacion;
     private TipoVehiculo tipoVehiculo;
     private CategoriaVehiculo categoriaVehiculo;
-    //Set (conjunto) garantiza la propiedad 'unique' por definicion
+    // Set (conjunto) garantiza la propiedad 'unique' por definicion
     private Set<TipoServicio> tipoServicios;
     private int capacidadPasajeros;
 
-    //constructor de la clase vehiculo
+    // constructor de la clase vehiculo
     /**
      * 
      * @param patente
@@ -23,48 +23,63 @@ public class Vehiculo {
      * @param tipoServicio
      */
     public Vehiculo(String patente, String modelo, Ubicacion ubicacion, TipoVehiculo tipoVehiculo,
-			CategoriaVehiculo categoriaVehiculo, TipoServicio tipoServicio, int capacidadPasajeros) {
-		this.patente = patente;
-		this.modelo = modelo;
-		this.ubicacion = ubicacion;
-		this.tipoVehiculo = tipoVehiculo;
-		this.categoriaVehiculo = categoriaVehiculo;
-		this.capacidadPasajeros = capacidadPasajeros;
-		agregarTipoServicio(tipoServicio);
-	}
-    
+            CategoriaVehiculo categoriaVehiculo, TipoServicio tipoServicio, int capacidadPasajeros) {
+        this.patente = patente;
+        this.modelo = modelo;
+        this.ubicacion = ubicacion;
+        this.tipoVehiculo = tipoVehiculo;
+        this.categoriaVehiculo = categoriaVehiculo;
+        this.capacidadPasajeros = capacidadPasajeros;
+        agregarTipoServicio(tipoServicio);
+    }
+
     /**
+     * agrega un tipo de servicio a un vehiculo, siempre y cuando no sea null, ya
+     * tenga 2 servicios o ya posea ese mismo servicio
      * 
      * @param tipoServicio
+     * @throws IllegalArgumentException si el tipo de servicio es repetido, invalido
+     *                                  o se supero la max cantidad
      */
     public void agregarTipoServicio(TipoServicio tipoServicio) {
-    	//validar la multiplicidad 1..2
-    	if(tipoServicios.size() < 1 || tipoServicios.size() > 2 || tipoServicios == null)
-    		throw new IllegalArgumentException("Un vehículo debe tener al menos 1 servicio." + tipoServicio);
-    	this.tipoServicios.add(tipoServicio);
+        // validar la multiplicidad 1..2
+
+        if (tipoServicio == null) {
+            throw new IllegalArgumentException("El tipo de servicio es null");
+        }
+
+        if (tipoServicios.size() >= 2) {
+            throw new IllegalArgumentException("Un vehiculo no puede tener mas 2 dos servicios");
+        }
+
+        if (tipoServicios.contains(tipoServicio)) {
+            throw new IllegalArgumentException("El vehiculo ya posee el servicio: " + tipoServicio);
+        }
+
+        this.tipoServicios.add(tipoServicio);
     }
-    
+
     public Set<TipoServicio> getTipoServicios() {
-		return tipoServicios;
-	}
+        return tipoServicios;
+    }
 
-	public TipoVehiculo getTipoVehiculo() {
-		return tipoVehiculo;
-	}
+    public TipoVehiculo getTipoVehiculo() {
+        return tipoVehiculo;
+    }
 
-	public void setTipoVehiculo(TipoVehiculo tipoVehiculo) {
-		this.tipoVehiculo = tipoVehiculo;
-	}
+    public void setTipoVehiculo(TipoVehiculo tipoVehiculo) {
+        this.tipoVehiculo = tipoVehiculo;
+    }
 
-	public CategoriaVehiculo getCategoriaVehiculo() {
-		return categoriaVehiculo;
-	}
+    public CategoriaVehiculo getCategoriaVehiculo() {
+        return categoriaVehiculo;
+    }
 
-	public void setCategoriaVehiculo(CategoriaVehiculo categoriaVehiculo) {
-		this.categoriaVehiculo = categoriaVehiculo;
-	}
+    public void setCategoriaVehiculo(CategoriaVehiculo categoriaVehiculo) {
+        this.categoriaVehiculo = categoriaVehiculo;
+    }
 
-	// getters y setters del objeto vehiculo
+    // getters y setters del objeto vehiculo
     public Ubicacion getUbicacion() {
         return ubicacion;
     }
@@ -88,16 +103,16 @@ public class Vehiculo {
     public void setModelo(String modelo) {
         this.modelo = modelo;
     }
-    
+
     public int getCapacidadPasajeros() {
-		return capacidadPasajeros;
-	}
+        return capacidadPasajeros;
+    }
 
-	public void setCapacidadPasajeros(int capacidadPasajeros) {
-		this.capacidadPasajeros = capacidadPasajeros;
-	}
+    public void setCapacidadPasajeros(int capacidadPasajeros) {
+        this.capacidadPasajeros = capacidadPasajeros;
+    }
 
-	// hash y equals del objeto vehiculo
+    // hash y equals del objeto vehiculo
     // dos vehiculos son iguales si tienen la misma patente
     // no se si se deberia chequear por el tipo de servicio siguiendo la idea de que
     // los servicios serian carga y pasajeros
@@ -126,10 +141,10 @@ public class Vehiculo {
         return true;
     }
 
-	@Override
-	public String toString() {
-		return "Vehiculo [patente=" + patente + ", modelo=" + modelo + ", ubicacion=" + ubicacion + ", tipoVehiculo="
-				+ tipoVehiculo + ", categoriaVehiculo=" + categoriaVehiculo + ", tipoServicios=" + tipoServicios + "]";
-	}
-    
+    @Override
+    public String toString() {
+        return "Vehiculo [patente=" + patente + ", modelo=" + modelo + ", ubicacion=" + ubicacion + ", tipoVehiculo="
+                + tipoVehiculo + ", categoriaVehiculo=" + categoriaVehiculo + ", tipoServicios=" + tipoServicios + "]";
+    }
+
 }
