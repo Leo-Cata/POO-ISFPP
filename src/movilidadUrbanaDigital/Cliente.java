@@ -4,40 +4,46 @@ import java.util.UUID;
 
 import net.datastructures.ProbeHashMap;
 
-public class Cliente{
-	
-	private ProbeHashMap<UUID,Viaje> viajes;
+public class Cliente {
 
-    public Cliente() {
-		this.viajes = new ProbeHashMap<UUID,Viaje>();
+	private ProbeHashMap<UUID, Viaje> viajes;
+
+	public Cliente() {
+		this.viajes = new ProbeHashMap<UUID, Viaje>();
 	}
 
 	public ProbeHashMap<UUID, Viaje> getViajes() {
 		return viajes;
 	}
 
+	/**
+	 * agrega un viaje al mapa de viajes
+	 * 
+	 * @param viaje del cual se obtendra su UUID para ser usada como llave
+	 */
 	public void agregarViajes(Viaje viaje) {
 		this.viajes.put(viaje.getId(), viaje);
 	}
-    
+
 	/**
-	 * @return true si el cliente tiene algun viaje en curso (SOLICITADO, ACEPTADO o INICIADO)
+	 * @return true si el cliente tiene algun viaje en curso (SOLICITADO, ACEPTADO o
+	 *         INICIADO)
 	 */
 	public boolean enViaje() {
 		for (Viaje v : viajes.values()) {
 			EstadoViaje estado = v.estadoActual();
-			
-			if(estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO)
+
+			if (estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO)
 				return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	// to string
 	@Override
 	public String toString() {
 		return "Cliente [viajes=" + viajes + "]";
 	}
-    
+
 }
