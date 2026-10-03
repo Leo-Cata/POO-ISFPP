@@ -1,31 +1,28 @@
 package movilidadUrbanaDigital;
- 
+
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.UUID;
 
 import net.datastructures.LinkedPositionalList;
 
 public class Viaje {
 
-    private UUID id;
-    private String motivoCancelacion;
-    private Usuario cliente;
-    private Usuario conductor;
-    private RolUsuario rolCancela;
-    private CalificacionViaje calificacionCondcutor;
-    private CalificacionViaje calificacionCliente;
-    private Vehiculo vehiculo;
-    private Ubicacion origen;
-    private Ubicacion destino;
-    private LinkedPositionalList<RegistroViaje> registroViaje;
-    private Servicio servicio;
-    
-    
+	private UUID id;
+	private String motivoCancelacion;
+	private Usuario cliente;
+	private Usuario conductor;
+	private RolUsuario rolCancela;
+	private CalificacionViaje calificacionCondcutor;
+	private CalificacionViaje calificacionCliente;
+	private Vehiculo vehiculo;
+	private Ubicacion origen;
+	private Ubicacion destino;
+	private LinkedPositionalList<RegistroViaje> registroViaje;
+	private Servicio servicio;
 
-    public Viaje(UUID id, String motivoCancelacion, Usuario cliente, Usuario conductor, RolUsuario rolCancela,
+	public Viaje(UUID id, String motivoCancelacion, Usuario cliente, Usuario conductor, RolUsuario rolCancela,
 			CalificacionViaje calificacionCondcutor, CalificacionViaje calificacionCliente, Vehiculo vehiculo,
-			Ubicacion origen, Ubicacion destino	, Servicio servicio) {
+			Ubicacion origen, Ubicacion destino, Servicio servicio) {
 		super();
 		this.id = id;
 		this.motivoCancelacion = motivoCancelacion;
@@ -40,36 +37,37 @@ public class Viaje {
 		this.servicio = servicio;
 		this.registroViaje = new LinkedPositionalList<RegistroViaje>();
 	}
-    
-    public void solicitar(LocalDateTime fechaHora) {
-    }
 
-    public void aceptar(LocalDateTime fechaHora, Conductor conductor) {
-    	
-    }
-    
-    public void iniciar(LocalDateTime fechaHora) {
-    	
-    }
-    
-    public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionConductor, CalificacionViaje calificacionCliente) {
-    	
-    }
-    
-    public void cancelar(LocalDateTime fehcaHora, Usuario usuario, String motivo) {
-    	
-    }
-    
-    public void rechazar(LocalDateTime fechaHora) {
-    	
-    }
-    
-    public EstadoViaje estadoActual() {
+	public void solicitar(LocalDateTime fechaHora) {
+	}
+
+	public void aceptar(LocalDateTime fechaHora, Conductor conductor) {
+
+	}
+
+	public void iniciar(LocalDateTime fechaHora) {
+
+	}
+
+	public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionConductor,
+			CalificacionViaje calificacionCliente) {
+
+	}
+
+	public void cancelar(LocalDateTime fehcaHora, Usuario usuario, String motivo) {
+
+	}
+
+	public void rechazar(LocalDateTime fechaHora) {
+
+	}
+
+	public EstadoViaje estadoActual() {
 		return null;
-    	
-    }
 
-    public UUID getId() {
+	}
+
+	public UUID getId() {
 		return id;
 	}
 
@@ -163,62 +161,5 @@ public class Viaje {
 
 	public void setServicio(Servicio servicio) {
 		this.servicio = servicio;
-	}
-
-
-
-
-	//-----------------CLASE REGISRTO VAIJE PRIVADA-------------------
-	//inner class, la relacion es de composicion por lo que el registro del viaje depende fuertemente de
-    //la clase viaje
-	//asegura que el ciclo de vida del registro dependa estrictamente del viaje
-	private class RegistroViaje {
-
-    	private LocalDateTime fechaHora;
-    	private EstadoViaje estado;
-    	
-    	public RegistroViaje(LocalDateTime fechaHora, EstadoViaje estado) {
-    		super();
-    		this.fechaHora = fechaHora;
-    		this.estado = estado;
-    	}
-
-    	public LocalDateTime getFechaHora() {
-    		return fechaHora;
-    	}
-
-    	public void setFechaHora(LocalDateTime fechaHora) {
-    		this.fechaHora = fechaHora;
-    	}
-
-    	public EstadoViaje getEstado() {
-    		return estado;
-    	}
-
-    	public void setEstado(EstadoViaje estado) {
-    		this.estado = estado;
-    	}
-
-    	@Override
-    	public int hashCode() {
-    		return Objects.hash(fechaHora);
-    	}
-
-    	@Override
-    	public boolean equals(Object obj) {
-    		if (this == obj)
-    			return true;
-    		if (obj == null)
-    			return false;
-    		if (getClass() != obj.getClass())
-    			return false;
-    		RegistroViaje other = (RegistroViaje) obj;
-    		return Objects.equals(fechaHora, other.fechaHora);
-    	}
-
-    	@Override
-    	public String toString() {
-    		return "RegistroViaje [fechaHora=" + fechaHora + "]";
-    	}
 	}
 }
