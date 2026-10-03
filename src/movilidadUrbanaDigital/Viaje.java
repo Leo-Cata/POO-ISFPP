@@ -6,52 +6,96 @@ import java.util.UUID;
 import net.datastructures.LinkedPositionalList;
 
 public class Viaje {
-
 	private UUID id;
 	private String motivoCancelacion;
-	private Usuario cliente;
-	private Usuario conductor;
 	private RolUsuario rolCancela;
-	private CalificacionViaje calificacionCondcutor;
-	private CalificacionViaje calificacionCliente;
+	private Usuario cliente, conductor;
 	private Vehiculo vehiculo;
-	private Ubicacion origen;
-	private Ubicacion destino;
-	private LinkedPositionalList<RegistroViaje> registroViaje;
+	private Ubicacion origen, destino;
+	private LinkedPositionalList<RegistroViaje> registroViaje; // segun gemeni se puede usar un ArrayList directamennte
 	private Servicio servicio;
+	private CalificacionViaje calificacionCondutor, calificacionCliente;
 
-	public Viaje(UUID id, String motivoCancelacion, Usuario cliente, Usuario conductor, RolUsuario rolCancela,
-			CalificacionViaje calificacionCondcutor, CalificacionViaje calificacionCliente, Vehiculo vehiculo,
-			Ubicacion origen, Ubicacion destino, Servicio servicio) {
-		super();
-		this.id = id;
-		this.motivoCancelacion = motivoCancelacion;
+	public Viaje(UUID id, Usuario cliente, Ubicacion origen, Ubicacion destino, Servicio servicio) {
+		this.id = id; // ia recomienda usar UUID.randomUUID();
 		this.cliente = cliente;
-		this.conductor = conductor;
-		this.rolCancela = rolCancela;
-		this.calificacionCondcutor = calificacionCondcutor;
-		this.calificacionCliente = calificacionCliente;
-		this.vehiculo = vehiculo;
 		this.origen = origen;
 		this.destino = destino;
 		this.servicio = servicio;
-		this.registroViaje = new LinkedPositionalList<RegistroViaje>();
+
+		this.registroViaje = new LinkedPositionalList<RegistroViaje>(); // se inicializa con 0 elementos
+		this.conductor = null; // se agrega al aceptar el viaje
+		this.vehiculo = null; // se agrega al aceptar el viaje
+		this.motivoCancelacion = null; // se agrega al cancelar un viaje
+		this.calificacionCliente = null; // se agrega al finalizar el viaje
+		this.calificacionCondutor = null; // se agrega al finalizar el viaje
 	}
 
+	/**
+	 * se solicita un nuevo viaje
+	 * 
+	 * @param fechaHora LocalDateTime de la solicitud
+	 * @throws IllegalArgumentException si la fechaHora es invalida
+	 * @throws IllegalStateException    si ya se encuentran valores en la lista, es
+	 *                                  decir ya se ha solicitado y hay un vieja en
+	 *                                  alguno de los estados
+	 */
 	public void solicitar(LocalDateTime fechaHora) {
+		if (fechaHora == null) {
+			throw new IllegalArgumentException("La fecha y hora son invalidas");
+		}
+
+		// para solicitar un vieja la lista debe estar vacia
+		if (!registroViaje.isEmpty()) {
+			throw new IllegalStateException("Ya se ha solicitado un vieja");
+		}
+
+		this.registroViaje.addLast(new RegistroViaje(fechaHora, EstadoViaje.SOLICITADO));
 	}
 
-	public void aceptar(LocalDateTime fechaHora, Conductor conductor) {
-
+	/**
+	 * se aceptara el viaje, asignando asi un conductor
+	 * 
+	 * @param fechaHora LocalDateTime de cuando se acepto
+	 * @param conductor Usuario de tipo conductor que sera asignadp
+	 * @throws IllegalArgumentException si la fechaHora o conductor son invalidos
+	 * @throws IllegalStateException    si el ultimo estado no es de tipo SOLICITADO
+	 */
+	public void aceptar(LocalDateTime fechaHora, Usuario conductor) {
+		if (fechaHora == null) {
+			throw new IllegalArgumentException("La fecha y hora son invalidas");
+		}
+		if (conductor == null) {
+			throw new IllegalArgumentException("El conductor es invalido");
+		}
+		if (registroViaje.last().getElement().getEstado() != EstadoViaje.SOLICITADO) {
+			throw new IllegalStateException("El viaje no se encuentra solicitado");
+		}
+		this.conductor = conductor;
+		this.registroViaje.addLast(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
 	}
+
+	/**
+	 * setea el viaje como INICIADO (se sube el pasajero/entrega el paquete)
+	 * 
+	 * @param fechaHora LocalDateTime en que se inicio
+	 * @throws IllegalArgumentException si la hora es invalida
+	 * @throws IllegalStateArgument     si el estado anterior no es ACEPTADO
+	 */
 
 	public void iniciar(LocalDateTime fechaHora) {
+		if (fechaHora == null) {
+			throw new IllegalArgumentException("La hora y fecha son invalidas");
+		}
+		if (registroViaje.last().getElement().getEstado() != EstadoViaje.ACEPTADO) {
+			throw new IllegalStateException("El viaje no se encuentra aceptado");
+		}
 
+		this.registroViaje.addLast(new RegistroViaje(fechaHora, EstadoViaje.INICIADO));
 	}
 
 	public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionConductor,
 			CalificacionViaje calificacionCliente) {
-
 	}
 
 	public void cancelar(LocalDateTime fehcaHora, Usuario usuario, String motivo) {
@@ -107,12 +151,12 @@ public class Viaje {
 		this.rolCancela = rolCancela;
 	}
 
-	public CalificacionViaje getCalificacionCondcutor() {
-		return calificacionCondcutor;
+	public CalificacionViaje getCalificacionCondutor() {
+		return calificacionCondutor;
 	}
 
-	public void setCalificacionCondcutor(CalificacionViaje calificacionCondcutor) {
-		this.calificacionCondcutor = calificacionCondcutor;
+	public void setCalificacionCondutor(CalificacionViaje calificacionCondutor) {
+		this.calificacionCondutor = calificacionCondutor;
 	}
 
 	public CalificacionViaje getCalificacionCliente() {
