@@ -3,55 +3,48 @@ package movilidadUrbanaDigital;
 import java.util.Objects;
 
 public class Ubicacion {
-
-	//atributos de ubicacion
 	private double latitud;
 	private double longitud;
-	private String direccion;
 	
-	//constructor del objeto 
-	public Ubicacion(double latitud, double longitud, String direccion) {
+	public Ubicacion(double latitud, double longitud) {
 		super();
 		this.latitud = latitud;
 		this.longitud = longitud;
-		this.direccion = direccion;
 	}
-
+	
 	// Método que calcula la distancia real entre el origen y destino usando Haversine
 	/**
 	 * 
-	 * @param destino
-	 * @return la distancia entre la ubicacion de origen y el destino
+	 * @param ubicacion
+	 * @return la distancia entre la ubicaciones
 	 */
-		public double calcularDistanciaA(Ubicacion destino) {
-			// Radio medio de la Tierra en kilómetros
-			final double RADIO_TIERRA = 6371.0;
+	public double calcularDistanciaA(Ubicacion ubicacion) {
+		// Radio medio de la Tierra en kilómetros
+		final double RADIO_TIERRA = 6371.0;
 
-			// 1. Convertir las latitudes y longitudes de grados a radianes
-			double lat1 = Math.toRadians(this.latitud);
-			double lon1 = Math.toRadians(this.longitud);
-			double lat2 = Math.toRadians(destino.getLatitud());
-			double lon2 = Math.toRadians(destino.getLongitud());
+		// 1. Convertir las latitudes y longitudes de grados a radianes
+		double lat1 = Math.toRadians(this.latitud);
+		double lon1 = Math.toRadians(this.longitud);
+		double lat2 = Math.toRadians(ubicacion.getLatitud());
+		double lon2 = Math.toRadians(ubicacion.getLongitud());
 
-			//Calcular la diferencia entre las coordenadas
-			double dLat = lat2 - lat1;
-			double dLon = lon2 - lon1;
+		//Calcular la diferencia entre las coordenadas
+		double dLat = lat2 - lat1;
+		double dLon = lon2 - lon1;
 
-			//Aplicar la Fórmula de Haversine
-			double a = Math.pow(Math.sin(dLat / 2), 2)
-					 + Math.cos(lat1) * Math.cos(lat2) 
-					 * Math.pow(Math.sin(dLon / 2), 2);
+		//Aplicar la Fórmula de Haversine
+		double a = Math.pow(Math.sin(dLat / 2), 2)
+			+ Math.cos(lat1) * Math.cos(lat2) 
+			* Math.pow(Math.sin(dLon / 2), 2);
 			
-			double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-			//Obtener la distancia exacta en kilómetros con decimales
-			double distanciaKm = RADIO_TIERRA * c;
-
-			//Redondear a entero porque el método devuelve un 'int'
+		//Obtener la distancia exacta en kilómetros con decimales
+		double distanciaKm = RADIO_TIERRA * c;
+		
 			return distanciaKm;
 		}
-	
-	//getters y setters
+
 	public double getLatitud() {
 		return latitud;
 	}
@@ -68,19 +61,10 @@ public class Ubicacion {
 		this.longitud = longitud;
 	}
 
-	public String getDireccion() {
-		return direccion;
-	}
-
-	public void setDireccion(String direccion) {
-		this.direccion = direccion;
-	}
-
 	@Override
 	public int hashCode() {
 		return Objects.hash(latitud, longitud);
 	}
-	
 	//equals, dos ubicaciones son iguales si coinciden en su longitud y latitud.
 	@Override
 	public boolean equals(Object obj) {
@@ -95,9 +79,11 @@ public class Ubicacion {
 				&& Double.doubleToLongBits(longitud) == Double.doubleToLongBits(other.longitud);
 	}
 
-	//to string del objeto ubicacion
 	@Override
 	public String toString() {
-		return "Ubicacion [latitud=" + latitud + ", longitud=" + longitud + ", direccion=" + direccion + "]";
+		return "Ubicacion [latitud=" + latitud + ", longitud=" + longitud + "]";
 	}
+		
+	
+	
 }

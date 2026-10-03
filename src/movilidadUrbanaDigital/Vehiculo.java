@@ -1,37 +1,70 @@
 package movilidadUrbanaDigital;
 
-public abstract class Vehiculo {
+import java.util.Set;
+
+public class Vehiculo {
     private String patente;
     private String modelo;
-    private boolean aceptaPasajeros;
-    private boolean aceptaCarga;
-    private Servicio servicio;
     private Ubicacion ubicacion;
+    private TipoVehiculo tipoVehiculo;
+    private CategoriaVehiculo categoriaVehiculo;
+    //Set (conjunto) garantiza la propiedad 'unique' por definicion
+    private Set<TipoServicio> tipoServicios;
+    private int capacidadPasajeros;
 
-    // constuctor del objeto vehiculo
-    public Vehiculo(String patente, String modelo, boolean aceptaPasajeros, boolean aceptaCarga, Servicio servicio,
-            Ubicacion ubicacion) {
-        this.patente = patente;
-        this.modelo = modelo;
-        this.aceptaPasajeros = aceptaPasajeros;
-        this.aceptaCarga = aceptaCarga;
-        this.servicio = servicio;
-        this.ubicacion = ubicacion;
-    }
-
-    // metodo abstracto cada subclase calcula su costo
-    // CAMBIO: de int a double para poder calcular los metros, eje 500m serian 0.5
+    //constructor de la clase vehiculo
     /**
-     * retorna el costo del viaje, calculando la distancia por el precio por km + la
-     * tarifa base en caso de que el tipo de vehiculo posea una
      * 
-     * @param distancia
-     * @return double costo del viaje
-     * @throws IllegalArgumentException Si la distancia es un valor negativo.
+     * @param patente
+     * @param modelo
+     * @param ubicacion
+     * @param tipoVehiculo
+     * @param categoriaVehiculo
+     * @param tipoServicio
      */
-    public abstract double calcularCostoViaje(double distancia);
+    public Vehiculo(String patente, String modelo, Ubicacion ubicacion, TipoVehiculo tipoVehiculo,
+			CategoriaVehiculo categoriaVehiculo, TipoServicio tipoServicio, int capacidadPasajeros) {
+		this.patente = patente;
+		this.modelo = modelo;
+		this.ubicacion = ubicacion;
+		this.tipoVehiculo = tipoVehiculo;
+		this.categoriaVehiculo = categoriaVehiculo;
+		this.capacidadPasajeros = capacidadPasajeros;
+		agregarTipoServicio(tipoServicio);
+	}
+    
+    /**
+     * 
+     * @param tipoServicio
+     */
+    public void agregarTipoServicio(TipoServicio tipoServicio) {
+    	//validar la multiplicidad 1..2
+    	if(tipoServicios.size() < 1 || tipoServicios.size() > 2 || tipoServicios == null)
+    		throw new IllegalArgumentException("Un vehículo debe tener al menos 1 servicio." + tipoServicio);
+    	this.tipoServicios.add(tipoServicio);
+    }
+    
+    public Set<TipoServicio> getTipoServicios() {
+		return tipoServicios;
+	}
 
-    // getters y setters del objeto vehiculo
+	public TipoVehiculo getTipoVehiculo() {
+		return tipoVehiculo;
+	}
+
+	public void setTipoVehiculo(TipoVehiculo tipoVehiculo) {
+		this.tipoVehiculo = tipoVehiculo;
+	}
+
+	public CategoriaVehiculo getCategoriaVehiculo() {
+		return categoriaVehiculo;
+	}
+
+	public void setCategoriaVehiculo(CategoriaVehiculo categoriaVehiculo) {
+		this.categoriaVehiculo = categoriaVehiculo;
+	}
+
+	// getters y setters del objeto vehiculo
     public Ubicacion getUbicacion() {
         return ubicacion;
     }
@@ -55,32 +88,16 @@ public abstract class Vehiculo {
     public void setModelo(String modelo) {
         this.modelo = modelo;
     }
+    
+    public int getCapacidadPasajeros() {
+		return capacidadPasajeros;
+	}
 
-    public boolean isAceptaPasajeros() {
-        return aceptaPasajeros;
-    }
+	public void setCapacidadPasajeros(int capacidadPasajeros) {
+		this.capacidadPasajeros = capacidadPasajeros;
+	}
 
-    public void setAceptaPasajeros(boolean aceptaPasajeros) {
-        this.aceptaPasajeros = aceptaPasajeros;
-    }
-
-    public boolean isAceptaCarga() {
-        return aceptaCarga;
-    }
-
-    public void setAceptaCarga(boolean aceptaCarga) {
-        this.aceptaCarga = aceptaCarga;
-    }
-
-    public Servicio getServicio() {
-        return servicio;
-    }
-
-    public void setServicio(Servicio servicio) {
-        this.servicio = servicio;
-    }
-
-    // hash y equals del objeto vehiculo
+	// hash y equals del objeto vehiculo
     // dos vehiculos son iguales si tienen la misma patente
     // no se si se deberia chequear por el tipo de servicio siguiendo la idea de que
     // los servicios serian carga y pasajeros
@@ -109,9 +126,10 @@ public abstract class Vehiculo {
         return true;
     }
 
-    @Override
-    public String toString() {
-        return "Vehiculo [patente=" + patente + ", modelo=" + modelo + ", aceptaPasajeros=" + aceptaPasajeros
-                + ", aceptaCarga=" + aceptaCarga + ", servicio=" + servicio + ", ubicacion=" + ubicacion + "]";
-    }
+	@Override
+	public String toString() {
+		return "Vehiculo [patente=" + patente + ", modelo=" + modelo + ", ubicacion=" + ubicacion + ", tipoVehiculo="
+				+ tipoVehiculo + ", categoriaVehiculo=" + categoriaVehiculo + ", tipoServicios=" + tipoServicios + "]";
+	}
+    
 }

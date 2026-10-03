@@ -1,21 +1,33 @@
 package movilidadUrbanaDigital;
 
-public class Cliente extends Usuario {
-    private static int limiteCalificaciones = 100;
+import java.util.UUID;
 
-    public Cliente(String nombre, String documento, String telefono, String email) {
-        super(nombre, documento, telefono, email);
-    }
+import net.datastructures.ProbeHashMap;
 
-    public int getLimiteCalificaciones() {
-        return limiteCalificaciones;
-    }
+public class Cliente{
+	
+	private ProbeHashMap<UUID,Viaje> viajes;
 
-    // equals se hereda de usuario
+    public Cliente() {
+		this.viajes = new ProbeHashMap<UUID,Viaje>();
+	}
 
-    // to string
-    @Override
-    public String toString() {
-        return "Cliente [limiteCalificaciones=" + limiteCalificaciones + "]";
-    }
+	public ProbeHashMap<UUID, Viaje> getViajes() {
+		return viajes;
+	}
+
+	public void agregarViajes(Viaje viaje) {
+		this.viajes.put(viaje.getId(), viaje);
+	}
+    
+	public boolean enViaje() {
+		return false;
+		
+	}
+	// to string
+	@Override
+	public String toString() {
+		return "Cliente [viajes=" + viajes + "]";
+	}
+    
 }

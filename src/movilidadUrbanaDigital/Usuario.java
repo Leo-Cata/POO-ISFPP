@@ -1,45 +1,41 @@
 package movilidadUrbanaDigital;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
+
 
 public abstract class Usuario {
-    // variables del objeto usuario
+    // atributos del objeto usuario
     private String nombre;
-    private String documento;
     private String telefono;
     private String email;
-    private int totalCalificaciones; // {readOnly}
+    private RolUsuario rolActivo;
+    private Cliente cliente;
+    private Conductor conductor;
 
-    // capaz hay que quitarlo porque no figura en el diagrama, pero de alguna manera
-    // hay que tener en cuenta las calificaciones
-    private List<Calificacion> calificaciones;
 
     // constructor del objeto usuario
-    public Usuario(String nombre, String documento, String telefono, String email) {
-        this.nombre = nombre;
-        this.documento = documento;
-        this.telefono = telefono;
-        this.email = email;
-        this.totalCalificaciones = 0;
-        this.calificaciones = new ArrayList<Calificacion>();
-    }
+    public Usuario(String nombre, String telefono, String email, RolUsuario rolActivo) {
+		this.nombre = nombre;
+		this.telefono = telefono;
+		this.email = email;
+		this.rolActivo = rolActivo;
+		//el diagrama indica una relacion de composicion, el usuario crea al cliente
+		this.cliente = new Cliente();
+		//el conductor en nullo al principio segun la cardianlidad, si es conductor de lo da de alta luego
+		this.conductor = null;
+	}
 
+    public void altaConductor(String licencia, Vehiculo vehiculo) {
+    	this.conductor = new Conductor(licencia, vehiculo.getCategoriaVehiculo(), vehiculo, EstadoConductor.FUERA_DE_SERVICIO);
+    }
+    
     // getters y setters del objeto usuario
     public String getNombre() {
         return nombre;
     }
 
-    public void setNombre(String nombre) {
+	public void setNombre(String nombre) {
         this.nombre = nombre;
-    }
-
-    public String getDocumento() {
-        return documento;
-    }
-
-    public void setDocumento(String documento) {
-        this.documento = documento;
     }
 
     public String getTelefono() {
@@ -57,91 +53,54 @@ public abstract class Usuario {
     public void setEmail(String email) {
         this.email = email;
     }
+   
+    public RolUsuario getRolActivo() {
+		return rolActivo;
+	}
 
-    public int getTotalCalificaciones() {
-        return totalCalificaciones;
-    }
+	public void setRolActivo(RolUsuario rolActivo) {
+		this.rolActivo = rolActivo;
+	}
 
-    // LEO
-    // segun la ia, para trabajos anteriores me decia que
-    // tener setters para variables de tipo lista y similares puede ser mala
-    // practica ya que al setter algo en la lista, estarias sobreescribiendo toda la
-    // lista y no solamente agregando un valor
-    public List<Calificacion> getCalificaciones() {
-        return calificaciones;
-    }
+	public Cliente getCliente() {
+		return cliente;
+	}
 
-    // hash y equals del objeto usuario
+	public void setCliente(Cliente cliente) {
+		this.cliente = cliente;
+	}
+
+	public Conductor getConductor() {
+		return conductor;
+	}
+
+	public void setConductor(Conductor conductor) {
+		this.conductor = conductor;
+	}
+
+	// hash y equals del objeto usuario
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((documento == null) ? 0 : documento.hashCode());
-        return result;
-    }
+ 	public int hashCode() {
+ 		return Objects.hash(email);
+ 	}
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Usuario other = (Usuario) obj;
-        if (documento == null) {
-            if (other.documento != null)
-                return false;
-        } else if (!documento.equals(other.documento))
-            return false;
-        return true;
-    }
+ 	@Override
+ 	public boolean equals(Object obj) {
+ 		if (this == obj)
+ 			return true;
+ 		if (obj == null)
+ 			return false;
+ 		if (getClass() != obj.getClass())
+ 			return false;
+ 		Usuario other = (Usuario) obj;
+ 		return Objects.equals(email, other.email);
+ 	}
 
-    // metodos
+	@Override
+	public String toString() {
+		return "Usuario [nombre=" + nombre + ", telefono=" + telefono + ", email=" + email + ", rolActivo=" + rolActivo
+				+ ", cliente=" + cliente + ", conductor=" + conductor + "]";
+	}
 
-    /**
-     * Metodo para agregar una calificacion al viaje
-     * para el conductor y el cliente
-     * 
-     * @param calificacion
-     * @throws IllegalArgumentException si la calificacion es invalda
-     */
-    public void calificarViaje(Calificacion calificacion) {
-        if (calificacion == null) {
-            throw new IllegalArgumentException("Calificacion invalida.");
-        }
-        this.calificaciones.add(calificacion);
-        this.totalCalificaciones++;
-    }
-
-    /**
-     * metodo para calcular el promedio de todas las calificaciones en la lista de
-     * las mismas
-     * 
-     * @return double promedio de calificaciones
-     */
-    public double promedioCalificacion() {
-        double promedio = 0.0;
-        // caso base, la lista es nulla o esta vacia (retorna 0)
-        if (calificaciones == null || calificaciones.isEmpty()) {
-            return promedio;
-        }
-
-        // foreach para loopear por todas las clasificaciones
-        // obteniendo el resultado en int
-        for (Calificacion calificacion : calificaciones) {
-            promedio += calificacion.getPuntaje();
-        }
-        // luego se divide la suma total por el tamaño de la lista
-        promedio = promedio / calificaciones.size();
-
-        return promedio;
-    }
-
-    // toString del objeto usuario
-    @Override
-    public String toString() {
-        return "Usuario [nombre=" + nombre + ", documento=" + documento + ", telefono=" + telefono + ", email=" + email
-                + ", totalCalificaciones=" + totalCalificaciones + "]";
-    }
+    
 }

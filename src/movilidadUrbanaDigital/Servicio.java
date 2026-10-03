@@ -6,22 +6,38 @@ public class Servicio {
     private double precioPorKm;
     private double precioPorMinuto;
     private TipoServicio tipoServicio;
+    private TipoVehiculo tipoVehiculo;
+    private CategoriaVehiculo categoriaVehiculo;
 
     // constructor
     public Servicio(String nombre, double tarifaBase, double precioPorKm, double precioPorMinuto,
-            TipoServicio tipoServicio) {
-        this.nombre = nombre;
-        this.tarifaBase = tarifaBase;
-        this.precioPorKm = precioPorKm;
-        this.precioPorMinuto = precioPorMinuto;
-        this.tipoServicio = tipoServicio;
+			TipoServicio tipoServicio, TipoVehiculo tipoVehiculo, CategoriaVehiculo categoriaVehiculo) {
+		super();
+		this.nombre = nombre;
+		this.tarifaBase = tarifaBase;
+		this.precioPorKm = precioPorKm;
+		this.precioPorMinuto = precioPorMinuto;
+		this.tipoServicio = tipoServicio;
+		this.tipoVehiculo = tipoVehiculo;
+		this.categoriaVehiculo = categoriaVehiculo;
+	}
+    
+    /**
+     * 
+     * @param km
+     * @param minutos
+     * @return el costo del servicio
+     */
+    public double calcularCosto(double km, double minutos) {
+    	
+    	return tarifaBase + (precioPorKm * km) + ( precioPorMinuto * minutos);
     }
 
     public String getNombre() {
         return nombre;
     }
 
-    public void setNombre(String nombre) {
+	public void setNombre(String nombre) {
         this.nombre = nombre;
     }
 
@@ -56,8 +72,25 @@ public class Servicio {
     public void setTipoServicio(TipoServicio tipoServicio) {
         this.tipoServicio = tipoServicio;
     }
+    
 
-    // dos servicios son iguales si comparten el mismo nombre y el mismo tipo de
+    public TipoVehiculo getTipoVehiculo() {
+		return tipoVehiculo;
+	}
+
+	public void setTipoVehiculo(TipoVehiculo tipoVehiculo) {
+		this.tipoVehiculo = tipoVehiculo;
+	}
+
+	public CategoriaVehiculo getCategoriaVehiculo() {
+		return categoriaVehiculo;
+	}
+
+	public void setCategoriaVehiculo(CategoriaVehiculo categoriaVehiculo) {
+		this.categoriaVehiculo = categoriaVehiculo;
+	}
+
+	// dos servicios son iguales si comparten el mismo nombre y el mismo tipo de
     // servicio
     @Override
     public int hashCode() {
@@ -87,10 +120,11 @@ public class Servicio {
         return true;
     }
 
-    // metodo toString
-    @Override
-    public String toString() {
-        return "Servicio [nombre=" + nombre + ", tarifaBase=" + tarifaBase + ", precioPorKm=" + precioPorKm
-                + ", precioPorMinuto=" + precioPorMinuto + ", tipoServicio=" + tipoServicio + "]";
-    }
+	@Override
+	public String toString() {
+		return "Servicio [nombre=" + nombre + ", tarifaBase=" + tarifaBase + ", precioPorKm=" + precioPorKm
+				+ ", precioPorMinuto=" + precioPorMinuto + ", tipoServicio=" + tipoServicio + ", tipoVehiculo="
+				+ tipoVehiculo + ", categoriaVehiculo=" + categoriaVehiculo + "]";
+	}
+
 }

@@ -1,7 +1,8 @@
 package movilidadUrbanaDigital;
 
-public enum Calificacion {
+public enum CalificacionViaje {
     // valores posibles del enum
+	NO_CALIFICADO(0),
     MALO(1),
     REGULAR(2),
     BUENO(3),
@@ -11,7 +12,7 @@ public enum Calificacion {
     private final int puntaje;
 
     // constructor, por defecto es privado
-    Calificacion(int puntaje) {
+    CalificacionViaje(int puntaje) {
         this.puntaje = puntaje;
     }
 

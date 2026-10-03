@@ -1,75 +1,103 @@
 package movilidadUrbanaDigital;
 
-public class Conductor extends Usuario {
-    private boolean disponible;
-    private static int limiteCalificaciones = 200;
-    private Vehiculo vehiculo;
 
-    // constructor de la clase conductor
-    public Conductor(String nombre, String documento, String telefono, String email, Vehiculo vehiculo) {
-        super(nombre, documento, telefono, email);
-        this.vehiculo = vehiculo;
-    }
+import java.util.Objects;
+import java.util.UUID;
 
-    // setters y getters de conductor
-    public boolean isDisponible() {
-        return disponible;
-    }
+import net.datastructures.ProbeHashMap;
 
-    public void setDisponible(boolean disponible) {
-        this.disponible = disponible;
-    }
 
-    public static int getLimiteCalificaciones() {
-        return limiteCalificaciones;
-    }
+public class Conductor {
+	
+	private String licenciaConducir;
+	private CategoriaVehiculo categoriaVehiculoActivo;
+	private ProbeHashMap<String,Vehiculo> vehiculos;//alamcenar los autos en un mapa y como clave la patente
+	private ProbeHashMap<UUID,Viaje> viajes;	//almacenar los vaijes en un mapa y como clave el UUID
+	private EstadoConductor estado;
+	
+	
+	public Conductor(String licenciaConducir, CategoriaVehiculo categoriaVehiculoActivo, Vehiculo vehiculo, EstadoConductor estado) {
+		super();
+		this.licenciaConducir = licenciaConducir;
+		this.categoriaVehiculoActivo = categoriaVehiculoActivo;
+		this.estado = estado;
+		this.viajes = new ProbeHashMap<UUID,Viaje>();
+		this.vehiculos = new ProbeHashMap<String,Vehiculo>();
+		agregarVehiculo(vehiculo);
+	}
+	
+	/**
+	 * 
+	 * @param vehiculo
+	 */
+	public void agregarVehiculo(Vehiculo vehiculo) {
+		this.vehiculos.put(vehiculo.getPatente(), vehiculo);
+	}
 
-    public static void setLimiteCalificaciones(int limiteCalificaciones) {
-        Conductor.limiteCalificaciones = limiteCalificaciones;
-    }
+	/**
+	 * 
+	 * @param viaje
+	 */
+	public void agregarViaje(Viaje viaje) {
+		this.viajes.put(viaje.getId(), viaje);
+	}
+	  // setters y getters de conductor
+	public String getLicenciaConducir() {
+		return licenciaConducir;
+	}
 
-    public Vehiculo getVehiculo() {
-        return vehiculo;
-    }
+	public void setLicenciaConducir(String licenciaConducir) {
+		this.licenciaConducir = licenciaConducir;
+	}
 
-    public void setVehiculo(Vehiculo vehiculo) {
-        this.vehiculo = vehiculo;
-    }
+	public CategoriaVehiculo getCategoriaVehiculoActivo() {
+		return categoriaVehiculoActivo;
+	}
 
-    // hash y equals de conductor
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + (disponible ? 1231 : 1237);
-        result = prime * result + ((vehiculo == null) ? 0 : vehiculo.hashCode());
-        return result;
-    }
+	public void setCategoriaVehiculoActivo(CategoriaVehiculo categoriaVehiculoActivo) {
+		this.categoriaVehiculoActivo = categoriaVehiculoActivo;
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Conductor other = (Conductor) obj;
-        if (disponible != other.disponible)
-            return false;
-        if (vehiculo == null) {
-            if (other.vehiculo != null)
-                return false;
-        } else if (!vehiculo.equals(other.vehiculo))
-            return false;
-        return true;
-    }
+	public EstadoConductor getEstado() {
+		return estado;
+	}
 
-    // toString de conductor
-    @Override
-    public String toString() {
-        return super.toString() + " Conductor [disponible=" + disponible + ", vehiculo=" + vehiculo + "]";
-    }
+	public void setEstado(EstadoConductor estado) {
+		this.estado = estado;
+	}
+
+	public ProbeHashMap<String, Vehiculo> getVehiculos() {
+		return vehiculos;
+	}
+	
+	public ProbeHashMap<UUID, Viaje> getViajes() {
+		return viajes;
+	}
+
+	// hash y equals de conductor
+	//dos conductores son iguales si tiene la misma licencia de conducir
+	@Override
+	public int hashCode() {
+		return Objects.hash(licenciaConducir);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Conductor other = (Conductor) obj;
+		return Objects.equals(licenciaConducir, other.licenciaConducir);
+	}
+
+	@Override
+	public String toString() {
+		return "Conductor [licenciaConducir=" + licenciaConducir + ", categoriaVehiculoActivo="
+				+ categoriaVehiculoActivo + ", vehiculos=" + vehiculos + ", viajes=" + viajes + ", estado=" + estado
+				+ "]";
+	}
+   
 }
