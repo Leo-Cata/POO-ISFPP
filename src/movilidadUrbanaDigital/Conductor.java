@@ -31,6 +31,8 @@ public class Conductor {
 	 * @param vehiculo
 	 */
 	public void agregarVehiculo(Vehiculo vehiculo) {
+		if (vehiculo == null)
+			throw new IllegalArgumentException("El vehiculo no puede ser null");
 		this.vehiculos.put(vehiculo.getPatente(), vehiculo);
 	}
 
@@ -39,8 +41,17 @@ public class Conductor {
 	 * @param viaje
 	 */
 	public void agregarViaje(Viaje viaje) {
+		
 		this.viajes.put(viaje.getId(), viaje);
 	}
+	
+	public boolean enViaje() {
+		if(this.estado == EstadoConductor.VIAJE_A_ORIGEN || this.estado == EstadoConductor.VIAJE_A_DESTINO)
+			return true;
+		return false;
+	}
+	
+	
 	  // setters y getters de conductor
 	public String getLicenciaConducir() {
 		return licenciaConducir;

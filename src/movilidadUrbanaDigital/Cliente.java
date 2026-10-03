@@ -20,10 +20,20 @@ public class Cliente{
 		this.viajes.put(viaje.getId(), viaje);
 	}
     
+	/**
+	 * @return true si el cliente tiene algun viaje en curso (SOLICITADO, ACEPTADO o INICIADO)
+	 */
 	public boolean enViaje() {
-		return false;
+		for (Viaje v : viajes.values()) {
+			EstadoViaje estado = v.estadoActual();
+			
+			if(estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO)
+				return true;
+		}
 		
+		return false;
 	}
+	
 	// to string
 	@Override
 	public String toString() {
