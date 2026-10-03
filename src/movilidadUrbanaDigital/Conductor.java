@@ -1,34 +1,34 @@
 package movilidadUrbanaDigital;
 
-
 import java.util.Objects;
 import java.util.UUID;
 
 import net.datastructures.ProbeHashMap;
 
-
 public class Conductor {
-	
+
 	private String licenciaConducir;
 	private CategoriaVehiculo categoriaVehiculoActivo;
-	private ProbeHashMap<String,Vehiculo> vehiculos;//alamcenar los autos en un mapa y como clave la patente
-	private ProbeHashMap<UUID,Viaje> viajes;	//almacenar los vaijes en un mapa y como clave el UUID
+	private ProbeHashMap<String, Vehiculo> vehiculos;// alamcenar los autos en un mapa y como clave la patente
+	private ProbeHashMap<UUID, Viaje> viajes; // almacenar los vaijes en un mapa y como clave el UUID
 	private EstadoConductor estado;
-	
-	
-	public Conductor(String licenciaConducir, CategoriaVehiculo categoriaVehiculoActivo, Vehiculo vehiculo, EstadoConductor estado) {
+
+	public Conductor(String licenciaConducir, CategoriaVehiculo categoriaVehiculoActivo, Vehiculo vehiculo,
+			EstadoConductor estado) {
 		super();
 		this.licenciaConducir = licenciaConducir;
 		this.categoriaVehiculoActivo = categoriaVehiculoActivo;
 		this.estado = estado;
-		this.viajes = new ProbeHashMap<UUID,Viaje>();
-		this.vehiculos = new ProbeHashMap<String,Vehiculo>();
+		this.viajes = new ProbeHashMap<UUID, Viaje>();
+		this.vehiculos = new ProbeHashMap<String, Vehiculo>();
 		agregarVehiculo(vehiculo);
 	}
-	
+
 	/**
+	 * agrega un vehiculo al usuario de tipo conductor
 	 * 
-	 * @param vehiculo
+	 * @param vehiculo el cual sera agregado, obteniendo la patente del mismo que se
+	 *                 usara como llave del mapa
 	 */
 	public void agregarVehiculo(Vehiculo vehiculo) {
 		if (vehiculo == null)
@@ -37,22 +37,31 @@ public class Conductor {
 	}
 
 	/**
+	 * agrega un viaje al mapa de viajes
 	 * 
-	 * @param viaje
+	 * @param viaje del cual se obtiene us UUID como llave
 	 */
 	public void agregarViaje(Viaje viaje) {
-		
+
+		if (viaje == null) {
+			throw new IllegalArgumentException("El viaje no puede ser null");
+		}
+
 		this.viajes.put(viaje.getId(), viaje);
 	}
-	
+
+	/**
+	 * chequea el estado actual del conductor
+	 * 
+	 * @return true el conductor se encuentra conduciendo al origen/destino
+	 */
 	public boolean enViaje() {
-		if(this.estado == EstadoConductor.VIAJE_A_ORIGEN || this.estado == EstadoConductor.VIAJE_A_DESTINO)
+		if (this.estado == EstadoConductor.VIAJE_A_ORIGEN || this.estado == EstadoConductor.VIAJE_A_DESTINO)
 			return true;
 		return false;
 	}
-	
-	
-	  // setters y getters de conductor
+
+	// setters y getters de conductor
 	public String getLicenciaConducir() {
 		return licenciaConducir;
 	}
@@ -80,13 +89,13 @@ public class Conductor {
 	public ProbeHashMap<String, Vehiculo> getVehiculos() {
 		return vehiculos;
 	}
-	
+
 	public ProbeHashMap<UUID, Viaje> getViajes() {
 		return viajes;
 	}
 
 	// hash y equals de conductor
-	//dos conductores son iguales si tiene la misma licencia de conducir
+	// dos conductores son iguales si tiene la misma licencia de conducir
 	@Override
 	public int hashCode() {
 		return Objects.hash(licenciaConducir);
@@ -110,5 +119,5 @@ public class Conductor {
 				+ categoriaVehiculoActivo + ", vehiculos=" + vehiculos + ", viajes=" + viajes + ", estado=" + estado
 				+ "]";
 	}
-   
+
 }
