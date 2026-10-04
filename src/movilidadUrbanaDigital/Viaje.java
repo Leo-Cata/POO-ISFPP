@@ -222,11 +222,11 @@ public class Viaje {
 		this.rolCancela = rolCancela;
 	}
 
-	public CalificacionViaje getcalificacionConductor() {
+	public CalificacionViaje getCalificacionConductor() {
 		return calificacionConductor;
 	}
 
-	public void setcalificacionConductor(CalificacionViaje calificacionConductor) {
+	public void setCalificacionConductor(CalificacionViaje calificacionConductor) {
 		this.calificacionConductor = calificacionConductor;
 	}
 
