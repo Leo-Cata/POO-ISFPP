@@ -1,5 +1,6 @@
 package movilidadUrbanaDigital;
 
+import java.util.EnumSet;
 import java.util.Set;
 
 public class Vehiculo {
@@ -30,26 +31,22 @@ public class Vehiculo {
         this.tipoVehiculo = tipoVehiculo;
         this.categoriaVehiculo = categoriaVehiculo;
         this.capacidadPasajeros = capacidadPasajeros;
+		// es un conjunto que contiene solo valores de TipoServicio y no permite repetidos (empieza vacio)
+		this.tipoServicios = EnumSet.noneOf(TipoServicio.class);
         agregarTipoServicio(tipoServicio);
     }
 
     /**
-     * agrega un tipo de servicio a un vehiculo, siempre y cuando no sea null, ya
-     * tenga 2 servicios o ya posea ese mismo servicio
+     * agrega un tipo de servicio a un vehiculo.
      * 
      * @param tipoServicio
-     * @throws IllegalArgumentException si el tipo de servicio es repetido, invalido
-     *                                  o se supero la max cantidad
+     * @throws IllegalArgumentException si el tipo de servicio es repetido o invalido
      */
     public void agregarTipoServicio(TipoServicio tipoServicio) {
         // validar la multiplicidad 1..2
 
         if (tipoServicio == null) {
-            throw new IllegalArgumentException("El tipo de servicio es null");
-        }
-
-        if (tipoServicios.size() >= 2) {
-            throw new IllegalArgumentException("Un vehiculo no puede tener mas 2 dos servicios");
+            throw new IllegalArgumentException("El tipo de servicio no puede ser null.");
         }
 
         if (tipoServicios.contains(tipoServicio)) {

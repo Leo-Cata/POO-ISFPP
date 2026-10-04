@@ -1,2 +1,0 @@
-30111222;Ana Diaz;2804555111;ana@mail.com
-30333444;Luis Gomez;2804555222;luis@mail.com

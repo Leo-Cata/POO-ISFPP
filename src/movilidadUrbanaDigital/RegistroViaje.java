@@ -7,7 +7,7 @@ public class RegistroViaje {
     private LocalDateTime fechaHora;
     private EstadoViaje estado;
 
-    public RegistroViaje(LocalDateTime fechaHora, EstadoViaje estado) {
+    RegistroViaje(LocalDateTime fechaHora, EstadoViaje estado) {
         this.fechaHora = fechaHora;
         this.estado = estado;
     }
@@ -16,16 +16,8 @@ public class RegistroViaje {
         return fechaHora;
     }
 
-    public void setFechaHora(LocalDateTime fechaHora) {
-        this.fechaHora = fechaHora;
-    }
-
     public EstadoViaje getEstado() {
         return estado;
-    }
-
-    public void setEstado(EstadoViaje estado) {
-        this.estado = estado;
     }
 
     @Override
