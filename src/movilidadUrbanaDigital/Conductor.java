@@ -2,7 +2,6 @@ package movilidadUrbanaDigital;
 
 import java.util.Objects;
 import java.util.UUID;
-
 import net.datastructures.ProbeHashMap;
 
 public class Conductor {
@@ -12,6 +11,7 @@ public class Conductor {
 	private ProbeHashMap<String, Vehiculo> vehiculos;// alamcenar los autos en un mapa y como clave la patente
 	private ProbeHashMap<UUID, Viaje> viajes; // almacenar los vaijes en un mapa y como clave el UUID
 	private EstadoConductor estado;
+	private Vehiculo vehiculoActivo;
 
 	public Conductor(String licenciaConducir, CategoriaVehiculo categoriaVehiculoActivo, Vehiculo vehiculo,
 			EstadoConductor estado) {
@@ -19,8 +19,9 @@ public class Conductor {
 		this.licenciaConducir = licenciaConducir;
 		this.categoriaVehiculoActivo = categoriaVehiculoActivo;
 		this.estado = estado;
-		this.viajes = new ProbeHashMap<UUID, Viaje>();
-		this.vehiculos = new ProbeHashMap<String, Vehiculo>();
+		this.viajes = new ProbeHashMap<>();
+		this.vehiculos = new ProbeHashMap<>();
+		this.vehiculoActivo = vehiculo;
 		agregarVehiculo(vehiculo);
 	}
 
@@ -56,12 +57,19 @@ public class Conductor {
 	 * @return true el conductor se encuentra conduciendo al origen/destino
 	 */
 	public boolean enViaje() {
-		if (this.estado == EstadoConductor.VIAJE_A_ORIGEN || this.estado == EstadoConductor.VIAJE_A_DESTINO)
-			return true;
-		return false;
+		return this.estado == EstadoConductor.VIAJE_A_ORIGEN || this.estado == EstadoConductor.VIAJE_A_DESTINO;
 	}
 
 	// setters y getters de conductor
+
+	public Vehiculo getVehiculoActivo() {
+		return vehiculoActivo;
+	}
+
+	public void setVehiculoActivo(Vehiculo vehiculoActivo) {
+		this.vehiculoActivo = vehiculoActivo;
+	}
+
 	public String getLicenciaConducir() {
 		return licenciaConducir;
 	}

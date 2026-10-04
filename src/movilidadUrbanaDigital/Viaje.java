@@ -14,7 +14,7 @@ public class Viaje {
 	private Ubicacion origen, destino;
 	private LinkedPositionalList<RegistroViaje> registroViaje; // segun gemeni se puede usar un ArrayList directamennte
 	private Servicio servicio;
-	private CalificacionViaje calificacionCondutor, calificacionCliente;
+	private CalificacionViaje calificacionConductor, calificacionCliente;
 
 	public Viaje(UUID id, Usuario cliente, Ubicacion origen, Ubicacion destino, Servicio servicio) {
 		this.id = id; // ia recomienda usar UUID.randomUUID();
@@ -28,7 +28,7 @@ public class Viaje {
 		this.vehiculo = null; // se agrega al aceptar el viaje
 		this.motivoCancelacion = null; // se agrega al cancelar un viaje
 		this.calificacionCliente = null; // se agrega al finalizar el viaje
-		this.calificacionCondutor = null; // se agrega al finalizar el viaje
+		this.calificacionConductor = null; // se agrega al finalizar el viaje
 	}
 
 	/**
@@ -37,7 +37,7 @@ public class Viaje {
 	 * @param fechaHora LocalDateTime de la solicitud
 	 * @throws IllegalArgumentException si la fechaHora es invalida
 	 * @throws IllegalStateException    si ya se encuentran valores en la lista, es
-	 *                                  decir ya se ha solicitado y hay un vieja en
+	 *                                  decir ya se ha solicitado y hay un viaje en
 	 *                                  alguno de los estados
 	 */
 	public void solicitar(LocalDateTime fechaHora) {
@@ -50,7 +50,7 @@ public class Viaje {
 			throw new IllegalStateException("Ya se ha solicitado un vieja");
 		}
 
-		this.registroViaje.addLast(new RegistroViaje(fechaHora, EstadoViaje.SOLICITADO));
+		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.SOLICITADO));
 	}
 
 	/**
@@ -68,46 +68,117 @@ public class Viaje {
 		if (conductor == null) {
 			throw new IllegalArgumentException("El conductor es invalido");
 		}
-		if (registroViaje.last().getElement().getEstado() != EstadoViaje.SOLICITADO) {
+		if (estadoActual() != EstadoViaje.SOLICITADO) {
 			throw new IllegalStateException("El viaje no se encuentra solicitado");
 		}
 		this.conductor = conductor;
-		this.registroViaje.addLast(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
+		this.vehiculo = conductor.getConductor().getVehiculoActivo();
+		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
 	}
 
 	/**
 	 * setea el viaje como INICIADO (se sube el pasajero/entrega el paquete)
 	 * 
 	 * @param fechaHora LocalDateTime en que se inicio
-	 * @throws IllegalArgumentException si la hora es invalida
-	 * @throws IllegalStateArgument     si el estado anterior no es ACEPTADO
+	 * @throws IllegalArgumentException si la fechaHora es invalida
+	 * @throws IllegalStateException    si el estado anterior no es ACEPTADO
 	 */
 
 	public void iniciar(LocalDateTime fechaHora) {
 		if (fechaHora == null) {
 			throw new IllegalArgumentException("La hora y fecha son invalidas");
 		}
-		if (registroViaje.last().getElement().getEstado() != EstadoViaje.ACEPTADO) {
+		if (estadoActual() != EstadoViaje.ACEPTADO) {
 			throw new IllegalStateException("El viaje no se encuentra aceptado");
 		}
 
-		this.registroViaje.addLast(new RegistroViaje(fechaHora, EstadoViaje.INICIADO));
+		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.INICIADO));
 	}
 
+	/**
+	 * setea el estado de viaje como FINALIZADO, agregando las calificaciones
+	 * 
+	 * @param fechaHora             LocalDateTime de la hora de finalizacion
+	 * @param calificacionConductor enum int calificacion
+	 * @param calificacionCliente   enum int calificacion
+	 * @throws IllegalStateException    si el estado anterior no es INICIADO
+	 * @throws IllegalArgumentException si la fechaHora es null
+	 */
 	public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionConductor,
 			CalificacionViaje calificacionCliente) {
+		if (fechaHora == null) {
+			throw new IllegalArgumentException("La hora y fecha son invalidas");
+		}
+		if (estadoActual() != EstadoViaje.INICIADO) {
+			throw new IllegalStateException("El viaje no se encuentra iniciado");
+		}
+		if (calificacionCliente == null || calificacionConductor == null) {
+			throw new IllegalArgumentException("Calificaciones invalidas");
+		}
+
+		this.calificacionCliente = calificacionCliente;
+		this.calificacionConductor = calificacionConductor;
+
+		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.FINALIZADO));
 	}
 
+	/**
+	 * setea un viaje como cancelado, solo si los parametros no son null, y si los
+	 * estados anteriores no son FINALIZADO y CANCELADO
+	 * 
+	 * @param fehcaHora LocalDateTime de cuando se cancela
+	 * @param usuario   Usuario que cancela el viaje
+	 * @param motivo    String descripcion de por que se cancelo el viaje
+	 * @throws IllegalArgumentException si la fehcaHora es null
+	 * @throws IllegalStateException    si el usuario es invalido, o si el estado
+	 *                                  actual es FINALIZADO o CANCELADO
+	 */
 	public void cancelar(LocalDateTime fehcaHora, Usuario usuario, String motivo) {
+		if (fehcaHora == null) {
+			throw new IllegalArgumentException("La hora y fecha son invalidas");
+		}
+		if (usuario == null) {
+			throw new IllegalArgumentException("El usuario es invalido");
+		}
+		if (estadoActual() == EstadoViaje.FINALIZADO
+				|| estadoActual() == EstadoViaje.CANCELADO) {
+			throw new IllegalStateException("El viaje se encuentra finalizado o cancelado");
+		}
 
+		this.motivoCancelacion = motivo;
+		this.rolCancela = usuario.getRolActivo();
+		agregarRegistroViaje(new RegistroViaje(fehcaHora, EstadoViaje.CANCELADO));
 	}
 
+	/**
+	 * rechaza un viaje que se encuentra solicidado
+	 * 
+	 * @param fechaHora LocalDatetime de cuando se rechazo
+	 * @throws IllegalArgumentException si la fechaHora es null
+	 * @throws IllegalStateException    si el estado actual no es SOLICITADO
+	 */
 	public void rechazar(LocalDateTime fechaHora) {
+		if (fechaHora == null) {
+			throw new IllegalArgumentException("La fecha y hora son invalidos");
+		}
+		if (estadoActual() != EstadoViaje.SOLICITADO) {
+			throw new IllegalStateException("El viaje no se encuentra SOLICITADO");
+		}
 
+		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.RECHAZADO));
 	}
 
+	/**
+	 * metodo para consultar el estado accual
+	 * 
+	 * @return EstadoViaje enum del ultimo estado, o null si no hay estados en la
+	 *         lista
+	 */
 	public EstadoViaje estadoActual() {
-		return null;
+		if (registroViaje.isEmpty() || registroViaje == null) {
+			return null;
+		}
+		return registroViaje.last().getElement().getEstado();
 
 	}
 
@@ -151,12 +222,12 @@ public class Viaje {
 		this.rolCancela = rolCancela;
 	}
 
-	public CalificacionViaje getCalificacionCondutor() {
-		return calificacionCondutor;
+	public CalificacionViaje getcalificacionConductor() {
+		return calificacionConductor;
 	}
 
-	public void setCalificacionCondutor(CalificacionViaje calificacionCondutor) {
-		this.calificacionCondutor = calificacionCondutor;
+	public void setcalificacionConductor(CalificacionViaje calificacionConductor) {
+		this.calificacionConductor = calificacionConductor;
 	}
 
 	public CalificacionViaje getCalificacionCliente() {
@@ -206,4 +277,40 @@ public class Viaje {
 	public void setServicio(Servicio servicio) {
 		this.servicio = servicio;
 	}
+
+	// dos viajes son iguales si tienen el mismo UUID
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Viaje other = (Viaje) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Viaje [id=" + id + ", motivoCancelacion=" + motivoCancelacion + ", rolCancela=" + rolCancela
+				+ ", cliente=" + cliente + ", conductor=" + conductor + ", vehiculo=" + vehiculo + ", origen=" + origen
+				+ ", destino=" + destino + ", registroViaje=" + registroViaje + ", servicio=" + servicio
+				+ ", calificacionConductor=" + calificacionConductor + ", calificacionCliente=" + calificacionCliente
+				+ "]";
+	}
+
 }
