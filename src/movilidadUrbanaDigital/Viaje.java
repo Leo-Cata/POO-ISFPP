@@ -1,9 +1,9 @@
 package movilidadUrbanaDigital;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.UUID;
 
-import net.datastructures.LinkedPositionalList;
 
 public class Viaje {
 	private UUID id;
@@ -12,18 +12,18 @@ public class Viaje {
 	private Usuario cliente, conductor;
 	private Vehiculo vehiculo;
 	private Ubicacion origen, destino;
-	private LinkedPositionalList<RegistroViaje> registroViaje; // segun gemeni se puede usar un ArrayList directamennte
+	private ArrayList<RegistroViaje> registroViaje; 
 	private Servicio servicio;
 	private CalificacionViaje calificacionConductor, calificacionCliente;
 
 	public Viaje(Usuario cliente, Ubicacion origen, Ubicacion destino, Servicio servicio) {
-		this.id = UUID.randomUUID(); // ia recomienda usar UUID.randomUUID();
+		this.id = UUID.randomUUID();
 		this.cliente = cliente;
 		this.origen = origen;
 		this.destino = destino;
 		this.servicio = servicio;
 
-		this.registroViaje = new LinkedPositionalList<RegistroViaje>(); // se inicializa con 0 elementos
+		this.registroViaje = new ArrayList<RegistroViaje>(); // se inicializa con 0 elementos
 		this.conductor = null; // se agrega al aceptar el viaje
 		this.vehiculo = null; // se agrega al aceptar el viaje
 		this.motivoCancelacion = null; // se agrega al cancelar un viaje
@@ -65,9 +65,16 @@ public class Viaje {
 		if (fechaHora == null) {
 			throw new IllegalArgumentException("La fecha y hora son invalidas");
 		}
+		//verificar que el objeto usuario no sea null
 		if (conductor == null) {
 			throw new IllegalArgumentException("El conductor es invalido");
 		}
+		
+		//verificar que el usuario tenga el rol de conductor	
+		if (conductor.getConductor() == null) {
+			throw new IllegalArgumentException("El usuario ingresado no tiene perfil de conductor");
+		}
+		
 		if (estadoActual() != EstadoViaje.SOLICITADO) {
 			throw new IllegalStateException("El viaje no se encuentra solicitado");
 		}
@@ -126,20 +133,25 @@ public class Viaje {
 	 * setea un viaje como cancelado, solo si los parametros no son null, y si los
 	 * estados anteriores no son FINALIZADO y CANCELADO
 	 * 
-	 * @param fehcaHora LocalDateTime de cuando se cancela
+	 * @param fechaHora LocalDateTime de cuando se cancela
 	 * @param usuario   Usuario que cancela el viaje
 	 * @param motivo    String descripcion de por que se cancelo el viaje
 	 * @throws IllegalArgumentException si la fehcaHora es null
 	 * @throws IllegalStateException    si el usuario es invalido, o si el estado
 	 *                                  actual es FINALIZADO o CANCELADO
 	 */
-	public void cancelar(LocalDateTime fehcaHora, Usuario usuario, String motivo) {
-		if (fehcaHora == null) {
+	public void cancelar(LocalDateTime fechaHora, Usuario usuario, String motivo) {
+		if (fechaHora == null) {
 			throw new IllegalArgumentException("La hora y fecha son invalidas");
 		}
 		if (usuario == null) {
 			throw new IllegalArgumentException("El usuario es invalido");
 		}
+		
+		if(motivo == null) {
+			throw new IllegalArgumentException("El motivo no puede ser null");
+		}
+		
 		if (estadoActual() == EstadoViaje.FINALIZADO
 				|| estadoActual() == EstadoViaje.CANCELADO) {
 			throw new IllegalStateException("El viaje se encuentra finalizado o cancelado");
@@ -147,7 +159,7 @@ public class Viaje {
 
 		this.motivoCancelacion = motivo;
 		this.rolCancela = usuario.getRolActivo();
-		agregarRegistroViaje(new RegistroViaje(fehcaHora, EstadoViaje.CANCELADO));
+		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.CANCELADO));
 	}
 
 	/**
@@ -175,10 +187,10 @@ public class Viaje {
 	 *         lista
 	 */
 	public EstadoViaje estadoActual() {
-		if (registroViaje.isEmpty() || registroViaje == null) {
+		if (registroViaje == null || registroViaje.isEmpty()) {
 			return null;
 		}
-		return registroViaje.last().getElement().getEstado();
+		return registroViaje.getLast().getEstado();
 
 	}
 
@@ -262,8 +274,13 @@ public class Viaje {
 		this.destino = destino;
 	}
 
-	public LinkedPositionalList<RegistroViaje> getRegistroViaje() {
-		return registroViaje;
+	public ArrayList<RegistroViaje> getRegistroViaje() {
+		
+		ArrayList<RegistroViaje> copiaRegistroViaje = new ArrayList<RegistroViaje>();
+		
+		copiaRegistroViaje.addAll(registroViaje);
+		
+		return copiaRegistroViaje;
 	}
 
 	public void agregarRegistroViaje(RegistroViaje nuevoRegistroViaje) {
