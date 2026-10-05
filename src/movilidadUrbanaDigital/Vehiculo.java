@@ -43,7 +43,6 @@ public class Vehiculo {
      * @throws IllegalArgumentException si el tipo de servicio es repetido o invalido
      */
     public void agregarTipoServicio(TipoServicio tipoServicio) {
-        // validar la multiplicidad 1..2
 
         if (tipoServicio == null) {
             throw new IllegalArgumentException("El tipo de servicio no puede ser null.");
@@ -57,7 +56,11 @@ public class Vehiculo {
     }
 
     public Set<TipoServicio> getTipoServicios() {
-        return tipoServicios;
+    	
+    	Set<TipoServicio> copiaTipoServicio = EnumSet.noneOf(TipoServicio.class);
+    	copiaTipoServicio.addAll(tipoServicios);
+    	
+        return copiaTipoServicio;
     }
 
     public TipoVehiculo getTipoVehiculo() {
