@@ -16,8 +16,8 @@ public class Viaje {
 	private Servicio servicio;
 	private CalificacionViaje calificacionConductor, calificacionCliente;
 
-	public Viaje(UUID id, Usuario cliente, Ubicacion origen, Ubicacion destino, Servicio servicio) {
-		this.id = id; // ia recomienda usar UUID.randomUUID();
+	public Viaje(Usuario cliente, Ubicacion origen, Ubicacion destino, Servicio servicio) {
+		this.id = UUID.randomUUID(); // ia recomienda usar UUID.randomUUID();
 		this.cliente = cliente;
 		this.origen = origen;
 		this.destino = destino;

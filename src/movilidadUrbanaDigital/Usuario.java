@@ -21,7 +21,7 @@ public class Usuario {
 		this.rolActivo = RolUsuario.CLIENTE;
 		//el diagrama indica una relacion de composicion, el usuario crea al cliente
 		this.cliente = new Cliente();
-		//el conductor en nullo al principio segun la cardianlidad, si es conductor de lo da de alta luego
+		//el conductor en nullo al principio segun la cardianlidad, si es conductor se lo da de alta luego
 		this.conductor = null;
 	}
 
