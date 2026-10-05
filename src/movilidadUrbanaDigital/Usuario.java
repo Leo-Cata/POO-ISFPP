@@ -28,10 +28,19 @@ public class Usuario {
     /**
      * Da de alta al usuario como conductor con su primer vehiculo.
      * @throws IllegalStateException si ya era conductor
+     * 								si la licencia o el vehiculo es null		
      */
     public void altaConductor(String licencia, Vehiculo vehiculo) {
+    	
+    	if(licencia == null)
+    		throw new IllegalArgumentException("La licencia no puede ser null.");
+    	
+    	if(vehiculo == null)
+    		throw new IllegalArgumentException("El vehiculo no puede ser null.");
+    		
     	if (this.conductor != null)
     		throw new IllegalStateException(nombre + "(" + email + ")" + "ya está dado de alta.");
+    		
     	this.conductor = new Conductor(licencia, vehiculo.getCategoriaVehiculo(), vehiculo, EstadoConductor.FUERA_DE_SERVICIO);
     }
     
