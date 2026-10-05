@@ -2,6 +2,8 @@ package movilidadUrbanaDigital;
 
 import java.util.Objects;
 import java.util.UUID;
+
+import net.datastructures.Entry;
 import net.datastructures.ProbeHashMap;
 
 public class Conductor {
@@ -34,6 +36,10 @@ public class Conductor {
 	public void agregarVehiculo(Vehiculo vehiculo) {
 		if (vehiculo == null)
 			throw new IllegalArgumentException("El vehiculo no puede ser null");
+		
+		if(vehiculos.get(vehiculo.getPatente())!= null)
+			throw new IllegalArgumentException("El vehiculo ya esta registrado.");
+		
 		this.vehiculos.put(vehiculo.getPatente(), vehiculo);
 	}
 
@@ -48,6 +54,9 @@ public class Conductor {
 			throw new IllegalArgumentException("El viaje no puede ser null");
 		}
 
+		if(viajes.get(viaje.getId()) != null)
+			throw new IllegalArgumentException("El viaje ya esta registrado.");
+		
 		this.viajes.put(viaje.getId(), viaje);
 	}
 
@@ -95,11 +104,23 @@ public class Conductor {
 	}
 
 	public ProbeHashMap<String, Vehiculo> getVehiculos() {
-		return vehiculos;
+		
+		ProbeHashMap<String, Vehiculo> vehiculosCopia = new ProbeHashMap<String, Vehiculo>();
+		
+		for(Entry<String, Vehiculo> vehic : vehiculos.entrySet())
+			vehiculosCopia.put(vehic.getKey(), vehic.getValue());
+		//se devuelve una copia de vehiculos
+		return vehiculosCopia ;
 	}
 
 	public ProbeHashMap<UUID, Viaje> getViajes() {
-		return viajes;
+		
+		ProbeHashMap<UUID, Viaje> viajesCopia = new ProbeHashMap<UUID, Viaje>();
+		
+		for(Entry<UUID, Viaje> viaj : viajes.entrySet())
+			viajesCopia.put(viaj.getKey(), viaj.getValue());
+		//se devuelve una copia de viajes
+		return viajesCopia;
 	}
 
 	// hash y equals de conductor
