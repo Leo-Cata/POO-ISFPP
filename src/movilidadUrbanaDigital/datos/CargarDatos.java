@@ -108,6 +108,12 @@ public class CargarDatos {
 	            TipoServicio tipoServicioSecundario = TipoServicio.valueOf(partes[6].trim().toUpperCase());
 	            vehiculo.agregarTipoServicio(tipoServicioSecundario);
 	        }
+	        
+	        // Verificamos si la patente ya existe
+			if (vehiculos.get(patente) != null) {
+				lector.close(); // Cerramos antes de lanzar excepción
+				throw new IllegalArgumentException("Vehículo duplicado encontrado en el archivo con patente : " + patente);
+			}
 	          
 	        vehiculos.put(patente, vehiculo);
 	    }
@@ -171,7 +177,11 @@ public class CargarDatos {
 		                }
 		            }
 		        }
-		        
+		        // Verificamos si el email ya existe
+		        if (usuarios.get(email) != null) {
+					lector.close(); // Cerramos antes de lanzar excepción
+					throw new IllegalArgumentException("Usuario duplicado encontrado en el archivo: " + email);
+				}
 		        // Guardamos el usuario en el mapa usando su email como clave
 		        usuarios.put(email, usuario);
 		    }
