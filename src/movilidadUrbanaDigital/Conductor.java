@@ -32,13 +32,13 @@ public class Conductor {
 	 * @param vehiculo el cual sera agregado, obteniendo la patente del mismo que se
 	 *                 usara como llave del mapa
 	 */
-	public void agregarVehiculo(Vehiculo vehiculo) {
+	public final void agregarVehiculo(Vehiculo vehiculo) {
 		if (vehiculo == null)
 			throw new IllegalArgumentException("El vehiculo no puede ser null");
-		
-		if(vehiculos.get(vehiculo.getPatente())!= null)
+
+		if (vehiculos.get(vehiculo.getPatente()) != null)
 			throw new IllegalArgumentException("El vehiculo ya esta registrado.");
-		
+
 		this.vehiculos.put(vehiculo.getPatente(), vehiculo);
 	}
 
@@ -53,9 +53,9 @@ public class Conductor {
 			throw new IllegalArgumentException("El viaje no puede ser null");
 		}
 
-		if(viajes.get(viaje.getId()) != null)
+		if (viajes.get(viaje.getId()) != null)
 			throw new IllegalArgumentException("El viaje ya esta registrado.");
-		
+
 		this.viajes.put(viaje.getId(), viaje);
 	}
 
@@ -103,22 +103,22 @@ public class Conductor {
 	}
 
 	public ProbeHashMap<String, Vehiculo> getVehiculos() {
-		
+
 		ProbeHashMap<String, Vehiculo> vehiculosCopia = new ProbeHashMap<String, Vehiculo>();
-		
-		for(Entry<String, Vehiculo> vehic : vehiculos.entrySet())
+
+		for (Entry<String, Vehiculo> vehic : vehiculos.entrySet())
 			vehiculosCopia.put(vehic.getKey(), vehic.getValue());
-		//se devuelve una copia de vehiculos
-		return vehiculosCopia ;
+		// se devuelve una copia de vehiculos
+		return vehiculosCopia;
 	}
 
 	public ProbeHashMap<UUID, Viaje> getViajes() {
-		
+
 		ProbeHashMap<UUID, Viaje> viajesCopia = new ProbeHashMap<UUID, Viaje>();
-		
-		for(Entry<UUID, Viaje> viaj : viajes.entrySet())
+
+		for (Entry<UUID, Viaje> viaj : viajes.entrySet())
 			viajesCopia.put(viaj.getKey(), viaj.getValue());
-		//se devuelve una copia de viajes
+		// se devuelve una copia de viajes
 		return viajesCopia;
 	}
 
