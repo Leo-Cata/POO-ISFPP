@@ -28,6 +28,8 @@ public class Viaje {
 		this.motivoCancelacion = null; // se agrega al cancelar un viaje
 		this.calificacionCliente = null; // se agrega al finalizar el viaje
 		this.calificacionConductor = null; // se agrega al finalizar el viaje
+
+		cliente.getCliente().agregarViajes(this); // agrega el viaje actual
 	}
 
 	/**
@@ -82,6 +84,7 @@ public class Viaje {
 		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
 
 		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_ORIGEN);
+		conductor.getConductor().agregarViaje(this);
 	}
 
 	/**
