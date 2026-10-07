@@ -1,6 +1,5 @@
 package movilidadUrbanaDigital;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import net.datastructures.Entry;
@@ -121,25 +120,6 @@ public class Conductor {
 			viajesCopia.put(viaj.getKey(), viaj.getValue());
 		//se devuelve una copia de viajes
 		return viajesCopia;
-	}
-
-	// hash y equals de conductor
-	// dos conductores son iguales si tiene la misma licencia de conducir
-	@Override
-	public int hashCode() {
-		return Objects.hash(licenciaConducir);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Conductor other = (Conductor) obj;
-		return Objects.equals(licenciaConducir, other.licenciaConducir);
 	}
 
 	@Override
