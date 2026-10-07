@@ -44,7 +44,7 @@ public class Vehiculo {
      * @throws IllegalArgumentException si el tipo de servicio es repetido o
      *                                  invalido
      */
-    public final void agregarTipoServicio(TipoServicio tipoServicio) {
+    public void agregarTipoServicio(TipoServicio tipoServicio) {
 
         if (tipoServicio == null) {
             throw new IllegalArgumentException("El tipo de servicio no puede ser null.");
