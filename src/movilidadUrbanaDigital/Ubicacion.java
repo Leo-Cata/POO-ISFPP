@@ -19,6 +19,11 @@ public class Ubicacion {
 	 * @return la distancia entre la ubicaciones
 	 */
 	public double calcularDistanciaA(Ubicacion ubicacion) {
+
+		if (ubicacion == null) {
+			throw new IllegalArgumentException("La ubicacion no puede ser null");
+		}
+
 		// Radio medio de la Tierra en kilómetros
 		final double RADIO_TIERRA = 6371.0;
 
