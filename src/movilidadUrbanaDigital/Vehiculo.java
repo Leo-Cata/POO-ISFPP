@@ -31,8 +31,9 @@ public class Vehiculo {
         this.tipoVehiculo = tipoVehiculo;
         this.categoriaVehiculo = categoriaVehiculo;
         this.capacidadPasajeros = capacidadPasajeros;
-		// es un conjunto que contiene solo valores de TipoServicio y no permite repetidos (empieza vacio)
-		this.tipoServicios = EnumSet.noneOf(TipoServicio.class);
+        // es un conjunto que contiene solo valores de TipoServicio y no permite
+        // repetidos (empieza vacio)
+        this.tipoServicios = EnumSet.noneOf(TipoServicio.class);
         agregarTipoServicio(tipoServicio);
     }
 
@@ -40,9 +41,10 @@ public class Vehiculo {
      * agrega un tipo de servicio a un vehiculo.
      * 
      * @param tipoServicio
-     * @throws IllegalArgumentException si el tipo de servicio es repetido o invalido
+     * @throws IllegalArgumentException si el tipo de servicio es repetido o
+     *                                  invalido
      */
-    public void agregarTipoServicio(TipoServicio tipoServicio) {
+    public final void agregarTipoServicio(TipoServicio tipoServicio) {
 
         if (tipoServicio == null) {
             throw new IllegalArgumentException("El tipo de servicio no puede ser null.");
@@ -56,10 +58,10 @@ public class Vehiculo {
     }
 
     public Set<TipoServicio> getTipoServicios() {
-    	
-    	Set<TipoServicio> copiaTipoServicio = EnumSet.noneOf(TipoServicio.class);
-    	copiaTipoServicio.addAll(tipoServicios);
-    	
+
+        Set<TipoServicio> copiaTipoServicio = EnumSet.noneOf(TipoServicio.class);
+        copiaTipoServicio.addAll(tipoServicios);
+
         return copiaTipoServicio;
     }
 
@@ -114,8 +116,6 @@ public class Vehiculo {
 
     // hash y equals del objeto vehiculo
     // dos vehiculos son iguales si tienen la misma patente
-    // no se si se deberia chequear por el tipo de servicio siguiendo la idea de que
-    // los servicios serian carga y pasajeros
     @Override
     public int hashCode() {
         final int prime = 31;

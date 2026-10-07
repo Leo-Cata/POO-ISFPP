@@ -32,7 +32,7 @@ public class Conductor {
 	 * @param vehiculo el cual sera agregado, obteniendo la patente del mismo que se
 	 *                 usara como llave del mapa
 	 */
-	public final void agregarVehiculo(Vehiculo vehiculo) {
+	public void agregarVehiculo(Vehiculo vehiculo) {
 		if (vehiculo == null)
 			throw new IllegalArgumentException("El vehiculo no puede ser null");
 
