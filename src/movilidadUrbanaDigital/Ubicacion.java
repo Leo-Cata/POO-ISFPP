@@ -5,14 +5,14 @@ import java.util.Objects;
 public class Ubicacion {
 	private double latitud;
 	private double longitud;
-	
+
 	public Ubicacion(double latitud, double longitud) {
-		super();
 		this.latitud = latitud;
 		this.longitud = longitud;
 	}
-	
-	// Método que calcula la distancia real entre el origen y destino usando Haversine
+
+	// Método que calcula la distancia real entre el origen y destino usando
+	// Haversine
 	/**
 	 * 
 	 * @param ubicacion
@@ -28,22 +28,22 @@ public class Ubicacion {
 		double lat2 = Math.toRadians(ubicacion.getLatitud());
 		double lon2 = Math.toRadians(ubicacion.getLongitud());
 
-		//Calcular la diferencia entre las coordenadas
+		// Calcular la diferencia entre las coordenadas
 		double dLat = lat2 - lat1;
 		double dLon = lon2 - lon1;
 
-		//Aplicar la Fórmula de Haversine
+		// Aplicar la Fórmula de Haversine
 		double a = Math.pow(Math.sin(dLat / 2), 2)
-			+ Math.cos(lat1) * Math.cos(lat2) 
-			* Math.pow(Math.sin(dLon / 2), 2);
-			
+				+ Math.cos(lat1) * Math.cos(lat2)
+						* Math.pow(Math.sin(dLon / 2), 2);
+
 		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-		//Obtener la distancia exacta en kilómetros con decimales
+		// Obtener la distancia exacta en kilómetros con decimales
 		double distanciaKm = RADIO_TIERRA * c;
-		
-			return distanciaKm;
-		}
+
+		return distanciaKm;
+	}
 
 	public double getLatitud() {
 		return latitud;
@@ -65,7 +65,8 @@ public class Ubicacion {
 	public int hashCode() {
 		return Objects.hash(latitud, longitud);
 	}
-	//equals, dos ubicaciones son iguales si coinciden en su longitud y latitud.
+
+	// equals, dos ubicaciones son iguales si coinciden en su longitud y latitud.
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -83,7 +84,5 @@ public class Ubicacion {
 	public String toString() {
 		return "Ubicacion [latitud=" + latitud + ", longitud=" + longitud + "]";
 	}
-		
-	
-	
+
 }
