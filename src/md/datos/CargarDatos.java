@@ -1,4 +1,4 @@
-package movilidadUrbanaDigital.datos;
+package md.datos;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import movilidadUrbanaDigital.CategoriaVehiculo;
-import movilidadUrbanaDigital.Servicio;
-import movilidadUrbanaDigital.TipoServicio;
-import movilidadUrbanaDigital.TipoVehiculo;
-import movilidadUrbanaDigital.Ubicacion;
-import movilidadUrbanaDigital.Usuario;
-import movilidadUrbanaDigital.Vehiculo;
+import md.modelo.CategoriaVehiculo;
+import md.modelo.Servicio;
+import md.modelo.TipoServicio;
+import md.modelo.TipoVehiculo;
+import md.modelo.Ubicacion;
+import md.modelo.Usuario;
+import md.modelo.Vehiculo;
 import net.datastructures.ProbeHashMap;
 
 /**

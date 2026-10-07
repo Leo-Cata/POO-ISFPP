@@ -2,11 +2,11 @@ package test;
 
 import java.util.List;
 
-import movilidadUrbanaDigital.Servicio;
-import movilidadUrbanaDigital.Usuario;
-import movilidadUrbanaDigital.Vehiculo;
-import movilidadUrbanaDigital.datos.CargarDatos;
-import movilidadUrbanaDigital.datos.CargarParametros;
+import md.datos.CargarDatos;
+import md.datos.CargarParametros;
+import md.modelo.Servicio;
+import md.modelo.Usuario;
+import md.modelo.Vehiculo;
 import net.datastructures.ProbeHashMap;
 
 public class PruebaCargarDatos {

@@ -1,4 +1,4 @@
-package movilidadUrbanaDigital;
+package md.modelo;
 
 import java.util.UUID;
 

@@ -1,4 +1,4 @@
-package movilidadUrbanaDigital;
+package md.modelo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

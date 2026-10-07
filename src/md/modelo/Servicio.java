@@ -1,4 +1,4 @@
-package movilidadUrbanaDigital;
+package md.modelo;
 
 public class Servicio {
     private String nombre;

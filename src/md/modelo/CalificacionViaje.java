@@ -1,4 +1,4 @@
-package movilidadUrbanaDigital;
+package md.modelo;
 
 public enum CalificacionViaje {
     // valores posibles del enum

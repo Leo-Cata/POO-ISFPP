@@ -1,4 +1,4 @@
-package movilidadUrbanaDigital;
+package md.modelo;
 
 import java.util.EnumSet;
 import java.util.Set;

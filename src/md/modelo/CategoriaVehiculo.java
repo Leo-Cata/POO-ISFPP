@@ -1,4 +1,4 @@
-package movilidadUrbanaDigital;
+package md.modelo;
 
 public enum CategoriaVehiculo {
 	ESTANDAR(1),
