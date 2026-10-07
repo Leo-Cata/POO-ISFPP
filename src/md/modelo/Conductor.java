@@ -94,7 +94,7 @@ public class Conductor {
 		this.categoriaVehiculoActivo = categoriaVehiculoActivo;
 	}
 
-	public EstadoConductor getEstado() {
+	public EstadoConductor getEstadoConductor() {
 		return estado;
 	}
 

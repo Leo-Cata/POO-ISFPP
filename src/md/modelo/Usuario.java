@@ -67,7 +67,7 @@ public class Usuario {
 
 		// si deja de ser conductor no puede quedar DISPONIBLE recibiendo solicitudes
 		if (rolNuevo == RolUsuario.CLIENTE && this.conductor != null
-				&& this.conductor.getEstado() == EstadoConductor.DISPONIBLE)
+				&& this.conductor.getEstadoConductor() == EstadoConductor.DISPONIBLE)
 			this.conductor.setEstado(EstadoConductor.FUERA_DE_SERVICIO);
 
 		this.rolActivo = rolNuevo;

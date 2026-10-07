@@ -1,4 +1,4 @@
-package test;
+package md.test;
 
 import java.util.List;
 

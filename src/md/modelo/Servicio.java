@@ -11,7 +11,7 @@ public class Servicio {
 
     // constructor
     public Servicio(String nombre, double tarifaBase, double precioPorKm, double precioPorMinuto,
-            TipoServicio tipoServicio, TipoVehiculo tipoVehiculo, CategoriaVehiculo categoriaVehiculo) {
+            TipoVehiculo tipoVehiculo, CategoriaVehiculo categoriaVehiculo,TipoServicio tipoServicio) {
         this.nombre = nombre;
         this.tarifaBase = tarifaBase;
         this.precioPorKm = precioPorKm;

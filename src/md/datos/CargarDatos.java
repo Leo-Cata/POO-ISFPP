@@ -1,6 +1,6 @@
 package md.datos;
 
-import java.io.File;
+import java.io.File; 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,6 @@ import md.modelo.CategoriaVehiculo;
 import md.modelo.Servicio;
 import md.modelo.TipoServicio;
 import md.modelo.TipoVehiculo;
-import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Vehiculo;
 import net.datastructures.ProbeHashMap;
@@ -74,8 +73,8 @@ public class CargarDatos {
 				TipoVehiculo tipoVehiculo = TipoVehiculo.valueOf(tipoVehiculoStr);
 
 				// Instanciamos pasándole los objetos Enum
-				Servicio servicio = new Servicio(nombre, tarifaBase, precioPorKm, precioPorMinuto, tipoServicio,
-						tipoVehiculo, categoriaVehiculo);
+				Servicio servicio = new Servicio(nombre, tarifaBase, precioPorKm, precioPorMinuto,
+						tipoVehiculo, categoriaVehiculo, tipoServicio);
 
 				servicios.add(servicio);
 			}
@@ -128,11 +127,11 @@ public class CargarDatos {
 				// Tomamos el primer servicio obligatorio (índice 5)
 				TipoServicio tipoServicioPrincipal = TipoServicio.valueOf(partes[5].toUpperCase());
 
-				Ubicacion ubicacionInicial = null;
+				//Ubicacion ubicacionInicial = null;
 
 				// Instanciamos el vehículo cumpliendo con el constructor
-				Vehiculo vehiculo = new Vehiculo(patente, modelo, ubicacionInicial, tipoVehiculo, categoriaVehiculo,
-						tipoServicioPrincipal, capacidadPasajeros);
+				Vehiculo vehiculo = new Vehiculo(patente, modelo, capacidadPasajeros, tipoVehiculo, categoriaVehiculo,
+						tipoServicioPrincipal);
 
 				// Verificamos SI el array tiene una 7ma posición (índice 6) antes de intentar
 				// leerla

@@ -23,11 +23,10 @@ public class Vehiculo {
      * @param categoriaVehiculo
      * @param tipoServicio
      */
-    public Vehiculo(String patente, String modelo, Ubicacion ubicacion, TipoVehiculo tipoVehiculo,
-            CategoriaVehiculo categoriaVehiculo, TipoServicio tipoServicio, int capacidadPasajeros) {
+    public Vehiculo(String patente, String modelo, int capacidadPasajeros, TipoVehiculo tipoVehiculo,
+            CategoriaVehiculo categoriaVehiculo, TipoServicio tipoServicio) {
         this.patente = patente;
         this.modelo = modelo;
-        this.ubicacion = ubicacion;
         this.tipoVehiculo = tipoVehiculo;
         this.categoriaVehiculo = categoriaVehiculo;
         this.capacidadPasajeros = capacidadPasajeros;
