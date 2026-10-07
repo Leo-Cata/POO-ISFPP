@@ -153,8 +153,8 @@ public class Viaje {
 		}
 		
 		if (estadoActual() == EstadoViaje.FINALIZADO
-				|| estadoActual() == EstadoViaje.CANCELADO) {
-			throw new IllegalStateException("El viaje se encuentra finalizado o cancelado");
+				|| estadoActual() == EstadoViaje.CANCELADO || estadoActual() == EstadoViaje.RECHAZADO) {
+			throw new IllegalStateException("El viaje se encuentra finalizado, cancelado o rechazado");
 		}
 
 		this.motivoCancelacion = motivo;

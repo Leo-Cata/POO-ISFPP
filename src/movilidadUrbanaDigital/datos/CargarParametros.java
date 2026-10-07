@@ -63,7 +63,7 @@ public class CargarParametros {
 	 */
 	private static String leerClave(Properties prop, String clave) {
 		String valor = prop.getProperty(clave);
-		if (valor == null) {
+		if (valor == null || valor.trim().isEmpty()) {
 			throw new IllegalStateException("La clave '" + clave + "' no existe o está mal escrita en " + ARCHIVO_CONFIG);
 		}
 		return valor;
