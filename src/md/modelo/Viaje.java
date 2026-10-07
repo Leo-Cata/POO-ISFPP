@@ -50,8 +50,8 @@ public class Viaje {
 		if (!registroViaje.isEmpty()) {
 			throw new IllegalStateException("Ya se ha solicitado un vieja");
 		}
-		
-		if(this.cliente.getCliente().enViaje()) {
+
+		if (this.cliente.getCliente().enViaje()) {
 			throw new IllegalStateException("El cliente ya tiene un viaje activo.");
 		}
 
@@ -83,11 +83,12 @@ public class Viaje {
 		if (estadoActual() != EstadoViaje.SOLICITADO) {
 			throw new IllegalStateException("El viaje no se encuentra solicitado");
 		}
-		
-		if(conductor.getConductor().getVehiculoActivo().getCategoriaVehiculo().getValor() < this.servicio.getCategoriaVehiculo().getValor()) {
+
+		if (conductor.getConductor().getVehiculoActivo().getCategoriaVehiculo().getValor() < this.servicio
+				.getCategoriaVehiculo().getValor()) {
 			throw new IllegalStateException("El vehículo no cumple con la categoría requerida.");
 		}
-		
+
 		this.conductor = conductor;
 		this.vehiculo = conductor.getConductor().getVehiculoActivo();
 		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
@@ -126,8 +127,8 @@ public class Viaje {
 	 * @throws IllegalStateException    si el estado anterior no es INICIADO
 	 * @throws IllegalArgumentException si la fechaHora es null
 	 */
-	public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionConductor,
-			CalificacionViaje calificacionCliente) {
+	public void finalizar(LocalDateTime fechaHora, CalificacionViaje calificacionCliente,
+			CalificacionViaje calificacionConductor) {
 		if (fechaHora == null) {
 			throw new IllegalArgumentException("La hora y fecha son invalidas");
 		}
