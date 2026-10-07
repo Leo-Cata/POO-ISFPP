@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
 
-
 public class Viaje {
 	private UUID id;
 	private String motivoCancelacion;
@@ -12,7 +11,7 @@ public class Viaje {
 	private Usuario cliente, conductor;
 	private Vehiculo vehiculo;
 	private Ubicacion origen, destino;
-	private ArrayList<RegistroViaje> registroViaje; 
+	private ArrayList<RegistroViaje> registroViaje;
 	private Servicio servicio;
 	private CalificacionViaje calificacionConductor, calificacionCliente;
 
@@ -65,22 +64,24 @@ public class Viaje {
 		if (fechaHora == null) {
 			throw new IllegalArgumentException("La fecha y hora son invalidas");
 		}
-		//verificar que el objeto usuario no sea null
+		// verificar que el objeto usuario no sea null
 		if (conductor == null) {
 			throw new IllegalArgumentException("El conductor es invalido");
 		}
-		
-		//verificar que el usuario tenga el rol de conductor	
+
+		// verificar que el usuario tenga el rol de conductor
 		if (conductor.getConductor() == null) {
 			throw new IllegalArgumentException("El usuario ingresado no tiene perfil de conductor");
 		}
-		
+
 		if (estadoActual() != EstadoViaje.SOLICITADO) {
 			throw new IllegalStateException("El viaje no se encuentra solicitado");
 		}
 		this.conductor = conductor;
 		this.vehiculo = conductor.getConductor().getVehiculoActivo();
 		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
+
+		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_ORIGEN);
 	}
 
 	/**
@@ -100,6 +101,8 @@ public class Viaje {
 		}
 
 		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.INICIADO));
+
+		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_DESTINO);
 	}
 
 	/**
@@ -127,6 +130,9 @@ public class Viaje {
 		this.calificacionConductor = calificacionConductor;
 
 		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.FINALIZADO));
+
+		conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);
+
 	}
 
 	/**
@@ -147,11 +153,11 @@ public class Viaje {
 		if (usuario == null) {
 			throw new IllegalArgumentException("El usuario es invalido");
 		}
-		
-		if(motivo == null) {
+
+		if (motivo == null) {
 			throw new IllegalArgumentException("El motivo no puede ser null");
 		}
-		
+
 		if (estadoActual() == EstadoViaje.FINALIZADO
 				|| estadoActual() == EstadoViaje.CANCELADO || estadoActual() == EstadoViaje.RECHAZADO) {
 			throw new IllegalStateException("El viaje se encuentra finalizado, cancelado o rechazado");
@@ -160,6 +166,11 @@ public class Viaje {
 		this.motivoCancelacion = motivo;
 		this.rolCancela = usuario.getRolActivo();
 		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.CANCELADO));
+
+		if (this.conductor != null && this.conductor.getConductor() != null) {
+			conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);
+		}
+
 	}
 
 	/**
@@ -275,11 +286,11 @@ public class Viaje {
 	}
 
 	public ArrayList<RegistroViaje> getRegistroViaje() {
-		
+
 		ArrayList<RegistroViaje> copiaRegistroViaje = new ArrayList<RegistroViaje>();
-		
+
 		copiaRegistroViaje.addAll(registroViaje);
-		
+
 		return copiaRegistroViaje;
 	}
 
