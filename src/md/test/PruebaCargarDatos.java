@@ -13,6 +13,7 @@ public class PruebaCargarDatos {
 
 	private static int aprobadas = 0;
 	private static int falladas = 0;
+	
 
 	/** Registra el resultado de una verificacion y la muestra por consola. */
 	private static void verificar(String descripcion, boolean condicion) {
@@ -26,19 +27,24 @@ public class PruebaCargarDatos {
 	}
 
 	public static void main(String[] args) throws Exception {
-		CargarParametros.parametros();
+		CargarParametros instancia = CargarParametros.getInstance();
+		
+		System.out.println("== Singleton");
+		CargarParametros a = CargarParametros.getInstance();
+		CargarParametros b = CargarParametros.getInstance();
+		verificar("getInstance() devuelve siempre la misma instancia", a == b);
 
 		System.out.println("== Servicios");
-		List<Servicio> servicios = CargarDatos.cargarServicios(CargarParametros.getArchivoServicios());
+		List<Servicio> servicios = CargarDatos.cargarServicios(instancia.getArchivoServicios());
 		verificar("se cargan 6 servicios", servicios.size() == 6);
 
 		System.out.println("== Vehiculos");
-		ProbeHashMap<String, Vehiculo> vehiculos = CargarDatos.cargarVehiculos(CargarParametros.getArchivoVehiculos());
+		ProbeHashMap<String, Vehiculo> vehiculos = CargarDatos.cargarVehiculos(instancia.getArchivoVehiculos());
 		verificar("se cargan 15 vehiculos", vehiculos.size() == 15);
 		verificar("AB456DE tiene 2 tipos de servicio", vehiculos.get("AB456DE").getTipoServicios().size() == 2);
 
 		System.out.println("== Usuarios");
-		ProbeHashMap<String, Usuario> usuarios = CargarDatos.cargarUsuarios(CargarParametros.getArchivoUsuarios(), vehiculos);
+		ProbeHashMap<String, Usuario> usuarios = CargarDatos.cargarUsuarios(instancia.getArchivoUsuarios(), vehiculos);
 		verificar("se cargan 50 usuarios", usuarios.size() == 50);
 
 		// --- ejemplo del patron "debe fallar" ---
