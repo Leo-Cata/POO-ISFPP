@@ -29,7 +29,7 @@ public class Viaje {
 		this.calificacionCliente = null; // se agrega al finalizar el viaje
 		this.calificacionConductor = null; // se agrega al finalizar el viaje
 
-		cliente.getCliente().agregarViajes(this); // agrega el viaje actual
+		
 	}
 
 	/**
@@ -56,6 +56,7 @@ public class Viaje {
 		}
 
 		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.SOLICITADO));
+		cliente.getCliente().agregarViajes(this); // agrega el viaje actual
 	}
 
 	/**
@@ -74,27 +75,40 @@ public class Viaje {
 		if (conductor == null) {
 			throw new IllegalArgumentException("El conductor es invalido");
 		}
-
+		if(conductor.equals(this.cliente)) {
+			throw new IllegalArgumentException("Un usuario no puede aceptar su propio viaje.");
+		}
 		// verificar que el usuario tenga el rol de conductor
-		if (conductor.getConductor() == null) {
+		if (conductor.getRolActivo() != RolUsuario.CONDUCTOR) {
 			throw new IllegalArgumentException("El usuario ingresado no tiene perfil de conductor");
 		}
-
 		if (estadoActual() != EstadoViaje.SOLICITADO) {
 			throw new IllegalStateException("El viaje no se encuentra solicitado");
 		}
-
-		if (conductor.getConductor().getVehiculoActivo().getCategoriaVehiculo().getValor() < this.servicio
-				.getCategoriaVehiculo().getValor()) {
-			throw new IllegalStateException("El vehículo no cumple con la categoría requerida.");
+		if (conductor.getConductor().getEstadoConductor() != EstadoConductor.DISPONIBLE) {
+		    throw new IllegalStateException("El conductor no se encuentra en estado disponible");
 		}
-
-		this.conductor = conductor;
-		this.vehiculo = conductor.getConductor().getVehiculoActivo();
-		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
-
-		conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_ORIGEN);
-		conductor.getConductor().agregarViaje(this);
+		
+		Vehiculo vehiculoActivo = conductor.getConductor().getVehiculoActivo();
+	    if (vehiculoActivo == null) {
+	        throw new IllegalStateException("El conductor no tiene un vehículo activo asignado.");
+	    }
+	    
+	    boolean tipoCoincide = vehiculoActivo.getTipoVehiculo().equals(servicio.getTipoVehiculo());
+	    boolean servicioCoincide = vehiculoActivo.getTipoServicios().contains(servicio.getTipoServicio());
+	    boolean categoriaValida = vehiculoActivo.getCategoriaVehiculo().ordinal() >= servicio.getCategoriaVehiculo().ordinal();
+	    
+	    if (!tipoCoincide || !servicioCoincide || !categoriaValida) {
+	        throw new IllegalStateException("El vehículo no cumple con los requisitos del servicio solicitado.");
+	    }
+	    
+	    this.conductor = conductor;
+	    this.vehiculo = vehiculoActivo;
+	    agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.ACEPTADO));
+	    conductor.getConductor().setEstado(EstadoConductor.VIAJE_A_ORIGEN);
+	    conductor.getConductor().agregarViaje(this);
+	    
+		
 	}
 
 	/**
@@ -170,14 +184,24 @@ public class Viaje {
 		if (motivo == null) {
 			throw new IllegalArgumentException("El motivo no puede ser null");
 		}
+		
+		if (estadoActual() == null) {
+		    throw new IllegalStateException("El viaje todavia no fue solicitado");
+		}
 
 		if (estadoActual() == EstadoViaje.FINALIZADO
 				|| estadoActual() == EstadoViaje.CANCELADO || estadoActual() == EstadoViaje.RECHAZADO) {
 			throw new IllegalStateException("El viaje se encuentra finalizado, cancelado o rechazado");
 		}
+		
+		boolean cancelaCliente = usuario.equals(this.cliente);
+		boolean cancelaConductor = this.conductor != null && usuario.equals(this.conductor);
+		if (!cancelaCliente && !cancelaConductor) {
+		    throw new IllegalArgumentException("Solo el cliente o el conductor del viaje pueden cancelarlo.");
+		}
 
 		this.motivoCancelacion = motivo;
-		this.rolCancela = usuario.getRolActivo();
+		this.rolCancela = cancelaCliente ? RolUsuario.CLIENTE : RolUsuario.CONDUCTOR;
 		agregarRegistroViaje(new RegistroViaje(fechaHora, EstadoViaje.CANCELADO));
 
 		if (this.conductor != null && this.conductor.getConductor() != null) {
