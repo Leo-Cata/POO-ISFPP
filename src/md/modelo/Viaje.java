@@ -96,7 +96,7 @@ public class Viaje {
 	    
 	    boolean tipoCoincide = vehiculoActivo.getTipoVehiculo().equals(servicio.getTipoVehiculo());
 	    boolean servicioCoincide = vehiculoActivo.getTipoServicios().contains(servicio.getTipoServicio());
-	    boolean categoriaValida = vehiculoActivo.getCategoriaVehiculo().ordinal() >= servicio.getCategoriaVehiculo().ordinal();
+	    boolean categoriaValida = vehiculoActivo.getCategoriaVehiculo().getValor() >= servicio.getCategoriaVehiculo().getValor();
 	    
 	    if (!tipoCoincide || !servicioCoincide || !categoriaValida) {
 	        throw new IllegalStateException("El vehículo no cumple con los requisitos del servicio solicitado.");
