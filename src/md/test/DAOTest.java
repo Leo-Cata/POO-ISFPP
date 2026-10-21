@@ -1,12 +1,11 @@
 package md.test;
 
 import junit.framework.TestCase;
-import md.datos.DAOFactory;
-import md.datos.DAOLoader;
+import md.datos.dao.DAOFactory;
+import md.datos.dao.DAOLoader;
 import md.modelo.Servicio;
 import java.util.List;
-import md.datos.DAOFactory;
-import md.datos.DAOLoader;
+
 import md.modelo.Servicio;
 import md.modelo.Vehiculo;
 import md.modelo.Usuario;

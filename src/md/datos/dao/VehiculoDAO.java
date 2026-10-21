@@ -1,4 +1,4 @@
-package md.datos;
+package md.datos.dao;
 
 import md.modelo.Vehiculo;
 import net.datastructures.ProbeHashMap;

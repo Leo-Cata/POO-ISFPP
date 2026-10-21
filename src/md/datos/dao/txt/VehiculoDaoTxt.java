@@ -1,8 +1,9 @@
-package md.datos;
+package md.datos.dao.txt;
 
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
+import md.datos.dao.VehiculoDAO;
 import md.datos.utils.txtBase;
 import md.modelo.CategoriaVehiculo;
 import md.modelo.TipoServicio;

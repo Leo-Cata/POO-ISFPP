@@ -1,4 +1,4 @@
-package md.datos;
+package md.datos.dao;
 
 public interface DAOFactory {
     ServicioDAO getServicioDAO();
