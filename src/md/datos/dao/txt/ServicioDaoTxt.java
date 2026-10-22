@@ -1,14 +1,14 @@
 package md.datos.dao.txt;
 
-import java.io.FileNotFoundException;
+import java.io.FileNotFoundException; 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import md.datos.dao.ServicioDAO;
+import md.datos.dto.ServicioDTO;
 import md.datos.utils.txtBase;
 import md.modelo.CategoriaVehiculo;
-import md.modelo.Servicio;
 import md.modelo.TipoServicio;
 import md.modelo.TipoVehiculo;
 
@@ -31,8 +31,8 @@ public class ServicioDaoTxt extends txtBase implements ServicioDAO {
      *                                  suficientes o el formato es incorrecto.
      */
     @Override
-    public List<Servicio> obtenerTodos() throws FileNotFoundException {
-        List<Servicio> servicios = new ArrayList<Servicio>();
+    public List<ServicioDTO> obtenerTodos() throws FileNotFoundException {
+        List<ServicioDTO> servicios = new ArrayList<ServicioDTO>();
 
         // Uso de try-with-resources para asegurar el cierre automático del Scanner
         try (Scanner lector = abrir(rutaArchivo)) {
@@ -70,7 +70,7 @@ public class ServicioDaoTxt extends txtBase implements ServicioDAO {
                 TipoVehiculo tipoVehiculo = TipoVehiculo.valueOf(tipoVehiculoStr);
 
                 // Instanciamos pasándole los objetos Enum
-                Servicio servicio = new Servicio(nombre, tarifaBase, precioPorKm, precioPorMinuto,
+                ServicioDTO servicio = new ServicioDTO(nombre, tarifaBase, precioPorKm, precioPorMinuto,
                         tipoVehiculo, categoriaVehiculo, tipoServicio);
 
                 servicios.add(servicio);

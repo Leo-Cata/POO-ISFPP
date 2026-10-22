@@ -1,12 +1,13 @@
 package md.datos.dao.txt;
 
 import java.io.FileNotFoundException;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 
 import md.datos.dao.UsuarioDAO;
+import md.datos.dto.UsuarioDTO;
 import md.datos.utils.txtBase;
-import md.modelo.Usuario;
-import md.modelo.Vehiculo;
 import net.datastructures.ProbeHashMap;
 
 public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
@@ -31,9 +32,9 @@ public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
      *                                  inexistente a un conductor.
      */
     @Override
-    public ProbeHashMap<String, Usuario> obtenerTodos(ProbeHashMap<String, Vehiculo> vehiculosCargados)
+    public ProbeHashMap<String, UsuarioDTO> obtenerTodos()
             throws FileNotFoundException {
-        ProbeHashMap<String, Usuario> usuarios = new ProbeHashMap<>();
+        ProbeHashMap<String, UsuarioDTO> usuarios = new ProbeHashMap<>();
         try (Scanner lector = abrir(rutaArchivo)) {
             int numeroLinea = 0;
             while (lector.hasNextLine()) {
@@ -54,48 +55,51 @@ public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
                 String nombre = partes[0];
                 String telefono = partes[1];
                 String email = partes[2];
+                
+                String licencia = null;
+                String patentePrincipal = null;
+                
+                Set<String> patentesAdicionales = new HashSet<>();
 
-                Usuario usuario = new Usuario(nombre, telefono, email);
+                if (partes.length >= 4 && !partes[3].isEmpty()) {
+                    licencia = partes[3];
 
-                // Verificamos si la línea tiene datos de conductor (licencia y al menos 1
-                // patente)
-                // Índice 3: Licencia | Índice 4: Patente principal
-                if (partes.length >= 5 && !partes[3].isEmpty()) {
-                    String licencia = partes[3];
-                    String patentePrincipal = partes[4];
-
-                    // Buscamos el vehículo en el mapa que pasamos por parámetro
-                    Vehiculo vehiculoPrincipal = vehiculosCargados.get(patentePrincipal);
-
-                    if (vehiculoPrincipal == null) {
+                    if (partes.length < 5 || partes[4].isEmpty()) {
                         throw new IllegalArgumentException(
-                                "Vehículo no encontrado para la patente: " + patentePrincipal);
+                                "Línea " + numeroLinea
+                                + ": el conductor no tiene patente principal.");
                     }
 
-                    // Damos de alta al conductor con su primer vehículo
-                    usuario.altaConductor(licencia, vehiculoPrincipal);
+                    patentePrincipal = partes[4];
 
-                    // Si el array tiene más posiciones (índice 5 en adelante), cargamos los
-                    // vehículos extra
+                    // Las patentes adicionales comienzan
+                    // en la posición 5.
                     for (int i = 5; i < partes.length; i++) {
-                        String patenteExtra = partes[i];
-
-                        if (!patenteExtra.isEmpty()) {
-                            Vehiculo vehiculoExtra = vehiculosCargados.get(patenteExtra);
-                            if (vehiculoExtra != null) {
-                                usuario.getConductor().agregarVehiculo(vehiculoExtra);
-                            }
+                        if (!partes[i].isEmpty()) {
+                            patentesAdicionales.add(partes[i]);
                         }
                     }
                 }
-
-                // Verificamos si el email ya existe
+                
+                // La clave del mapa sigue siendo el email.
                 if (usuarios.get(email) != null) {
-                    throw new IllegalArgumentException("Usuario duplicado encontrado en el archivo: " + email);
+                    throw new IllegalArgumentException(
+                            "Usuario duplicado encontrado en el archivo: "
+                            + email);
                 }
+                UsuarioDTO usuario = new UsuarioDTO(
+                        nombre,
+                        telefono,
+                        email,
+                        licencia,
+                        patentePrincipal,
+                        patentesAdicionales
+                );
+                
+                usuarios.put(email,usuario);
+                
 
-                // Guardamos el usuario en el mapa usando su email como clave
-                usuarios.put(email, usuario);
+                
             }
         }
 

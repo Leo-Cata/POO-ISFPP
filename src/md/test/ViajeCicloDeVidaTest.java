@@ -101,12 +101,15 @@ class ViajeCicloDeVidaTest {
     void testAceptaVehiculoDeCategoriaMayor() {
         Usuario conductor = crearConductorDisponible("AA444AA", TipoVehiculo.AUTO,
                 CategoriaVehiculo.PREMIUM, TipoServicio.PASAJEROS);
+        
+        conductor.getConductor().setCategoriaVehiculoActivo(CategoriaVehiculo.ESTANDAR);
         Viaje viaje = crearViajeSolicitado(new Servicio("Estandar", 2000, 200, 100,
                 TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS));
 
         viaje.aceptar(LocalDateTime.now(), conductor);
 
         assertEquals(EstadoViaje.ACEPTADO, viaje.estadoActual());
+        assertEquals(EstadoConductor.VIAJE_A_ORIGEN, conductor.getConductor().getEstadoConductor());
         
     }
     

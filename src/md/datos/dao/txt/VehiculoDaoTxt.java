@@ -1,14 +1,16 @@
 package md.datos.dao.txt;
 
 import java.io.FileNotFoundException;
+import java.util.EnumSet;
 import java.util.Scanner;
+import java.util.Set;
 
 import md.datos.dao.VehiculoDAO;
+import md.datos.dto.VehiculoDTO;
 import md.datos.utils.txtBase;
 import md.modelo.CategoriaVehiculo;
 import md.modelo.TipoServicio;
 import md.modelo.TipoVehiculo;
-import md.modelo.Vehiculo;
 import net.datastructures.ProbeHashMap;
 
 public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
@@ -31,8 +33,8 @@ public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
      *                                  una patente duplicada.
      */
     @Override
-    public ProbeHashMap<String, Vehiculo> obtenerTodos() throws FileNotFoundException {
-        ProbeHashMap<String, Vehiculo> vehiculos = new ProbeHashMap<>();
+    public ProbeHashMap<String, VehiculoDTO> obtenerTodos() throws FileNotFoundException {
+        ProbeHashMap<String, VehiculoDTO> vehiculos = new ProbeHashMap<>();
 
         // Uso de try-with-resources para asegurar el cierre automático del Scanner
         try (Scanner lector = abrir(rutaParametro)) {
@@ -60,20 +62,21 @@ public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
                 TipoVehiculo tipoVehiculo = TipoVehiculo.valueOf(partes[3].toUpperCase());
                 CategoriaVehiculo categoriaVehiculo = CategoriaVehiculo.valueOf(partes[4].toUpperCase());
 
-                // Tomamos el primer servicio obligatorio (índice 5)
-                TipoServicio tipoServicioPrincipal = TipoServicio.valueOf(partes[5].toUpperCase());
+                Set<TipoServicio> tiposServicio =
+                        EnumSet.noneOf(TipoServicio.class);
 
+                // El primer tipo de servicio es obligatorio.
+                tiposServicio.add(
+                        TipoServicio.valueOf(partes[5].toUpperCase())
+                );
                 // Ubicacion ubicacionInicial = null;
-
-                // Instanciamos el vehículo cumpliendo con el constructor
-                Vehiculo vehiculo = new Vehiculo(patente, modelo, capacidadPasajeros, tipoVehiculo, categoriaVehiculo,
-                        tipoServicioPrincipal);
 
                 // Verificamos SI el array tiene una 7ma posición (índice 6) antes de intentar
                 // leerla
                 if (partes.length > 6 && !partes[6].isEmpty()) {
-                    TipoServicio tipoServicioSecundario = TipoServicio.valueOf(partes[6].toUpperCase());
-                    vehiculo.agregarTipoServicio(tipoServicioSecundario);
+                    tiposServicio.add(
+                            TipoServicio.valueOf(partes[6].toUpperCase())
+                    );
                 }
 
                 // Verificamos si la patente ya existe
@@ -81,6 +84,15 @@ public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
                     throw new IllegalArgumentException(
                             "Vehículo duplicado encontrado en el archivo con patente : " + patente);
                 }
+                // Instanciamos el vehículo cumpliendo con el constructor
+                VehiculoDTO vehiculo = new VehiculoDTO(
+                		patente, 
+                		modelo, 
+                		capacidadPasajeros, 
+                		tipoVehiculo, 
+                		categoriaVehiculo,
+                        tiposServicio
+                );
 
                 vehiculos.put(patente, vehiculo);
             }

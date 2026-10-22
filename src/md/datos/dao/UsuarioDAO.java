@@ -1,11 +1,11 @@
 package md.datos.dao;
 
 import java.io.FileNotFoundException;
-import md.modelo.Usuario;
-import md.modelo.Vehiculo;
+
+import md.datos.dto.UsuarioDTO;
 import net.datastructures.ProbeHashMap;
 
 public interface UsuarioDAO {
-    ProbeHashMap<String, Usuario> obtenerTodos(ProbeHashMap<String, Vehiculo> vehiculosCargados)
+    ProbeHashMap<String, UsuarioDTO> obtenerTodos()
             throws FileNotFoundException;
 }
