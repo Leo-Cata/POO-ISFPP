@@ -13,11 +13,11 @@ public class Interfaz {
      */
     public static int menu() {
         System.out.println("\n===== SISTEMA DE GESTIÓN DE BIBLIOTECA =====");
-        System.out.println(Constante.OPCION_REGISTRAR_USUARIO       + ". Registrar préstamo");
-        System.out.println(Constante.OPCION_DAR_DE_ALTA_CONDUCTOR   + ". Registrar devolución");
-        System.out.println(Constante.OPCION_SOLICITAR_VIAJE   		+ ". Buscar libro por ISBN");
-        System.out.println(Constante.OPCION_CANCELAR_VIAJE 			+ ". Buscar libro por título");
-        System.out.println(Constante.OPCION_SALIR         			+ ". Salir");
+        System.out.println(Constante.OPCION_REGISTRAR_USUARIO       + ". Registrar usuario.");
+        System.out.println(Constante.OPCION_DAR_DE_ALTA_CONDUCTOR   + ". Dar de alta conductor.");
+        System.out.println(Constante.OPCION_SOLICITAR_VIAJE   		+ ". Solicitar viaje.");
+        System.out.println(Constante.OPCION_CANCELAR_VIAJE 			+ ". Cancelar viaje.");
+        System.out.println(Constante.OPCION_SALIR         			+ ". Salir.");
         
 
         // TODO: validar que la entrada sea un número dentro del rango válido
