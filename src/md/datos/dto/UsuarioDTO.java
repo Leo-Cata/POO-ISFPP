@@ -26,9 +26,11 @@ public class UsuarioDTO {
 	 * @param nombre              nombre completo del usuario.
 	 * @param telefono            número de teléfono de contacto del usuario.
 	 * @param email               dirección de correo electrónico del usuario.
-	 * @param licencia            número de licencia de conducir del usuario.
+	 * @param licencia            número de licencia de conducir del usuario; puede
+	 *                            ser {@code null} si no es conductor.
 	 * @param patentePrincipal    patente del vehículo principal asociado al
-	 *                            usuario.
+	 *                            usuario; puede ser {@code null} si no es
+	 *                            conductor.
 	 * @param patentesAdicionales conjunto de patentes de vehículos adicionales;
 	 *                            puede ser {@code null}.
 	 */
@@ -77,7 +79,7 @@ public class UsuarioDTO {
 	/**
 	 * Retorna el número de licencia de conducir del usuario.
 	 *
-	 * @return licencia del usuario.
+	 * @return licencia del usuario o null si el usuario no es conductor.
 	 */
 	public String getLicencia() {
 		return licencia;
@@ -86,7 +88,7 @@ public class UsuarioDTO {
 	/**
 	 * Retorna la patente del vehículo principal asociado al usuario.
 	 *
-	 * @return patente principal del usuario.
+	 * @return patente principal del usuario o null si el usuario no es conductor.
 	 */
 	public String getPatentePrincipal() {
 		return patentePrincipal;
@@ -96,7 +98,8 @@ public class UsuarioDTO {
 	 * Retorna una copia defensiva del conjunto de patentes adicionales del usuario,
 	 * evitando la modificación directa del estado interno del objeto.
 	 *
-	 * @return conjunto de patentes adicionales del usuario.
+	 * @return conjunto de patentes adicionales del usuario o vacío si el usuario no
+	 *         es conductor o tiene un solo vehículo.
 	 */
 	public Set<String> getPatentesAdicionales() {
 		return new HashSet<>(patentesAdicionales);
