@@ -12,7 +12,7 @@ public class Interfaz {
      * Muestra el menú principal y retorna la opción elegida por el usuario.
      */
     public static int menu() {
-        System.out.println("\n===== SISTEMA DE GESTIÓN DE BIBLIOTECA =====");
+        System.out.println("\n===== SISTEMA DE GESTIÓN DE VIAJES =====");
         System.out.println(Constante.OPCION_REGISTRAR_USUARIO       + ". Registrar usuario.");
         System.out.println(Constante.OPCION_DAR_DE_ALTA_CONDUCTOR   + ". Dar de alta conductor.");
         System.out.println(Constante.OPCION_SOLICITAR_VIAJE   		+ ". Solicitar viaje.");
