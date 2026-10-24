@@ -1,4 +1,4 @@
-package md.test;
+package test.java;
 
 import md.aplicacion.CargadorModelo;
 import md.aplicacion.CargadorModelo.DatosIniciales;
