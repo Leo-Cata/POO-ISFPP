@@ -1,4 +1,4 @@
-package md.test;
+package md;
 
 import md.datos.dao.DAOFactory;
 import md.datos.dao.DAOLoader;
