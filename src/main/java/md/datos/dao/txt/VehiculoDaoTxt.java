@@ -34,14 +34,12 @@ public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
 	 * @return Un {@link ProbeHashMap} donde la clave es la patente del vehículo
 	 *         (tipo {@link String}) y el valor es el {@link VehiculoDTO}
 	 *         correspondiente.
-	 * @throws FileNotFoundException    Si no se encuentra el archivo en la ruta
-	 *                                  especificada.
 	 * @throws IllegalArgumentException Si una línea del archivo tiene menos de seis
 	 *                                  campos, o si se detecta una patente
 	 *                                  duplicada en el archivo.
 	 */
 	@Override
-	public ProbeHashMap<String, VehiculoDTO> obtenerTodos() throws FileNotFoundException {
+	public ProbeHashMap<String, VehiculoDTO> obtenerTodos() {
 		ProbeHashMap<String, VehiculoDTO> vehiculos = new ProbeHashMap<>();
 
 		// Uso de try-with-resources para asegurar el cierre automático del Scanner
@@ -92,6 +90,8 @@ public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
 
 				vehiculos.put(patente, vehiculo);
 			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
 
 		return vehiculos;

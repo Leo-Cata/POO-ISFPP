@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
 import md.datos.dto.ServicioDTO;
 import md.datos.dto.UsuarioDTO;
@@ -32,8 +33,9 @@ public class CargadorModelo {
 	 * Carga los datos desde los DAO y construye el modelo de dominio.
 	 * @return
 	 * @throws FileNotFoundException
+	 * @throws DAOException 
 	 */
-	public DatosIniciales cargar() throws FileNotFoundException {
+	public DatosIniciales cargar() throws FileNotFoundException, DAOException {
 		// 1. Leemos los DTO desde los archivos.
 		//Se leen los tres conjuntos de datos. Después construimos los objetos del modelo.
         List<ServicioDTO> serviciosDTO =this.factory.getServicioDAO().obtenerTodos();
@@ -58,8 +60,7 @@ public class CargadorModelo {
         return new DatosIniciales(servicios, vehiculos, usuarios);
     }
 	
-	private List<Servicio> convertirServicios(
-            List<ServicioDTO> serviciosDTO) {
+	private List<Servicio> convertirServicios(List<ServicioDTO> serviciosDTO) {
 
         List<Servicio> servicios = new ArrayList<>();
 

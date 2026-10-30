@@ -1,9 +1,12 @@
 package md.datos.dao;
 
-import java.io.FileInputStream;
+import java.io.FileInputStream; 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import md.datos.dao.bd.BdDAOFactory;
 import md.datos.dao.txt.TxtDAOFactory;
 
 public class DAOLoader {
@@ -25,38 +28,43 @@ public class DAOLoader {
      */
 
     static {
-        try {
-            Properties prop = new Properties();
-            try (InputStream input = new FileInputStream("config.properties")) {
-                prop.load(input);
+     
+    	try (InputStream input = new FileInputStream("config.properties")) {
+    		Properties prop = new Properties();
+    		prop.load(input);
 
-                String tipoOrigen = prop.getProperty("origen.datos", "TXT").toUpperCase();
+            String tipoOrigen = prop.getProperty("origen.datos", "TXT").toUpperCase();
 
-                String archivoServicios = prop.getProperty("servicio", "servicios.txt");
-                String archivoVehiculos = prop.getProperty("vehiculo", "vehiculos.txt");
-                String archivoUsuarios = prop.getProperty("usuario", "usuarios.txt");
+            double lat1 = Double.parseDouble(prop.getProperty("latitud1", "0"));
+            double lat2 = Double.parseDouble(prop.getProperty("latitud2", "0"));
+            double lon1 = Double.parseDouble(prop.getProperty("longitud1", "0"));
+            double lon2 = Double.parseDouble(prop.getProperty("longitud2", "0"));
+                
+            latitudMin = Math.min(lat1, lat2);
+            latitudMax = Math.max(lat1, lat2);
+            longitudMin = Math.min(lon1, lon2);
+            longitudMax = Math.max(lon1, lon2);
 
-                double lat1 = Double.parseDouble(prop.getProperty("latitud1", "0"));
-                double lat2 = Double.parseDouble(prop.getProperty("latitud2", "0"));
-                double lon1 = Double.parseDouble(prop.getProperty("longitud1", "0"));
-                double lon2 = Double.parseDouble(prop.getProperty("longitud2", "0"));
-
-                latitudMin = Math.min(lat1, lat2);
-                latitudMax = Math.max(lat1, lat2);
-                longitudMin = Math.min(lon1, lon2);
-                longitudMax = Math.max(lon1, lon2);
-
-                if ("BD".equals(tipoOrigen)) {
-                    // instanciaFabrica = new BdDAOFactory(); // Si existiera base de datos
-                } else {
-                    instanciaFabrica = new TxtDAOFactory(archivoServicios, archivoVehiculos, archivoUsuarios);
+            if ("BD".equals(tipoOrigen)) {
+            	instanciaFabrica = new BdDAOFactory(prop.getProperty("bd.config", "bd.properties"));
+            } else if ("TXT".equals(tipoOrigen)) {
+            	instanciaFabrica = new TxtDAOFactory(
+            			prop.getProperty("servicio", "servicios.txt"),
+                        prop.getProperty("vehiculo", "vehiculos.txt"),
+                        prop.getProperty("usuario", "usuarios.txt"));
+            } else {
+            	throw new IllegalStateException(
+            			"origen.datos desconocido: '" + tipoOrigen + "' (use TXT o BD).");
                 }
+            } catch (FileNotFoundException e) {
+                // Sin config.properties: se avisa y se usan los valores por defecto (TXT)
+                System.err.println("Aviso: no se encontro config.properties; se usan valores por defecto (TXT).");
+                instanciaFabrica = new TxtDAOFactory("servicios.txt", "vehiculos.txt", "usuarios.txt");
+            } catch (IOException e) {
+                throw new IllegalStateException("No se pudo leer config.properties.", e);
             }
-        } catch (Exception e) {
-            instanciaFabrica = new TxtDAOFactory("servicios.txt", "vehiculos.txt", "usuarios.txt");
-        }
-    }
-
+    
+    	}	
     public static DAOFactory getFactory() {
         return instanciaFabrica;
     }
@@ -76,4 +84,5 @@ public class DAOLoader {
     public static double getLongitudMax() {
         return longitudMax;
     }
+
 }

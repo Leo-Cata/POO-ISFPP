@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import md.aplicacion.CargadorModelo.DatosIniciales;
+import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
 import md.datos.dao.DAOLoader;
 import md.interfaz.Interfaz;
@@ -14,7 +15,7 @@ import net.datastructures.ProbeHashMap;
 
 public class AplicacionConsultas {
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, DAOException {
 		DAOFactory fabrica = DAOLoader.getFactory();
 		CargadorModelo cargaModelo = new CargadorModelo(fabrica);
 		

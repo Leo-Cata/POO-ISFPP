@@ -38,7 +38,7 @@ public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
 	 *                                  patente principal.
 	 */
 	@Override
-	public ProbeHashMap<String, UsuarioDTO> obtenerTodos() throws FileNotFoundException {
+	public ProbeHashMap<String, UsuarioDTO> obtenerTodos() {
 		ProbeHashMap<String, UsuarioDTO> usuarios = new ProbeHashMap<>();
 		try (Scanner lector = abrir(rutaArchivo)) {
 			int numeroLinea = 0;
@@ -95,6 +95,8 @@ public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
 				usuarios.put(email, usuario);
 
 			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
 
 		return usuarios;

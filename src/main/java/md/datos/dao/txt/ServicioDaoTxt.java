@@ -41,7 +41,7 @@ public class ServicioDaoTxt extends txtBase implements ServicioDAO {
 	 *                                  siete campos o tiene un formato incorrecto.
 	 */
 	@Override
-	public List<ServicioDTO> obtenerTodos() throws FileNotFoundException {
+	public List<ServicioDTO> obtenerTodos() {
 		List<ServicioDTO> servicios = new ArrayList<ServicioDTO>();
 
 		// Uso de try-with-resources para asegurar el cierre automático del Scanner
@@ -84,6 +84,8 @@ public class ServicioDaoTxt extends txtBase implements ServicioDAO {
 
 				servicios.add(servicio);
 			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		}
 
 		return servicios;
