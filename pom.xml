@@ -37,6 +37,12 @@
             <artifactId>junit-jupiter-params</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <dependency>
+    		<groupId>org.postgresql</groupId>
+    		<artifactId>postgresql</artifactId>
+    		<version>42.7.4</version>
+		</dependency>
 
         <!-- Dependencia indispensable para la interfaz gráfica -->
         <dependency>

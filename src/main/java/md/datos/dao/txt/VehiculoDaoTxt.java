@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.Scanner;
 import java.util.Set;
 
+import md.datos.dao.DAOException;
 import md.datos.dao.VehiculoDAO;
 import md.datos.dto.VehiculoDTO;
 import md.datos.utils.txtBase;
@@ -14,9 +15,9 @@ import md.modelo.TipoVehiculo;
 import net.datastructures.ProbeHashMap;
 
 /**
- * Implementación de {@link VehiculoDAO} que obtiene los datos de vehículos a
+ * Implementación de VehiculoDAO que obtiene los datos de vehículos a
  * partir de un archivo de texto plano, parseando cada línea y construyendo los
- * objetos {@link VehiculoDTO} correspondientes.
+ * objetos VehiculoDTO correspondientes.
  */
 public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
 	// Ruta al archivo de texto que contiene los datos de los vehículos.
@@ -31,15 +32,14 @@ public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
 	 * en un mapa indexado por patente. Omite líneas en blanco y comentarios, y
 	 * verifica que no existan registros con patente duplicada.
 	 *
-	 * @return Un {@link ProbeHashMap} donde la clave es la patente del vehículo
-	 *         (tipo {@link String}) y el valor es el {@link VehiculoDTO}
-	 *         correspondiente.
+	 * @return 							Un ProbeHashMap donde la clave es la patente del vehículo
+	 *   
 	 * @throws IllegalArgumentException Si una línea del archivo tiene menos de seis
 	 *                                  campos, o si se detecta una patente
 	 *                                  duplicada en el archivo.
 	 */
 	@Override
-	public ProbeHashMap<String, VehiculoDTO> obtenerTodos() {
+	public ProbeHashMap<String, VehiculoDTO> obtenerTodos() throws DAOException {
 		ProbeHashMap<String, VehiculoDTO> vehiculos = new ProbeHashMap<>();
 
 		// Uso de try-with-resources para asegurar el cierre automático del Scanner
@@ -91,7 +91,7 @@ public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
 				vehiculos.put(patente, vehiculo);
 			}
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			throw new DAOException("No se encontro el archivo de datos: " + rutaParametro, e);
 		}
 
 		return vehiculos;

@@ -5,13 +5,14 @@ import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
 
+import md.datos.dao.DAOException;
 import md.datos.dao.UsuarioDAO;
 import md.datos.dto.UsuarioDTO;
 import md.datos.utils.txtBase;
 import net.datastructures.ProbeHashMap;
 
 /**
- * Implementación de {@link UsuarioDAO} que obtiene los datos de usuarios a
+ * Implementación de UsuarioDAO que obtiene los datos de usuarios a
  * partir de un archivo de texto plano, construyendo un mapa indexado por correo
  * electrónico.
  */
@@ -28,9 +29,9 @@ public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
 	 * adicionales las carga como texto. Verifica que no se dupliquen correos
 	 * electrónicos.
 	 *
-	 * @return Un {@link ProbeHashMap} donde la clave es el email del usuario y el
-	 *         valor es el {@link UsuarioDTO} correspondiente.
-	 * @throws FileNotFoundException    Si no se encuentra el archivo en la ruta
+	 * @return Un ProbeHashMap donde la clave es el email del usuario y el
+	 *         valor es el UsuarioDTO correspondiente.
+	 * @throws DAOException 			Si no se encuentra el archivo en la ruta
 	 *                                  especificada.
 	 * @throws IllegalArgumentException Si faltan datos básicos en alguna línea, si
 	 *                                  se detectan correos electrónicos duplicados,
@@ -38,7 +39,7 @@ public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
 	 *                                  patente principal.
 	 */
 	@Override
-	public ProbeHashMap<String, UsuarioDTO> obtenerTodos() {
+	public ProbeHashMap<String, UsuarioDTO> obtenerTodos() throws DAOException {
 		ProbeHashMap<String, UsuarioDTO> usuarios = new ProbeHashMap<>();
 		try (Scanner lector = abrir(rutaArchivo)) {
 			int numeroLinea = 0;
@@ -96,7 +97,7 @@ public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
 
 			}
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			throw new DAOException("No se encontro el archivo de datos: " + rutaArchivo, e);
 		}
 
 		return usuarios;

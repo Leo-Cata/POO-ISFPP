@@ -18,10 +18,10 @@ import net.datastructures.Entry;
 import net.datastructures.ProbeHashMap;
 
 public class CargadorModelo {
-	// 1. Declaramos la dependencia como un atributo inmutable (final)
+	// Declaramos la dependencia como un atributo inmutable (final)
     private final DAOFactory factory;
 
-    // 2. Inyectamos la dependencia a través del constructor
+    // Inyectamos la dependencia a través del constructor
     public CargadorModelo(DAOFactory factory) {
         if (factory == null) {
             throw new IllegalArgumentException("El DAOFactory no puede ser nulo");
@@ -36,7 +36,7 @@ public class CargadorModelo {
 	 * @throws DAOException 
 	 */
 	public DatosIniciales cargar() throws FileNotFoundException, DAOException {
-		// 1. Leemos los DTO desde los archivos.
+		//Leemos los DTO desde los archivos.
 		//Se leen los tres conjuntos de datos. Después construimos los objetos del modelo.
         List<ServicioDTO> serviciosDTO =this.factory.getServicioDAO().obtenerTodos();
 
@@ -44,19 +44,16 @@ public class CargadorModelo {
 
         ProbeHashMap<String, UsuarioDTO> usuariosDTO = this.factory.getUsuarioDAO().obtenerTodos();
 		
-     // 2. Convertimos los DTO de servicios en objetos del modelo.
-        List<Servicio> servicios =
-                convertirServicios(serviciosDTO);
+        //Convertimos los DTO de servicios en objetos del modelo.
+        List<Servicio> servicios = convertirServicios(serviciosDTO);
 
-        // 3. Construimos todos los vehículos antes que los usuarios.
-        ProbeHashMap<String, Vehiculo> vehiculos =
-                convertirVehiculos(vehiculosDTO);
+        //Construimos todos los vehículos antes que los usuarios.
+        ProbeHashMap<String, Vehiculo> vehiculos = convertirVehiculos(vehiculosDTO);
 
-        // 4. Construimos usuarios y resolvemos sus vehículos.
-        ProbeHashMap<String, Usuario> usuarios =
-                convertirUsuarios(usuariosDTO, vehiculos);
+        //Construimos usuarios y resolvemos sus vehículos.
+        ProbeHashMap<String, Usuario> usuarios = convertirUsuarios(usuariosDTO, vehiculos);
 
-        // 5. Entregamos los datos ya preparados para la aplicación.
+        //Entregamos los datos ya preparados para la aplicación.
         return new DatosIniciales(servicios, vehiculos, usuarios);
     }
 	
@@ -85,20 +82,16 @@ public class CargadorModelo {
     private ProbeHashMap<String, Vehiculo> convertirVehiculos(
             ProbeHashMap<String, VehiculoDTO> vehiculosDTO) {
 
-        ProbeHashMap<String, Vehiculo> vehiculos =
-                new ProbeHashMap<>();
+        ProbeHashMap<String, Vehiculo> vehiculos = new ProbeHashMap<>();
 
-        for (Entry<String, VehiculoDTO> entrada
-                : vehiculosDTO.entrySet()) {
+        for (Entry<String, VehiculoDTO> entrada : vehiculosDTO.entrySet()) {
 
             VehiculoDTO dto = entrada.getValue();
-            Set<TipoServicio> tiposServicio =
-                    dto.getTipoServicios();
+            Set<TipoServicio> tiposServicio = dto.getTipoServicios();
 
             if (tiposServicio.isEmpty()) {
                 throw new IllegalArgumentException(
-                        "El vehículo " + dto.getPatente()
-                        + " no tiene tipos de servicio.");
+                        "El vehículo " + dto.getPatente() + " no tiene tipos de servicio.");
             }
 
             // El constructor de Vehiculo recibe un tipo de servicio.

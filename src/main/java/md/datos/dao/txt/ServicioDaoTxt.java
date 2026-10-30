@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import md.datos.dao.DAOException;
 import md.datos.dao.ServicioDAO;
 import md.datos.dto.ServicioDTO;
 import md.datos.utils.txtBase;
@@ -13,7 +14,7 @@ import md.modelo.TipoServicio;
 import md.modelo.TipoVehiculo;
 
 /**
- * Implementación de {@link ServicioDAO} que obtiene los datos de servicios
+ * Implementación de ServicioDAO que obtiene los datos de servicios
  * desde un archivo de texto plano con campos delimitados.
  */
 public class ServicioDaoTxt extends txtBase implements ServicioDAO {
@@ -28,20 +29,19 @@ public class ServicioDaoTxt extends txtBase implements ServicioDAO {
 
 	/**
 	 * Lee el archivo de texto cuya ruta recibe por constructor y construye una
-	 * lista de objetos {@link ServicioDTO} a partir de cada línea válida. Las
+	 * lista de objetos ServicioDTO a partir de cada línea válida. Las
 	 * líneas en blanco y los comentarios son ignorados automáticamente. Cada línea
 	 * debe contener al menos siete campos en el orden: nombre, tarifaBase,
 	 * precioPorKm, precioPorMinuto, tipoVehiculo, categoriaVehiculo y tipoServicio.
 	 *
-	 * @return Lista de {@link ServicioDTO} con todos los servicios leídos del
-	 *         archivo.
-	 * @throws FileNotFoundException    Si el archivo no existe en la ruta
+	 * @return Lista de ServicioDTO con todos los servicios leídos del archivo.
+	 * @throws DAOException 			Si el archivo no existe en la ruta
 	 *                                  especificada.
 	 * @throws IllegalArgumentException Si una línea del archivo contiene menos de
 	 *                                  siete campos o tiene un formato incorrecto.
 	 */
 	@Override
-	public List<ServicioDTO> obtenerTodos() {
+	public List<ServicioDTO> obtenerTodos() throws DAOException {
 		List<ServicioDTO> servicios = new ArrayList<ServicioDTO>();
 
 		// Uso de try-with-resources para asegurar el cierre automático del Scanner
@@ -85,7 +85,7 @@ public class ServicioDaoTxt extends txtBase implements ServicioDAO {
 				servicios.add(servicio);
 			}
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			throw new DAOException("No se encontro el archivo de datos: " + rutaArchivo, e);
 		}
 
 		return servicios;

@@ -1,8 +1,8 @@
 package md.interfaz;
 
-import java.util.Scanner;
+import java.util.Scanner; 
 
-import md.aplicacion.Constante;
+import md.aplicacion.OpcionMenu;
 
 public class Interfaz {
 	
@@ -11,38 +11,28 @@ public class Interfaz {
 	/**
      * Muestra el menú principal y retorna la opción elegida por el usuario.
      */
-    public static int menu() {
+    public static OpcionMenu menu() {
         System.out.println("\n===== SISTEMA DE GESTIÓN DE VIAJES =====");
-        System.out.println(Constante.OPCION_REGISTRAR_USUARIO       + ". Registrar usuario.");
-        System.out.println(Constante.OPCION_DAR_DE_ALTA_CONDUCTOR   + ". Dar de alta conductor.");
-        System.out.println(Constante.OPCION_SOLICITAR_VIAJE   		+ ". Solicitar viaje.");
-        System.out.println(Constante.OPCION_CANCELAR_VIAJE 			+ ". Cancelar viaje.");
-        System.out.println(Constante.OPCION_SALIR         			+ ". Salir.");
-        
+        for (OpcionMenu opcion : OpcionMenu.values()) {
+            System.out.println(opcion.getNumero() + ". " + opcion.getDescripcion());
+        }
 
-        // TODO: validar que la entrada sea un número dentro del rango válido
-        
         while (true) {
-
-        	System.out.print("Ingrese una opción: ");
-
+            System.out.print("Ingrese una opción: ");
             String entrada = SC.nextLine();
 
             try {
-
-                int opcion = Integer.parseInt(entrada);
-
-                if(opcion >= Constante.OPCION_SALIR && opcion <= Constante.OPCION_CANCELAR_VIAJE)
+                OpcionMenu opcion = OpcionMenu.desdeNumero(Integer.parseInt(entrada));
+                if (opcion != null) {
                     return opcion;
-
+                }
                 mostrarError("Opción fuera de rango.");
-
-            }
-            catch(NumberFormatException e){
+            } catch (NumberFormatException e) {
                 mostrarError("Debe ingresar un número.");
             }
         }
     }
+	
     public static void mostrarMensaje(String mensaje) {
         System.out.println(mensaje);
     }
