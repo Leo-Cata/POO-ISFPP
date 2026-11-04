@@ -1,74 +1,438 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<!--
 
-    <groupId>ar.edu.isfpp</groupId>
-    <artifactId>isfpp-md</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    POM = Project Object Model (modelo de objeto del proyecto).
+    Maven lee este archivo para identificar el proyecto, resolver bibliotecas,
+    compilar, ejecutar pruebas y ofrecer comandos de ejecución.
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>21</maven.compiler.release>
-    </properties>
+    IMPORTANTE: este archivo no descarga mapas OSM ni imágenes de teselas.
+    Los datos viales y los recursos de Leaflet se gestionan en el proyecto.
+    Los comentarios explican la configuración existente; no la modifican.
+-->
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<!--
+ Versión del formato de POM que utiliza Maven. No es la versión de la aplicación. 
+-->
+<modelVersion>4.0.0</modelVersion>
+<!--
+
+        Identidad del artefacto Maven:
+        groupId = organización o grupo que lo desarrolla;
+        artifactId = nombre técnico del módulo;
+        version = versión de ESTE proyecto.
+        Estas tres coordenadas identifican el artefacto al empaquetarlo.
+    
+-->
+<groupId>movilidad-digital</groupId>
+<artifactId>movil-9-mapa</artifactId>
+<version>1.4.0</version>
+<!--
+ Nombre y descripción informativos, visibles en herramientas Maven o Eclipse. 
+-->
+<name>Movilidad Digital - mapa y rutas urbanas</name>
+<description>Movilidad Digital</description>
+<!--
+
+        Propiedades: variables reutilizables mediante ${nombre.propiedad}.
+        Permiten definir versiones una sola vez y referenciarlas más abajo.
+    
+-->
+<properties>
+<!--
+ Compilar para Java 21, tanto en el lenguaje como en las API disponibles. 
+-->
+<maven.compiler.release>21</maven.compiler.release>
+<!--
+ Codificación uniforme de archivos fuente e informes (acentos, ñ, etc.). 
+-->
+<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+<!--
+ Versiones concretas de las bibliotecas usadas por el proyecto. 
+-->
+<javafx.version>21.0.12</javafx.version>
+<mysql.connector.version>9.7.0</mysql.connector.version>
+<postgresql.version>42.7.14</postgresql.version>
+<junit.version>5.10.1</junit.version>
+<!--
+ Versión elegida del motor GraphHopper para esta distribución con JDK 21. 
+-->
+<graphhopper.version>10.2</graphhopper.version>
+<!--
+ Clase de inicio predeterminada para exec:java. No es un nombre de paquete inventado. 
+-->
+<exec.mainClass>md.aplicacion.AplicacionConsultas</exec.mainClass>
+<!--
+
+            Clasificador nativo predeterminado de JavaFX.
+            Los perfiles de más abajo lo cambian para Linux y macOS.
+            Si Maven no activa otro perfil, queda seleccionado "win".
         
-    <!-- Gestión de versiones de JUnit -->
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>5.11.0</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    <dependencies>
+-->
+<javafx.platform>win</javafx.platform>
+</properties>
+<!--
 
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <scope>test</scope>
-        </dependency>
+        dependencies: bibliotecas externas que Maven obtiene y coloca en el
+        classpath del proyecto. Sus coordenadas groupId/artifactId/version
+        identifican la BIBLIOTECA, no a la aplicación.
+
+        En las dependencias JavaFX se especifica explícitamente el clasificador
+        del sistema operativo para seleccionar las bibliotecas nativas correctas.
+        Las exclusiones evitan incorporar otros módulos OpenJFX de forma
+        transitiva con clasificadores distintos: aquí se declaran expresamente.
+    
+-->
+<dependencies>
+<!--
+
+            graphhopper-core: motor de cálculo de recorridos sobre un grafo vial.
+            En esta aplicación importa la red de calles del archivo .osm local,
+            ajusta posiciones a calles y calcula trayectos y distancias.
+            Es una biblioteca embebida en Java, no una API de mapas comercial.
         
-        <dependency>
-    		<groupId>org.postgresql</groupId>
-    		<artifactId>postgresql</artifactId>
-    		<version>42.7.4</version>
-		</dependency>
-		<dependency>
-    		<groupId>org.openjfx</groupId>
-    		<artifactId>javafx-fxml</artifactId>
-   			 <version>21.0.1</version>
-		</dependency>
+-->
+<dependency>
+<groupId>com.graphhopper</groupId>
+<artifactId>graphhopper-core</artifactId>
+<version>${graphhopper.version}</version>
+</dependency>
+<!--
 
-        <!-- Dependencia indispensable para la interfaz gráfica -->
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>21.0.1</version>
-        </dependency>
-    </dependencies>
+            Driver JDBC de PostgreSQL: habilita conexiones desde java.sql/JDBC
+            a una base PostgreSQL si se selecciona esa persistencia.
+            scope=runtime: el controlador se necesita al ejecutar, mientras que
+            el código de los DAO compila contra las interfaces estándar java.sql.
+            No crea tablas ni instala un servidor de PostgreSQL.
+        
+-->
+<dependency>
+<groupId>org.postgresql</groupId>
+<artifactId>postgresql</artifactId>
+<version>${postgresql.version}</version>
+<scope>runtime</scope>
+</dependency>
+<!--
 
-    <build>
-        <plugins>
-            <!-- Plugin para correr JavaFX con mvn javafx:run -->
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
-                <configuration>
-                    <!--TODO: apuntar a donde estaria nuestra clase principal-->
-                    <mainClass>md.aplicacion.AplicacionConsultas</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+            Driver JDBC de MySQL: misma función que el anterior, pero para MySQL.
+            Se conserva como alternativa de persistencia; Maven no inicia MySQL.
+            scope=runtime excluye el JAR del classpath de compilación ordinario.
+        
+-->
+<dependency>
+<groupId>com.mysql</groupId>
+<artifactId>mysql-connector-j</artifactId>
+<version>${mysql.connector.version}</version>
+<scope>runtime</scope>
+</dependency>
+<!--
+
+            javafx-base: clases básicas de JavaFX (propiedades observables,
+            colecciones y mecanismos comunes). Otros módulos las utilizan.
+        
+-->
+<dependency>
+<groupId>org.openjfx</groupId>
+<artifactId>javafx-base</artifactId>
+<version>${javafx.version}</version>
+<classifier>${javafx.platform}</classifier>
+<exclusions>
+<!--
+ Dependencias OpenJFX transitivas: utilizar las declaradas aquí. 
+-->
+<exclusion>
+<groupId>org.openjfx</groupId>
+<artifactId>*</artifactId>
+</exclusion>
+</exclusions>
+</dependency>
+<!--
+
+            javafx-graphics: Stage, Scene, nodos gráficos, eventos y renderizado.
+            Es la infraestructura sobre la que funciona la interfaz JavaFX.
+        
+-->
+<dependency>
+<groupId>org.openjfx</groupId>
+<artifactId>javafx-graphics</artifactId>
+<version>${javafx.version}</version>
+<classifier>${javafx.platform}</classifier>
+<exclusions>
+<exclusion>
+<groupId>org.openjfx</groupId>
+<artifactId>*</artifactId>
+</exclusion>
+</exclusions>
+</dependency>
+<!--
+
+            javafx-controls: componentes visuales como Button, ComboBox,
+            Label, TextField y otros controles de las pantallas.
+        
+-->
+<dependency>
+<groupId>org.openjfx</groupId>
+<artifactId>javafx-controls</artifactId>
+<version>${javafx.version}</version>
+<classifier>${javafx.platform}</classifier>
+<exclusions>
+<exclusion>
+<groupId>org.openjfx</groupId>
+<artifactId>*</artifactId>
+</exclusion>
+</exclusions>
+</dependency>
+<!--
+
+            javafx-fxml: interpreta archivos .fxml, construye la interfaz,
+            vincula controladores y realiza la inyección de campos @FXML.
+            Se utiliza al cargar Login.fxml y los paneles de usuario.
+        
+-->
+<dependency>
+<groupId>org.openjfx</groupId>
+<artifactId>javafx-fxml</artifactId>
+<version>${javafx.version}</version>
+<classifier>${javafx.platform}</classifier>
+<exclusions>
+<exclusion>
+<groupId>org.openjfx</groupId>
+<artifactId>*</artifactId>
+</exclusion>
+</exclusions>
+</dependency>
+<!--
+
+            javafx-media: soporte de audio y video de JavaFX. Se incluye en la
+            familia de módulos requerida por esta configuración con WebView;
+            su presencia NO significa que el caso de estudio reproduzca medios.
+        
+-->
+<dependency>
+<groupId>org.openjfx</groupId>
+<artifactId>javafx-media</artifactId>
+<version>${javafx.version}</version>
+<classifier>${javafx.platform}</classifier>
+<exclusions>
+<exclusion>
+<groupId>org.openjfx</groupId>
+<artifactId>*</artifactId>
+</exclusion>
+</exclusions>
+</dependency>
+<!--
+
+            javafx-web: proporciona WebView y WebEngine para presentar HTML y
+            ejecutar JavaScript dentro de la ventana JavaFX. En este proyecto
+            muestra el mapa Leaflet e interviene en el puente Java/JavaScript.
+            Leaflet NO es una dependencia Maven: está en los recursos web locales.
+        
+-->
+<dependency>
+<groupId>org.openjfx</groupId>
+<artifactId>javafx-web</artifactId>
+<version>${javafx.version}</version>
+<classifier>${javafx.platform}</classifier>
+<exclusions>
+<exclusion>
+<groupId>org.openjfx</groupId>
+<artifactId>*</artifactId>
+</exclusion>
+</exclusions>
+</dependency>
+<!--
+
+            JUnit Jupiter: API y motor de pruebas automatizadas JUnit 5.
+            scope=test: no se incorpora como dependencia de la aplicación final.
+            Lo utiliza Maven Surefire al ejecutar la fase "test".
+        
+-->
+<dependency>
+<groupId>org.junit.jupiter</groupId>
+<artifactId>junit-jupiter</artifactId>
+<version>${junit.version}</version>
+<scope>test</scope>
+</dependency>
+</dependencies>
+<!--
+
+        profiles: variantes de la configuración Maven según el sistema operativo
+        y la arquitectura. Solo sustituyen javafx.platform: no duplican las
+        dependencias ni modifican las clases Java del proyecto.
+
+        activation/os realiza la selección automáticamente cuando Maven
+        identifica un sistema y una arquitectura coincidentes.
+    
+-->
+<profiles>
+<!--
+ Linux de 64 bits (dos nombres posibles de arquitectura x86-64). 
+-->
+<profile>
+<id>linux-x64</id>
+<activation>
+<os>
+<name>Linux</name>
+<arch>amd64</arch>
+</os>
+</activation>
+<properties>
+<javafx.platform>linux</javafx.platform>
+</properties>
+</profile>
+<profile>
+<id>linux-x86_64</id>
+<activation>
+<os>
+<name>Linux</name>
+<arch>x86_64</arch>
+</os>
+</activation>
+<properties>
+<javafx.platform>linux</javafx.platform>
+</properties>
+</profile>
+<!-- Linux sobre procesador ARM de 64 bits. -->
+<profile>
+<id>linux-arm64</id>
+<activation>
+<os>
+<name>Linux</name>
+<arch>aarch64</arch>
+</os>
+</activation>
+<properties>
+<javafx.platform>linux-aarch64</javafx.platform>
+</properties>
+</profile>
+<!--
+ Windows de 64 bits: usa bibliotecas nativas JavaFX con classifier win. 
+-->
+<profile>
+<id>windows-x64</id>
+<activation>
+<os>
+<name>Windows</name>
+<arch>amd64</arch>
+</os>
+</activation>
+<properties>
+<javafx.platform>win</javafx.platform>
+</properties>
+</profile>
+<profile>
+<id>windows-x86_64</id>
+<activation>
+<os>
+<name>Windows</name>
+<arch>x86_64</arch>
+</os>
+</activation>
+<properties>
+<javafx.platform>win</javafx.platform>
+</properties>
+</profile>
+<!--
+ macOS para procesadores Intel y Apple Silicon (ARM), respectivamente. 
+-->
+<profile>
+<id>mac-x64</id>
+<activation>
+<os>
+<name>Mac OS X</name>
+<arch>x86_64</arch>
+</os>
+</activation>
+<properties>
+<javafx.platform>mac</javafx.platform>
+</properties>
+</profile>
+<profile>
+<id>mac-arm64</id>
+<activation>
+<os>
+<name>Mac OS X</name>
+<arch>aarch64</arch>
+</os>
+</activation>
+<properties>
+<javafx.platform>mac-aarch64</javafx.platform>
+</properties>
+</profile>
+</profiles>
+<!--
+
+        build/plugins: herramientas que actúan durante las fases de Maven.
+        Una dependencia aporta clases al programa; un plugin ejecuta una tarea
+        de construcción (compilar, probar o iniciar la aplicación).
+    
+-->
+<build>
+<plugins>
+<!--
+
+                maven-compiler-plugin: compila los archivos .java del proyecto.
+                release toma el valor 21 definido en properties.
+                Requiere disponer de un JDK compatible con la compilación.
+            
+-->
+<plugin>
+<groupId>org.apache.maven.plugins</groupId>
+<artifactId>maven-compiler-plugin</artifactId>
+<version>3.11.0</version>
+<configuration>
+<release>${maven.compiler.release}</release>
+</configuration>
+</plugin>
+<!--
+
+                maven-surefire-plugin: ejecuta los tests de src/test/java.
+                forkCount=1 permite un proceso de pruebas a la vez;
+                reuseForks=false inicia una JVM nueva por clase de pruebas,
+                evitando que el estado global/Singleton pase de una clase a otra.
+                Tiene un costo de tiempo de ejecución mayor.
+            
+-->
+<plugin>
+<groupId>org.apache.maven.plugins</groupId>
+<artifactId>maven-surefire-plugin</artifactId>
+<version>3.2.5</version>
+<configuration>
+<forkCount>1</forkCount>
+<reuseForks>false</reuseForks>
+</configuration>
+</plugin>
+<!--
+
+                javafx-maven-plugin: proporciona el comando "mvn javafx:run"
+                para lanzar la aplicación JavaFX con su configuración de módulos.
+                mainClass indica la clase desde la que comienza el programa.
+                Este plugin es distinto de la dependencia javafx-web.
+            
+-->
+<plugin>
+<groupId>org.openjfx</groupId>
+<artifactId>javafx-maven-plugin</artifactId>
+<version>0.0.8</version>
+<configuration>
+<mainClass>md.aplicacion.AplicacionConsultas</mainClass>
+</configuration>
+</plugin>
+<!--
+
+                exec-maven-plugin: permite ejecutar clases main usando, por
+                ejemplo, "mvn exec:java". Lee la clase por defecto desde
+                exec.mainClass; se puede sobreescribir con una propiedad Maven.
+                Sirve para la entrada general y para ejecuciones CLI auxiliares.
+            
+-->
+<plugin>
+<groupId>org.codehaus.mojo</groupId>
+<artifactId>exec-maven-plugin</artifactId>
+<version>3.1.0</version>
+<configuration>
+<mainClass>${exec.mainClass}</mainClass>
+</configuration>
+</plugin>
+</plugins>
+</build>
 </project>
