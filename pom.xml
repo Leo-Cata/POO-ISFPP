@@ -227,6 +227,7 @@
             Leaflet NO es una dependencia Maven: está en los recursos web locales.
         
 -->
+<!-- 
 <dependency>
 <groupId>org.openjfx</groupId>
 <artifactId>javafx-web</artifactId>
@@ -239,6 +240,7 @@
 </exclusion>
 </exclusions>
 </dependency>
+-->
 <!--
 
             JUnit Jupiter: API y motor de pruebas automatizadas JUnit 5.
@@ -410,12 +412,12 @@
             
 -->
 <plugin>
-<groupId>org.openjfx</groupId>
-<artifactId>javafx-maven-plugin</artifactId>
-<version>0.0.8</version>
-<configuration>
-<mainClass>md.aplicacion.AplicacionConsultas</mainClass>
-</configuration>
+    <groupId>org.openjfx</groupId>
+    <artifactId>javafx-maven-plugin</artifactId>
+    <version>0.0.8</version>
+    <configuration>
+        <mainClass>md.ui.impl.javafx.MainApp</mainClass>
+    </configuration>
 </plugin>
 <!--
 
@@ -433,6 +435,9 @@
 <mainClass>${exec.mainClass}</mainClass>
 </configuration>
 </plugin>
+
+
+
 </plugins>
 </build>
 </project>
