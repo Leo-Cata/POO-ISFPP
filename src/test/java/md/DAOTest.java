@@ -1,7 +1,8 @@
 package md;
 
+import md.config.CargarParametros;
+import md.config.DAOLoader;
 import md.datos.dao.DAOFactory;
-import md.datos.dao.DAOLoader;
 import md.datos.dto.ServicioDTO;
 import md.datos.dto.UsuarioDTO;
 import md.datos.dto.VehiculoDTO;
@@ -53,10 +54,10 @@ public class DAOTest {
             System.out.println("\n--------------------------------------------------");
             System.out.println("--> 4. PARÁMETROS GEOGRÁFICOS DE CONFIGURACIÓN");
             System.out.println("--------------------------------------------------");
-            System.out.printf("  - Latitud Mínima:  %.4f\n", DAOLoader.getLatitudMin());
-            System.out.printf("  - Latitud Máxima:  %.4f\n", DAOLoader.getLatitudMax());
-            System.out.printf("  - Longitud Mínima: %.4f\n", DAOLoader.getLongitudMin());
-            System.out.printf("  - Longitud Máxima: %.4f\n", DAOLoader.getLongitudMax());
+            System.out.printf("  - Latitud Mínima:  %.4f\n", CargarParametros.getLatitudMin());
+            System.out.printf("  - Latitud Máxima:  %.4f\n", CargarParametros.getLatitudMax());
+            System.out.printf("  - Longitud Mínima: %.4f\n", CargarParametros.getLongitudMin());
+            System.out.printf("  - Longitud Máxima: %.4f\n", CargarParametros.getLongitudMax());
 
             System.out.println("\n==================================================");
             System.out.println("   ¡TODAS LAS PRUEBAS FINALIZARON CON ÉXITO!      ");
