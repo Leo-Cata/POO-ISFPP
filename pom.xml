@@ -227,7 +227,7 @@
             Leaflet NO es una dependencia Maven: está en los recursos web locales.
         
 -->
-<!-- 
+
 <dependency>
 <groupId>org.openjfx</groupId>
 <artifactId>javafx-web</artifactId>
@@ -240,7 +240,7 @@
 </exclusion>
 </exclusions>
 </dependency>
--->
+
 <!--
 
             JUnit Jupiter: API y motor de pruebas automatizadas JUnit 5.
