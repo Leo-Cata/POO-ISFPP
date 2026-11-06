@@ -17,7 +17,7 @@ public class MainApp extends Application {
             ContextoAplicacion.inicializar(DAOLoader.getFactory());
 
             // Carga tu archivo FXML de login
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/javafx/view/login.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/javafx/view/Login.fxml"));
             Parent root = loader.load();
 
             primaryStage.setTitle("Movilidad Digital - Iniciar Sesión");

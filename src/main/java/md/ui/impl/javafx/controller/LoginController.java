@@ -78,7 +78,7 @@ public class LoginController {
                 ContextoAplicacion.setUsuarioLogeado(usuarioSeleccionado);
 
                 // abre la otra pantalla
-                NavegadorVistas.cambiarEscena(event, "null"); // TODO: poner la ruta del controlador
+                NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/PanelConductor.fxml");
             } catch (IllegalStateException e) {
                 mostrarAlerta("No es posible ingresar", e.getMessage());
             }
@@ -86,7 +86,7 @@ public class LoginController {
             usuarioSeleccionado.cambiarRolActivo(RolUsuario.CLIENTE);
 
             ContextoAplicacion.setUsuarioLogeado(usuarioSeleccionado);
-            NavegadorVistas.cambiarEscena(event, "null"); // TODO: poner la ruta del controlador
+            NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/PanelCliente.fxml");
         }
     }
 
