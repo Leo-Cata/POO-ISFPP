@@ -5,12 +5,17 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import md.aplicacion.ContextoAplicacion;
+import md.config.DAOLoader;
 
 public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
         try {
+            // carga los datos primero
+            ContextoAplicacion.inicializar(DAOLoader.getFactory());
+
             // Carga tu archivo FXML de login
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/javafx/view/login.fxml"));
             Parent root = loader.load();
