@@ -1,8 +1,5 @@
 package md.config;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +20,13 @@ public class CargarParametros {
     private static final String CLAVE_LATITUD2 = "latitud2";
     private static final String CLAVE_LONGITUD1 = "longitud1";
     private static final String CLAVE_LONGITUD2 = "longitud2";
+    
+    private static final String CLAVE_TOLERANCIA_AJUSTE ="ubicacion.tolerancia.ajuste.metros";
+    private static final String CLAVE_MOTOR_RUTAS = "rutas.motor";
+    private static final String CLAVE_ARCHIVO_OSM = "rutas.osm";
+    private static final String CLAVE_CACHE_RUTAS = "rutas.cache";
+    
+    private static double toleranciaAjusteMetros;
 	
     //la tabla clave->valor queda guardada para que los getters la consulten despues.
     private static final Properties properties = new Properties();
@@ -63,6 +67,7 @@ public class CargarParametros {
 		double latitud2 = Double.parseDouble(leerClave(properties, CLAVE_LATITUD2));
 		double longitud1 = Double.parseDouble(leerClave(properties, CLAVE_LONGITUD1));
 		double longitud2 = Double.parseDouble(leerClave(properties, CLAVE_LONGITUD2));
+		
 
 		// asegura que el mínimo sea el menor y el máximo el mayor, sin importar en qué
 		// orden estén en el config.
@@ -70,6 +75,12 @@ public class CargarParametros {
 		latitudMax = Math.max(latitud1, latitud2);
 		longitudMin = Math.min(longitud1, longitud2);
 		longitudMax = Math.max(longitud1, longitud2);
+		
+		toleranciaAjusteMetros = Double.parseDouble(leerClave(properties, CLAVE_TOLERANCIA_AJUSTE));
+
+		if (!Double.isFinite(toleranciaAjusteMetros) || toleranciaAjusteMetros <= 0) {
+		    throw new IllegalStateException("La tolerancia de ajuste debe ser un número positivo.");
+		}
 	}
 
 	/**
@@ -126,4 +137,21 @@ public class CargarParametros {
 		return longitudMax;
 	}
 
+	public static double getToleranciaAjusteMetros() {
+	    return toleranciaAjusteMetros;
+	}
+	
+	public static String getMotorRutas() {
+	    return leerClave(properties, CLAVE_MOTOR_RUTAS)
+	            .trim()
+	            .toUpperCase(Locale.ROOT);
+	}
+
+	public static String getArchivoOsm() {
+	    return leerClave(properties, CLAVE_ARCHIVO_OSM).trim();
+	}
+
+	public static String getDirectorioCacheRutas() {
+	    return leerClave(properties, CLAVE_CACHE_RUTAS).trim();
+	}
 }
