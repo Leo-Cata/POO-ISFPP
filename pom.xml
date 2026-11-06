@@ -253,13 +253,15 @@
 <artifactId>junit-jupiter</artifactId>
 <version>${junit.version}</version>
 <scope>test</scope>
-</dependency>
+ </dependency>
+<!--
 	<dependency>
 		<groupId>ar.edu.poo</groupId>
 		<artifactId>mensajes-mvc-i18n-base</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</dependency>
-</dependencies>
+ -->
+ 
 <!--
 
         profiles: variantes de la configuración Maven según el sistema operativo
@@ -270,6 +272,7 @@
         identifica un sistema y una arquitectura coincidentes.
     
 -->
+</dependencies>
 <profiles>
 <!--
  Linux de 64 bits (dos nombres posibles de arquitectura x86-64). 
