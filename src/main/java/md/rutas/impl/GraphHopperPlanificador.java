@@ -98,7 +98,7 @@ public class GraphHopperPlanificador implements PlanificadorRutas {
 
         // Valores adicionales requeridos por los modelos de automóvil
         // y motocicleta.
-        motor.setEncodedValuesString("car_access, car_average_speed, track_type, surface");
+        motor.setEncodedValuesString("car_access, car_average_speed, track_type, surface, road_access, road_class");
 
         motor.setProfiles(new Profile(PERFIL_AUTO).setCustomModel(GHUtility.loadCustomModelFromJar("car.json")),
         				new Profile(PERFIL_MOTO).setCustomModel(GHUtility.loadCustomModelFromJar("motorcycle.json")));
