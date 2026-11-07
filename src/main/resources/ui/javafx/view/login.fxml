@@ -46,20 +46,20 @@
   <children>
     <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
       <children>
-        <Label fx:id="labelSeleccionarUsuario" alignment="CENTER" layoutX="259.0" layoutY="42.0" style="&#10;" text="Seleccionar Usuario" textAlignment="CENTER" textFill="#9f9f9f" wrapText="false">
+        <Label fx:id="labelSeleccionarUsuario" alignment="CENTER" layoutX="259.0" layoutY="42.0" style="&#10;" text="%login.user.select" textAlignment="CENTER" textFill="#9f9f9f" wrapText="false">
           <font>
             <Font size="14.0" />
           </font>
         </Label>
             <ComboBox fx:id="comboUsuarios" layoutX="102.0" layoutY="63.0" prefHeight="28.0" prefWidth="434.0" style="-fx-min-width: 70%;" />
             <Group />
-            <Button fx:id="botonIngresar" layoutX="296.0" layoutY="280.0" mnemonicParsing="false" text="Ingresar"  onAction="#handleIngresar"/>
-            <RadioButton fx:id="radioCliente" layoutX="297.0" layoutY="248.0" mnemonicParsing="false" text="Cliente">
+            <Button fx:id="botonIngresar" layoutX="296.0" layoutY="280.0" mnemonicParsing="false" text="%login.action.login"  onAction="#handleIngresar"/>
+            <RadioButton fx:id="radioCliente" layoutX="297.0" layoutY="248.0" mnemonicParsing="false" text="%login.role.client">
                <toggleGroup>
                   <ToggleGroup fx:id="tipoUsuario" />
                </toggleGroup>
             </RadioButton>
-            <RadioButton fx:id="radioConductor" layoutX="297.0" layoutY="223.0" mnemonicParsing="false" text="Conductor" toggleGroup="$tipoUsuario" />
+            <RadioButton fx:id="radioConductor" layoutX="297.0" layoutY="223.0" mnemonicParsing="false" text="%login.role.driver" toggleGroup="$tipoUsuario" />
       </children>
     </AnchorPane>
   </children>

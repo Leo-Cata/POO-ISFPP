@@ -6,6 +6,7 @@ import md.config.DAOLoader;
 import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
 import md.ui.api.UIEngine;
+import md.config.CargarParametros;
 
 public class AplicacionConsultas {
 
@@ -19,6 +20,10 @@ public class AplicacionConsultas {
             // Preparar el contexto de la aplicación
             ContextoAplicacion.inicializar(persistencia);
             
+            // Selecciona el idioma y pais
+            String idioma = CargarParametros.getLanguage();
+            String pais = CargarParametros.getCountry();
+            ContextoAplicacion.inicializarIdioma(idioma, pais);
             
             // Crear e iniciar Motor de UI configurado (JavaFX / CLI)
             UIEngine uiEngine = DAOLoader.crearUIEngine();

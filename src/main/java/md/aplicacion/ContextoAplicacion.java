@@ -1,6 +1,8 @@
 package md.aplicacion;
 
-import java.io.FileNotFoundException; 
+import java.io.FileNotFoundException;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
@@ -16,6 +18,8 @@ import md.simulacion.InicializadorEscenario;
  */
 public class ContextoAplicacion {
 	private static CargadorModelo.DatosIniciales datos;
+	private static Locale locale;
+	private static ResourceBundle mensajes;
 	private static Usuario usuarioLogeado; // mantiene el usuario logeado
 	private static PlanificadorRutas motorVial; //conserva la instancia del motor de rutas que creamos mediante PlanificadorRutasFactory
 	private static GeneradorUbicacionesViales generadorUbicaciones; //conserva el generador que utiliza ese motor para producir ubicaciones válidas
@@ -71,10 +75,28 @@ public class ContextoAplicacion {
 	            throw e;
 	        }
 	}
+	
+	public static void inicializarIdioma(String idioma, String pais) {
+
+	    locale = new Locale(idioma, pais);
+
+	    mensajes = ResourceBundle.getBundle(
+	        "ui.i18n.labels",
+	        locale
+	    );
+	}
 
 	public static CargadorModelo.DatosIniciales getDatosIniciales() {
         return datos;
     }
+	
+	public static Locale getLocale() {
+	    return locale;
+	}
+
+	public static ResourceBundle getMensajes() {
+	    return mensajes;
+	}
 
     public static Usuario getUsuarioLogeado() {
         return usuarioLogeado;

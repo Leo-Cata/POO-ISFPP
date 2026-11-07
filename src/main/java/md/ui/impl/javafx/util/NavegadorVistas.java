@@ -7,6 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import md.aplicacion.ContextoAplicacion;
 
 public class NavegadorVistas {
     /**
@@ -14,7 +15,8 @@ public class NavegadorVistas {
      */
     public static <T> T cambiarEscena(Event event, String rutaFXML) {
         try {
-            FXMLLoader loader = new FXMLLoader(NavegadorVistas.class.getResource(rutaFXML));
+        	// necesita el ResourceBundle, así todas las pantallas utilizan el mismo idioma.
+            FXMLLoader loader = new FXMLLoader(NavegadorVistas.class.getResource(rutaFXML),  ContextoAplicacion.getMensajes());
             Parent root = loader.load();
             // Obtiene el Stage a partir del componente que disparó el evento
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();

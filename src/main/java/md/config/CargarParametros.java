@@ -13,6 +13,8 @@ public class CargarParametros {
 	// los nombres de las claves se escriben UNA sola vez.
 	private static final String CLAVE_ORIGEN = "origen.datos";
 	private static final String CLAVE_UI_TYPE = "app.ui.type";
+	private static final String CLAVE_IDIOMA = "app.language";
+	private static final String CLAVE_PAIS = "app.country";
 	private static final String CLAVE_BD_CONFIG = "bd.config";
 	private static final String CLAVE_USUARIOS = "usuario";
 	private static final String CLAVE_SERVICIOS = "servicio";
@@ -35,6 +37,8 @@ public class CargarParametros {
 
 	private static String origenDatos;
 	private static String appUiType;
+	private static String appLanguage;
+	private static String appCountry;
 	private static double latitudMin;
 	private static double latitudMax;
 	private static double longitudMin;
@@ -67,6 +71,8 @@ public class CargarParametros {
 
 		origenDatos = leerClave(properties, CLAVE_ORIGEN);
 		appUiType = leerClave(properties, CLAVE_UI_TYPE);
+		appLanguage = leerClave(properties, CLAVE_IDIOMA);
+		appCountry = leerClave(properties, CLAVE_PAIS);
 
 		// convierte las coordenadas de texto a numero
 		// variables declaradas unicamente dentro del metodo para que no se puedan usar
@@ -114,6 +120,14 @@ public class CargarParametros {
 
 	public static String getOrigenDatos() {
 		return origenDatos.trim().toUpperCase(Locale.ROOT);
+	}
+
+	public static String getLanguage() {
+		return appLanguage.trim().toUpperCase(Locale.ROOT);
+	}
+
+	public static String getCountry() {
+		return appCountry.trim().toUpperCase(Locale.ROOT);
 	}
 
 	public static String getArchivoBdConfig() {
