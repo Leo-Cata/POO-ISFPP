@@ -5,7 +5,7 @@ import javafx.scene.web.WebView;
 import md.ui.api.VisualizadorMapa;
 import md.ui.impl.javafx.map.VisualizadorRutasLeaflet;
 
-public class PanelConductorController {
+public class PanelClienteController {
     @FXML
     private WebView mapaView;
     private VisualizadorMapa visualizador;
