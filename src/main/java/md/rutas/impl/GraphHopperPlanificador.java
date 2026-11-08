@@ -146,7 +146,7 @@ public class GraphHopperPlanificador implements PlanificadorRutas {
 
             PointList puntos = camino.getPoints();
 
-            if (puntos == null || puntos.size() < 2) {
+            if (puntos == null || puntos.size() == 0) {
                 throw new RutaNoDisponibleException("El recorrido no contiene una geometría válida.");
             }
 
@@ -155,6 +155,12 @@ public class GraphHopperPlanificador implements PlanificadorRutas {
             for (int i = 0; i < puntos.size(); i++) {
 
                 geometria.add(new PuntoRuta(puntos.getLat(i),puntos.getLon(i)));
+            }
+
+            // Origen y destino sobre el mismo punto de la red: el recorrido mide cero y GraphHopper
+            // devuelve un solo punto. Se lo repite para respetar el minimo de dos puntos de RutaCalculada.
+            if (geometria.size() == 1) {
+                geometria.add(geometria.get(0));
             }
 
             return new RutaCalculada(camino.getDistance(),camino.getTime(),geometria);

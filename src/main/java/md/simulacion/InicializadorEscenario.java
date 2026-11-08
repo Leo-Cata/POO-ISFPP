@@ -1,9 +1,8 @@
 
 package md.simulacion;
 
-import md.modelo.Conductor;
+import md.modelo.Conductor; 
 import md.modelo.EstadoConductor;
-import md.modelo.RolUsuario;
 import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Vehiculo;
@@ -56,9 +55,6 @@ public class InicializadorEscenario {
 
             // Primero obtenemos una ubicación vial válida.
             Ubicacion ubicacion = generador.generar();
-
-            // Activamos el rol de conductor respetando las reglas del modelo.
-            usuario.cambiarRolActivo(RolUsuario.CONDUCTOR);
 
             // Asignamos la ubicación al vehículo activo.
             vehiculo.setUbicacion(ubicacion);

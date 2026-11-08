@@ -65,9 +65,13 @@ public class Usuario {
 		if (rolNuevo == RolUsuario.CONDUCTOR && this.conductor == null)
 			throw new IllegalStateException("El usuario no está dado de alta como conductor.");
 		
-		//si el cliente quiere pasar a ser conductor
-		if (rolNuevo == RolUsuario.CONDUCTOR && this.conductor.getEstadoConductor() != EstadoConductor.FUERA_DE_SERVICIO) {
-			throw new IllegalStateException("El conductor debe estar FUERA_DE_SERVICIO para asumir el rol.");
+		
+		if (rolNuevo == RolUsuario.CONDUCTOR
+		        && this.conductor.getEstadoConductor() != EstadoConductor.FUERA_DE_SERVICIO) {
+
+		    throw new IllegalStateException(
+		            "El conductor no puede asumir el rol en estado: "
+		            + this.conductor.getEstadoConductor());
 		}
 		// si deja de ser conductor no puede quedar DISPONIBLE recibiendo solicitudes
 		if (rolNuevo == RolUsuario.CLIENTE && this.conductor != null

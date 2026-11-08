@@ -15,7 +15,7 @@ public class MainApp extends Application {
 
 			// Carga tu archivo FXML de login y recibe el ResourceBundle para resolver
 			// las claves que comienzan con %
-			FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/javafx/view/Login.fxml"),
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/javafx/view/login.fxml"),
 					ContextoAplicacion.getMensajes());
 			Parent root = loader.load();
 

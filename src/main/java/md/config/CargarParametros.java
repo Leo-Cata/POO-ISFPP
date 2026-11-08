@@ -23,12 +23,12 @@ public class CargarParametros {
 	private static final String CLAVE_LATITUD2 = "latitud2";
 	private static final String CLAVE_LONGITUD1 = "longitud1";
 	private static final String CLAVE_LONGITUD2 = "longitud2";
-
 	private static final String CLAVE_TOLERANCIA_AJUSTE = "ubicacion.tolerancia.ajuste.metros";
 	private static final String CLAVE_MOTOR_RUTAS = "rutas.motor";
 	private static final String CLAVE_ARCHIVO_OSM = "rutas.osm";
 	private static final String CLAVE_CACHE_RUTAS = "rutas.cache";
-
+	private static final String CLAVE_VELOCIDAD_MEDIA ="viaje.velocidad.media.kmh";
+	private static double velocidadMediaKmH;
 	private static double toleranciaAjusteMetros;
 
 	// la tabla clave->valor queda guardada para que los getters la consulten
@@ -93,6 +93,14 @@ public class CargarParametros {
 
 		if (!Double.isFinite(toleranciaAjusteMetros) || toleranciaAjusteMetros <= 0) {
 			throw new IllegalStateException("La tolerancia de ajuste debe ser un número positivo.");
+		}
+		
+		velocidadMediaKmH = Double.parseDouble(
+		        leerClave(properties, CLAVE_VELOCIDAD_MEDIA));
+
+		if (!Double.isFinite(velocidadMediaKmH) || velocidadMediaKmH <= 0) {
+		    throw new IllegalStateException(
+		            "La velocidad media debe ser un número positivo.");
 		}
 	}
 
@@ -176,5 +184,9 @@ public class CargarParametros {
 
 	public static String getDirectorioCacheRutas() {
 		return leerClave(properties, CLAVE_CACHE_RUTAS).trim();
+	}
+	
+	public static double getVelocidadMediaKmH() {
+	    return velocidadMediaKmH;
 	}
 }
