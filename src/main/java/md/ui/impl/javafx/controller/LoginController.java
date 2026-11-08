@@ -14,6 +14,7 @@ import md.modelo.RolUsuario;
 import md.modelo.Usuario;
 import md.ui.impl.javafx.util.NavegadorVistas;
 import net.datastructures.ProbeHashMap;
+import md.ui.impl.javafx.controller.util.AlertaUtil;
 
 public class LoginController {
 
@@ -67,15 +68,15 @@ public class LoginController {
 		Usuario usuarioSeleccionado = comboUsuarios.getValue();
 
 		if (usuarioSeleccionado == null) {
-			mostrarAlerta(resources.getString("login.alert.attention"),
-				    resources.getString("login.error.noUserSelected"));
+			AlertaUtil.mostrarAlerta(resources.getString("login.alert.attention"),
+					resources.getString("login.error.noUserSelected"));
 			return;
 		}
 
 		if (radioConductor.isSelected()) {
 			if (usuarioSeleccionado.getConductor() == null) {
-				mostrarAlerta(    resources.getString("login.alert.signInError"),
-					    resources.getString("login.error.notRegisteredDriver"));
+				AlertaUtil.mostrarAlerta(resources.getString("login.alert.signInError"),
+						resources.getString("login.error.notRegisteredDriver"));
 				return;
 			}
 
@@ -87,7 +88,7 @@ public class LoginController {
 				// abre la otra pantalla
 				NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/PanelConductor.fxml");
 			} catch (IllegalStateException e) {
-				mostrarAlerta(resources.getString("login.error.unableToSignIn"), e.getMessage());
+				AlertaUtil.mostrarAlerta(resources.getString("login.error.unableToSignIn"), e.getMessage());
 			}
 		} else if (radioCliente.isSelected()) {
 			usuarioSeleccionado.cambiarRolActivo(RolUsuario.CLIENTE);
@@ -97,12 +98,4 @@ public class LoginController {
 		}
 	}
 
-	// Método auxiliar para mostrar alertas de JavaFX
-	private void mostrarAlerta(String titulo, String mensaje) {
-		Alert alert = new Alert(Alert.AlertType.WARNING);
-		alert.setTitle(titulo);
-		alert.setHeaderText(null);
-		alert.setContentText(mensaje);
-		alert.showAndWait();
-	}
 }

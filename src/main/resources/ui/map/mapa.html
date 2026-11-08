@@ -5,59 +5,63 @@
     <meta charset="UTF-8" />
     <title>Mapa de Movilidad Digital</title>
     <!-- Hoja de estilo local de Leaflet -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
-            <style>
-html, body {
- width: 100%;
- height: 100%;
- margin: 0;
- padding: 0;
- overflow: hidden;
-}
-#mapa {
- position: absolute;
- top: 0;
- bottom: 0;
- left: 0;
- right: 0;
-}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+    <style>
+        html,
+        body,
+        #mapa {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
     </style>
+    <script>
+        window.L_DISABLE_3D = true;
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 </head>
 
 <body>
     <div id="mapa"></div>
     <!-- Librería local de Leaflet -->
-    
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+
+
     <script>
+        // 1. Variables globales
+        var mapa = null;
+        var capaRutas = null;
+        var capaSeleccion = null;
+        var modoSeleccion = null;
+        var marcadorOrigen = null;
+        var marcadorDestino = null;
         try {
-            const mapa = L.map("mapa").setView([-42.785, -65.07], 11);
+            mapa = L.map("mapa").setView([-42.785, -65.07], 11);
             L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 maxZoom: 19,
                 attribution: "© OpenStreetMap contributors",
             }).addTo(mapa);
+            capaRutas = L.layerGroup().addTo(mapa);
+            capaSeleccion = L.layerGroup().addTo(mapa);
         } catch (error) {
             alert("Error en Leaflet: " + error.message);
         }
-        // Capas para organizar marcadores y líneas de ruta
-        const capaRutas = L.layerGroup().addTo(mapa);
-        const capaSeleccion = L.layerGroup().addTo(mapa);
-        let modoSeleccion = null;
-        let marcadorOrigen = null;
-        let marcadorDestino = null;
-        // Captura de clics enviada a Java (window.javaBridge)
-        mapa.on("click", function (e) {
-            if (modoSeleccion && window.javaBridge) {
-                window.javaBridge.seleccionarPunto(
-                    modoSeleccion,
-                    e.latlng.lat,
-                    e.latlng.lng,
-                );
-            }
-        });
-        // --- FUNCIONES INVOCADAS DESDE VisualizadorRutasLeaflet.java ---
+        // 2. Captura de clics hacia Java
+        if (mapa) {
+            mapa.on("click", function (e) {
+                if (modoSeleccion && window.javaBridge) {
+                    window.javaBridge.seleccionarPunto(
+                        modoSeleccion,
+                        e.latlng.lat,
+                        e.latlng.lng,
+                    );
+                }
+            });
+        }
+        // 3. Funciones globales expuestas para Java
         window.activarSeleccion = function (tipo) {
             modoSeleccion = tipo;
         };
@@ -65,6 +69,7 @@ html, body {
             modoSeleccion = null;
         };
         window.mostrarMarcadorSeleccion = function (tipo, coords) {
+            if (!capaSeleccion) return;
             if (tipo === "origen") {
                 if (marcadorOrigen) capaSeleccion.removeLayer(marcadorOrigen);
                 marcadorOrigen = L.circleMarker(coords, {
@@ -80,6 +85,7 @@ html, body {
             }
         };
         window.mostrarRutas = function (datos) {
+            if (!capaRutas) return;
             capaRutas.clearLayers();
             if (!datos) return;
             const puntosTotal = [];
@@ -107,21 +113,34 @@ html, body {
                 L.circleMarker(datos.destino, { color: "green", radius: 6 }).addTo(
                     capaRutas,
                 );
-            if (puntosTotal.length > 0) mapa.fitBounds(puntosTotal);
+            if (puntosTotal.length > 0 && mapa) mapa.fitBounds(puntosTotal);
         };
         window.limpiarSeleccion = function () {
-            capaSeleccion.clearLayers();
+            if (capaSeleccion) capaSeleccion.clearLayers();
             marcadorOrigen = null;
             marcadorDestino = null;
         };
         window.limpiarRutas = function () {
-            capaRutas.clearLayers();
+            if (capaRutas) capaRutas.clearLayers();
         };
-        window.refrescarTamano = function () {
-            mapa.invalidateSize({ pan: false });
-        };
+        setTimeout(function () {
+            if (mapa) mapa.invalidateSize();
+        }, 500);
+        // Recalcular si el usuario redimensiona la ventana
+        window.addEventListener("resize", function () {
+            if (mapa) mapa.invalidateSize();
+        });
 
-        window.refrescarTamano = function() { if (mapa) { setTimeout(function() { mapa.invalidateSize(); }, 200); } };
+        window.limpiarMarcador = function (tipo) {
+            if (!capaSeleccion) return;
+            if (tipo === "origen" && marcadorOrigen) {
+                capaSeleccion.removeLayer(marcadorOrigen);
+                marcadorOrigen = null;
+            } else if (tipo === "destino" && marcadorDestino) {
+                capaSeleccion.removeLayer(marcadorDestino);
+                marcadorDestino = null;
+            }
+        };
     </script>
 </body>
 

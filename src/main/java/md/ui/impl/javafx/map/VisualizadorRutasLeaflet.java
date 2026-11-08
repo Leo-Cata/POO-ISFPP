@@ -176,4 +176,16 @@ public final class VisualizadorRutasLeaflet implements VisualizadorMapa {
         sb.append("}");
         return sb.toString();
     }
+
+    @Override
+    public void refrescarTamano() {
+        if (paginaLista) {
+            webEngine.executeScript("window.refrescarTamano();");
+        }
+    }
+
+    @Override
+    public void limpiarMarcador(String tipo) {
+        ejecutarJS("window.limpiarMarcador('" + tipo + "');");
+    }
 }

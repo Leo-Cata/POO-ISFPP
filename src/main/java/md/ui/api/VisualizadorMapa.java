@@ -27,4 +27,10 @@ public interface VisualizadorMapa {
 
     // Elimina las líneas de ruta trazadas anteriormente
     void limpiarRutas();
+
+    // Recalcula el tamaño del mapa cuando cambia el tamaño de la pantalla
+    void refrescarTamano();
+
+    // elimina uno de los marcadores de origen o destino
+    void limpiarMarcador(String tipo);
 }
