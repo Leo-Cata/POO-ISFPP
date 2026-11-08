@@ -29,25 +29,17 @@ public final class ValidacionUbicaciones {
                 CargarParametros.getToleranciaAjusteMetros();
 
         if (!Double.isFinite(tolerancia) || tolerancia <= 0) {
-            throw new IllegalStateException(
-                    "La tolerancia de ajuste no es válida."
-            );
+            throw new IllegalStateException("La tolerancia de ajuste no es válida.");
         }
 
-        Optional<Ubicacion> resultado =
-                motorVial.ajustarACalle(candidata, tolerancia);
+        Optional<Ubicacion> resultado = motorVial.ajustarACalle(candidata, tolerancia);
 
         if (resultado == null) {
-            throw new IllegalStateException(
-                    "El motor vial devolvió un resultado inválido."
-            );
+            throw new IllegalStateException("El motor vial devolvió un resultado inválido.");
         }
 
-        Ubicacion ajustada = resultado.orElseThrow(
-                () -> new IllegalArgumentException(
-                        "No se encontró una calle cercana a la ubicación."
-                )
-        );
+        Ubicacion ajustada = resultado.orElseThrow(() -> new IllegalArgumentException(
+                        "No se encontró una calle cercana a la ubicación."));
 
         validarCoordenadas(ajustada);
         validarDentroDelArea(ajustada);
@@ -80,9 +72,7 @@ public final class ValidacionUbicaciones {
                 ubicacion.getLongitud() > CargarParametros.getLongitudMax();
 
         if (fueraDelArea) {
-            throw new IllegalArgumentException(
-                    "La ubicación está fuera del área de cobertura."
-            );
+            throw new IllegalArgumentException("La ubicación está fuera del área de cobertura.");
         }
     }
 }
