@@ -1,29 +1,27 @@
 package md.ui.impl.javafx.controller;
 
-import java.util.ResourceBundle;
+import java.util.ResourceBundle; 
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.web.WebView;
 import javafx.util.StringConverter;
 import md.aplicacion.ContextoAplicacion;
-import md.logica.Movilidad;
-import md.logica.PlanificacionViajeService;
 import md.logica.ValidacionUbicaciones;
-import md.modelo.CategoriaVehiculo;
+import md.modelo.RolUsuario;
 import md.modelo.Servicio;
-import md.modelo.TipoServicio;
-import md.modelo.TipoVehiculo;
 import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Vehiculo;
 import md.rutas.api.RutaNoDisponibleException;
-import md.rutas.api.RutasViaje;
 import md.ui.api.VisualizadorMapa;
 import md.ui.impl.javafx.controller.util.AlertaUtil;
 import md.ui.impl.javafx.map.VisualizadorRutasLeaflet;
+import md.ui.impl.javafx.util.NavegadorVistas;
+import md.logica.GestorViajes;
 
 public class PanelClienteController {
     @FXML
@@ -137,63 +135,86 @@ public class PanelClienteController {
 
     @FXML
     void handleSolicitarViaje(ActionEvent event) {
-        // obtiene el servicio
+
         Servicio servicio = comboServicios.getValue();
 
-        // chequea que las coords esten bien
-        if (txtLatOrigen.getText().isBlank() || txtLatDestino.getText().isBlank() || servicio == null) {
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    resource.getString("client.error.missingData"));
+        // Verificamos que estén completos todos los datos.
+        if (txtLatOrigen.getText().isBlank()
+                || txtLonOrigen.getText().isBlank()
+                || txtLatDestino.getText().isBlank()
+                || txtLonDestino.getText().isBlank()
+                || servicio == null) {
+
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),resource.getString("client.error.missingData"));
+
             return;
         }
 
-        // genera ubicaciones con estas coords
-        Ubicacion origen = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),
-                Double.parseDouble(txtLonOrigen.getText()));
-        Ubicacion destino = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),
-                Double.parseDouble(txtLonDestino.getText()));
-
-        // crea una nueva movilidad para despues obtener el conductor
-        Movilidad movilidad = new Movilidad(ContextoAplicacion.getDatosIniciales().getUsuarios());
-
-        // System.out.println("Servicio: " + servicio.getNombre() + " | " +
-        // servicio.getTipoVehiculo()
-        // + " | " + servicio.getCategoriaVehiculo() + " | " +
-        // servicio.getTipoServicio());
-
-        // for (Usuario u :
-        // ContextoAplicacion.getDatosIniciales().getUsuarios().values()) {
-        // if (u.getConductor() != null) {
-        // Vehiculo v = u.getConductor().getVehiculoActivo();
-        // System.out.println(u.getEmail() + " rol=" + u.getRolActivo()
-        // + " estado=" + u.getConductor().getEstadoConductor()
-        // + " ubic=" + v.getUbicacion()
-        // + " | " + v.getTipoVehiculo() + " | " + v.getCategoriaVehiculo()
-        // + " | " + v.getTipoServicios());
-        // }
-        // }
-
-        // Usuario conductor = movilidad.seleccionarConductor(servicio, origen);
-        // // chequea que se haya asignado conductor
-        // if (conductor == null) {
-        // AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-        // resource.getString("client.error.noDriver"));
-        // return;
-        // }
-
-        // obtiene el vehiculo del conductor
-        // Vehiculo vehiculo = conductor.getConductor().getVehiculoActivo();
-
-        // VEHICULO HARDCODEADO PARA EL TEST
-        Vehiculo vehiculo = ContextoAplicacion.getDatosIniciales().getVehiculos().get("AB456DE");
-        vehiculo.setUbicacion(new Ubicacion(-42.7767, -65.0267));
         try {
-            RutasViaje rutas = new PlanificacionViajeService(ContextoAplicacion.getMotorVial())
-                    .planificar(vehiculo, origen, destino);
-            visualizador.mostrar(rutas, vehiculo.getUbicacion(), origen, destino);
+
+            Ubicacion origen = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),Double.parseDouble(txtLonOrigen.getText()));
+
+            Ubicacion destino = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),Double.parseDouble(txtLonDestino.getText()));
+
+            Usuario cliente = ContextoAplicacion.getUsuarioLogeado();
+
+            if (cliente == null || cliente.getRolActivo() != RolUsuario.CLIENTE) {
+                throw new IllegalStateException("No hay un usuario logueado con el rol CLIENTE.");
+            }
+
+            // Delegamos todo el procesamiento a la capa lógica.
+            GestorViajes gestor = new GestorViajes();
+
+            GestorViajes.ResultadoSolicitud resultado =gestor.procesarSolicitudViaje(cliente,servicio,origen,destino);
+
+            // No se encontró ningún conductor compatible.
+            if (resultado == null) {
+
+                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),resource.getString("client.error.noDriver"));
+
+                return;
+            }
+
+            // El vehículo es el que realmente quedó asignado al viaje.
+            Vehiculo vehiculo = resultado.viaje().getVehiculo();
+
+            if (vehiculo == null || vehiculo.getUbicacion() == null) {
+                throw new IllegalStateException("El viaje no tiene un vehículo con ubicación asignada.");
+            }
+
+            // Mostramos los recorridos reales calculados por GestorViajes.
+            visualizador.mostrar(resultado.rutas(),vehiculo.getUbicacion(),origen,destino);
+
+            GestorViajes.Cotizacion cotizacion = resultado.cotizacion();
+
+            Alert alerta = new Alert(Alert.AlertType.INFORMATION);
+            alerta.setTitle("Solicitud procesada");
+            alerta.setHeaderText("Conductor asignado: " + resultado.conductor().getNombre());
+
+            alerta.setContentText(String.format("El viaje fue aceptado.%n%n" + "Distancia estimada: %.2f km%n"
+                    + "Duración estimada: %.2f minutos%n"+ "Costo estimado: $%.2f",cotizacion.distanciaKm(),cotizacion.duracionMinutos(),
+                    cotizacion.costoTotal()));
+
+            alerta.showAndWait();
+
+        } catch (NumberFormatException e) {
+
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),"Las coordenadas ingresadas no son válidas.");
+
         } catch (RutaNoDisponibleException e) {
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    resource.getString("client.error.noRoute"));
+
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),resource.getString("client.error.noRoute"));
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),e.getMessage());
         }
+    }
+    @FXML
+    void handleCerrarSesion(ActionEvent event) {
+
+        ContextoAplicacion.setUsuarioLogeado(null);
+
+        NavegadorVistas.cambiarEscena(event,"/ui/javafx/view/login.fxml");
     }
 }

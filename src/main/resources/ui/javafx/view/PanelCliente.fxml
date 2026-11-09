@@ -25,7 +25,7 @@
         <TextField fx:id="txtLonOrigen" layoutX="14.0" layoutY="62.0" />
         <Button fx:id="botonClienteBorrarOrigen" layoutX="186.0" layoutY="27.0"
           mnemonicParsing="false" onAction="#handleBorrarOrigen" text="%client.delete.origin" />
-
+		<Button layoutX="210.0" layoutY="320.0" text="Cambiar usuario" onAction="#handleCerrarSesion" />
         <Label fx:id="labelClienteDestino" layoutX="14.0" layoutY="102.0" prefHeight="19.0"
           prefWidth="76.0" text="%client.label.destination" />
         <TextField fx:id="txtLatDestino" layoutX="14.0" layoutY="122.0" />

@@ -6,6 +6,7 @@ import md.aplicacion.ContextoAplicacion;
 import md.config.CargarParametros;
 import md.modelo.CalificacionViaje;
 import md.modelo.EstadoViaje;
+import md.modelo.RolUsuario;
 import md.modelo.Servicio;
 import md.modelo.Ubicacion;
 import md.modelo.Usuario;
@@ -27,54 +28,37 @@ public class GestorViajes {
      * La distancia y la duración son estimaciones geográficas,
      * no métricas obtenidas del motor vial.
      */
-    public record Cotizacion(
-            double distanciaKm,
-            double duracionMinutos,
-            double costoTotal) {
+    public record Cotizacion(double distanciaKm,double duracionMinutos,double costoTotal) {
     }
 
     /**
      * Resultado de una solicitud procesada correctamente.
      */
-    public record ResultadoSolicitud(
-            Viaje viaje,
-            RutasViaje rutas,
-            Cotizacion cotizacion,
-            Usuario conductor) {
+    public record ResultadoSolicitud(Viaje viaje,RutasViaje rutas,Cotizacion cotizacion,Usuario conductor) {
     }
 
     /**
      * Calcula la cotización comercial utilizando la distancia geográfica
      * y la velocidad media configurada.
      */
-    public Cotizacion calcularCotizacion(
-            Servicio servicio,
-            Ubicacion origen,
-            Ubicacion destino) {
+    public Cotizacion calcularCotizacion(Servicio servicio,Ubicacion origen,Ubicacion destino) {
 
         if (servicio == null || origen == null || destino == null) {
-            throw new IllegalArgumentException(
-                    "El servicio, el origen y el destino son obligatorios.");
+            throw new IllegalArgumentException("El servicio, el origen y el destino son obligatorios.");
         }
 
         double velocidadMedia = CargarParametros.getVelocidadMediaKmH();
 
         if (!Double.isFinite(velocidadMedia) || velocidadMedia <= 0) {
-            throw new IllegalStateException(
-                    "La velocidad media configurada no es válida.");
+            throw new IllegalStateException("La velocidad media configurada no es válida.");
         }
 
         double distanciaKm = origen.calcularDistanciaA(destino);
         double duracionMinutos = (distanciaKm / velocidadMedia) * 60.0;
 
-        double costoTotal = servicio.calcularCosto(
-                distanciaKm,
-                duracionMinutos);
+        double costoTotal = servicio.calcularCosto(distanciaKm,duracionMinutos);
 
-        return new Cotizacion(
-                distanciaKm,
-                duracionMinutos,
-                costoTotal);
+        return new Cotizacion(distanciaKm,duracionMinutos,costoTotal);
     }
 
     /**
@@ -89,76 +73,52 @@ public class GestorViajes {
      * @return el resultado de la solicitud o null si no hay conductores
      *         compatibles disponibles.
      */
-    public ResultadoSolicitud procesarSolicitudViaje(
-            Usuario clienteUsuario,
-            Servicio servicio,
-            Ubicacion origen,
-            Ubicacion destino) throws RutaNoDisponibleException {
+    public ResultadoSolicitud procesarSolicitudViaje(Usuario clienteUsuario,Servicio servicio,Ubicacion origen,Ubicacion destino) throws RutaNoDisponibleException {
 
-        if (clienteUsuario == null
-                || servicio == null
-                || origen == null
-                || destino == null) {
-
-            throw new IllegalArgumentException(
-                    "Los datos de la solicitud son obligatorios.");
+        if (clienteUsuario == null || servicio == null || origen == null || destino == null) {
+            throw new IllegalArgumentException("Los datos de la solicitud son obligatorios.");
         }
-
+        if (clienteUsuario.getRolActivo() != RolUsuario.CLIENTE) {
+            throw new IllegalStateException("El usuario debe tener activo el rol CLIENTE para solicitar un viaje.");
+        }
         if (clienteUsuario.getCliente() == null) {
-            throw new IllegalArgumentException(
-                    "El usuario no tiene perfil de cliente.");
+            throw new IllegalArgumentException("El usuario no tiene perfil de cliente.");
         }
 
         if (clienteUsuario.getCliente().enViaje()) {
-            throw new IllegalStateException(
-                    "El cliente ya tiene un viaje activo.");
+            throw new IllegalStateException("El cliente ya tiene un viaje activo.");
         }
 
-        // 1. Calcular la cotización definitiva.
-        Cotizacion cotizacion = calcularCotizacion(
-                servicio,
-                origen,
-                destino);
+        // Calcular la cotización definitiva.
+        Cotizacion cotizacion = calcularCotizacion(servicio,origen,destino);
 
-        // 2. Obtener los datos de la aplicación.
+        //Obtener los datos de la aplicación.
         var datos = ContextoAplicacion.getDatosIniciales();
 
         if (datos == null) {
-            throw new IllegalStateException(
-                    "Los datos iniciales no están disponibles.");
+            throw new IllegalStateException("Los datos iniciales no están disponibles.");
         }
 
-        // 3. Seleccionar el conductor compatible más cercano.
+        //Seleccionar el conductor compatible más cercano.
         Movilidad movilidad = new Movilidad(datos.getUsuarios());
 
-        Usuario conductorSeleccionado =
-                movilidad.seleccionarConductor(servicio, origen);
+        Usuario conductorSeleccionado =	movilidad.seleccionarConductor(servicio, origen);
 
         if (conductorSeleccionado == null) {
             return null;
         }
 
-        // 4. Calcular los dos recorridos viales.
-        RutasViaje rutas = new PlanificacionViajeService(
-                ContextoAplicacion.getMotorVial())
-                .planificar(
-                        conductorSeleccionado.getConductor().getVehiculoActivo(),
-                        origen,
-                        destino);
+        //Calcular los dos recorridos viales.
+        RutasViaje rutas = new PlanificacionViajeService(ContextoAplicacion.getMotorVial()).planificar(
+                        conductorSeleccionado.getConductor().getVehiculoActivo(),origen,destino);
 
-        // 5. Crear y registrar el viaje.
-        Viaje nuevoViaje = new Viaje(
-                clienteUsuario,
-                origen,
-                destino,
-                servicio);
+        //Crear y registrar el viaje.
+        Viaje nuevoViaje = new Viaje(clienteUsuario,origen,destino,servicio);
 
         nuevoViaje.solicitar(LocalDateTime.now());
 
         try {
-            nuevoViaje.aceptar(
-                    LocalDateTime.now(),
-                    conductorSeleccionado);
+            nuevoViaje.aceptar(LocalDateTime.now(),conductorSeleccionado);
 
         } catch (RuntimeException e) {
 
@@ -170,11 +130,7 @@ public class GestorViajes {
             throw e;
         }
 
-        return new ResultadoSolicitud(
-                nuevoViaje,
-                rutas,
-                cotizacion,
-                conductorSeleccionado);
+        return new ResultadoSolicitud(nuevoViaje,rutas,cotizacion,conductorSeleccionado);
     }
 
     /**
@@ -182,32 +138,23 @@ public class GestorViajes {
      *
      * @return true si se canceló un viaje; false si no había uno activo.
      */
-    public boolean procesarCancelacionViaje(
-            Usuario clienteUsuario,
-            String motivo) {
+    public boolean procesarCancelacionViaje(Usuario clienteUsuario,String motivo) {
 
         if (clienteUsuario == null || clienteUsuario.getCliente() == null) {
-            throw new IllegalArgumentException(
-                    "El usuario debe tener un perfil de cliente.");
+            throw new IllegalArgumentException("El usuario debe tener un perfil de cliente.");
         }
 
         if (motivo == null || motivo.isBlank()) {
-            throw new IllegalArgumentException(
-                    "El motivo de cancelación es obligatorio.");
+            throw new IllegalArgumentException("El motivo de cancelación es obligatorio.");
         }
 
         for (Viaje viaje : clienteUsuario.getCliente().getViajes().values()) {
 
             EstadoViaje estado = viaje.estadoActual();
 
-            if (estado == EstadoViaje.SOLICITADO
-                    || estado == EstadoViaje.ACEPTADO
-                    || estado == EstadoViaje.INICIADO) {
+            if (estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
 
-                viaje.cancelar(
-                        LocalDateTime.now(),
-                        clienteUsuario,
-                        motivo);
+                viaje.cancelar(LocalDateTime.now(),clienteUsuario,motivo);
 
                 return true;
             }
@@ -246,8 +193,7 @@ public class GestorViajes {
             CalificacionViaje calConductor) {
 
         if (calCliente == null || calConductor == null) {
-            throw new IllegalArgumentException(
-                    "Las calificaciones son obligatorias.");
+            throw new IllegalArgumentException("Las calificaciones son obligatorias.");
         }
 
         Viaje viajeActivo = obtenerViajeActivoConductor(conductorUsuario);
@@ -257,10 +203,7 @@ public class GestorViajes {
             return false;
         }
 
-        viajeActivo.finalizar(
-                LocalDateTime.now(),
-                calCliente,
-                calConductor);
+        viajeActivo.finalizar(LocalDateTime.now(),calCliente,calConductor);
 
         return true;
     }
@@ -279,8 +222,7 @@ public class GestorViajes {
 
             EstadoViaje estado = viaje.estadoActual();
 
-            if (estado == EstadoViaje.ACEPTADO
-                    || estado == EstadoViaje.INICIADO) {
+            if (estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
                 return viaje;
             }
         }

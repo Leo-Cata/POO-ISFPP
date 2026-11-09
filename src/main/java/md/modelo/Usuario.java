@@ -53,33 +53,52 @@ public class Usuario {
 	 *                               sin ser conductor
 	 */
 	public void cambiarRolActivo(RolUsuario rolNuevo) {
-		if (rolNuevo == null)
-			throw new IllegalArgumentException("El rol no puede ser null.");
 
-		if (rolNuevo == this.rolActivo)
-			return;
+	    if (rolNuevo == null) {
+	        throw new IllegalArgumentException("El rol no puede ser null.");
+	    }
 
-		if (this.cliente.enViaje() || this.conductor != null && this.conductor.enViaje())
-			throw new IllegalStateException("No se puede cambiar el rol con un viaje en curso.");
+	    if (rolNuevo == this.rolActivo) {
+	        return;
+	    }
 
-		if (rolNuevo == RolUsuario.CONDUCTOR && this.conductor == null)
-			throw new IllegalStateException("El usuario no está dado de alta como conductor.");
-		
-		
-		if (rolNuevo == RolUsuario.CONDUCTOR
-		        && this.conductor.getEstadoConductor() != EstadoConductor.FUERA_DE_SERVICIO) {
+	    if (this.cliente.enViaje()
+	            || this.conductor != null && this.conductor.enViaje()) {
+	        throw new IllegalStateException(
+	                "No se puede cambiar el rol con un viaje en curso.");
+	    }
 
-		    throw new IllegalStateException(
-		            "El conductor no puede asumir el rol en estado: "
-		            + this.conductor.getEstadoConductor());
-		}
-		// si deja de ser conductor no puede quedar DISPONIBLE recibiendo solicitudes
-		if (rolNuevo == RolUsuario.CLIENTE && this.conductor != null
-				&& this.conductor.getEstadoConductor() == EstadoConductor.DISPONIBLE)
-			this.conductor.setEstado(EstadoConductor.FUERA_DE_SERVICIO);
+	    if (rolNuevo == RolUsuario.CONDUCTOR) {
 
-		this.rolActivo = rolNuevo;
+	        if (this.conductor == null) {
+	            throw new IllegalStateException(
+	                    "El usuario no está dado de alta como conductor.");
+	        }
 
+	        EstadoConductor estado = this.conductor.getEstadoConductor();
+
+	        if (estado != EstadoConductor.FUERA_DE_SERVICIO
+	                && estado != EstadoConductor.DISPONIBLE) {
+
+	            throw new IllegalStateException(
+	                    "El conductor no puede asumir el rol en estado: " + estado);
+	        }
+
+	        // Al activar el rol de conductor, comienza a recibir solicitudes.
+	        if (estado == EstadoConductor.FUERA_DE_SERVICIO) {
+	            this.conductor.setEstado(EstadoConductor.DISPONIBLE);
+	        }
+	    }
+
+	    // Si deja de ser conductor, ya no puede recibir solicitudes.
+	    if (rolNuevo == RolUsuario.CLIENTE
+	            && this.conductor != null
+	            && this.conductor.getEstadoConductor() == EstadoConductor.DISPONIBLE) {
+
+	        this.conductor.setEstado(EstadoConductor.FUERA_DE_SERVICIO);
+	    }
+
+	    this.rolActivo = rolNuevo;
 	}
 
 	// getters y setters del objeto usuario
