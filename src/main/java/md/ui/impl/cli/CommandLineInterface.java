@@ -7,9 +7,11 @@ import java.util.Scanner;
 
 import md.aplicacion.CargadorModelo.DatosIniciales;
 import md.aplicacion.ContextoAplicacion;
+import md.logica.CalificacionServicio;
 import md.logica.GestorViajes;
 import md.modelo.RolUsuario;
 import md.modelo.Usuario;
+import md.modelo.Viaje;
 import md.ui.api.UIEngine;
 import net.datastructures.Entry;
 import md.logica.ValidacionUbicaciones;
@@ -17,11 +19,14 @@ import md.modelo.Servicio;
 import md.modelo.Ubicacion;
 import md.rutas.api.RutaNoDisponibleException;
 import md.modelo.CalificacionViaje;
+import md.modelo.EstadoViaje;
 
 public class CommandLineInterface implements UIEngine {
 
     private final Scanner scanner = new Scanner(System.in);
     private final GestorViajes gestorViajes = new GestorViajes();
+    private final CalificacionServicio calificacionServicio =
+            new CalificacionServicio();
 
     @Override
     public void start() {
@@ -124,6 +129,7 @@ public class CommandLineInterface implements UIEngine {
         System.out.println(msj.getString("menu.usuario") + ": " + usuario.getNombre());
         System.out.println("1. " + msj.getString("menu.cliente.opcion.solicitar"));
         System.out.println("2. " + msj.getString("menu.cliente.opcion.cancelar"));
+        System.out.println("3. " + msj.getString("menu.cliente.opcion.calificar"));
 
         boolean tienePerfilConductor = usuario.getConductor() != null;
 
@@ -144,8 +150,12 @@ public class CommandLineInterface implements UIEngine {
             case 2:
             	cancelarViaje(usuario, msj);
                 break;
-
+                
             case 3:
+                calificarViaje(usuario, msj);
+                break;
+                
+            case 4:
                 if (tienePerfilConductor) {
                     cambiarRol(usuario, RolUsuario.CONDUCTOR, msj);
                 } else {
@@ -172,7 +182,8 @@ private boolean mostrarMenuConductor(Usuario usuario, ResourceBundle msj) {
         System.out.println(msj.getString("menu.usuario") + ": " + usuario.getNombre());
         System.out.println("1. " + msj.getString("menu.conductor.opcion.iniciar_viaje"));
         System.out.println("2. " + msj.getString("menu.conductor.opcion.finalizar_viaje"));
-        System.out.println("3. " + msj.getString("menu.conductor.opcion.cambiar_cliente"));
+        System.out.println("3. " + msj.getString("menu.cliente.opcion.calificar"));
+        System.out.println("4. " + msj.getString("menu.conductor.opcion.cambiar_cliente"));
         System.out.println("0. " + msj.getString("menu.opcion.cerrar_sesion"));
 
         int opcion = leerOpcion(msj.getString("menu.seleccione_opcion") + ": ", msj);
@@ -185,8 +196,12 @@ private boolean mostrarMenuConductor(Usuario usuario, ResourceBundle msj) {
             case 2:
                 finalizarViajeConductor(usuario, msj);
                 break;
-
+                
             case 3:
+                calificarViaje(usuario, msj);
+                break;
+
+            case 4:
                 cambiarRol(usuario, RolUsuario.CLIENTE, msj);
                 break;
 
@@ -207,7 +222,7 @@ private boolean mostrarMenuConductor(Usuario usuario, ResourceBundle msj) {
             usuario.cambiarRolActivo(rolNuevo);
             System.out.println(msj.getString("menu.mensaje.rol_cambiado") + ": " + usuario.getRolActivo());
         } catch (IllegalStateException e) {
-            System.out.println(msj.getString("menu.error.cambio_rol") + ": " + e.getMessage());
+            System.out.println(msj.getString("menu.error.cambio_rol"));
         }
     }
 
@@ -455,12 +470,7 @@ private void finalizarViajeConductor(Usuario usuario, ResourceBundle msj) {
     System.out.println("\n--- " + msj.getString("viaje.titulo.finalizar") + " ---");
 
     try {
-    	CalificacionViaje sinCalificar = CalificacionViaje.NO_CALIFICADO;
-
-        boolean exito = gestorViajes.procesarFinalizacionViaje(
-                usuario,
-                sinCalificar,
-                sinCalificar);
+    	boolean exito = gestorViajes.procesarFinalizacionViaje(usuario);
 
         if (exito) {
             System.out.println(msj.getString("viaje.fin.exitoso"));
@@ -471,7 +481,79 @@ private void finalizarViajeConductor(Usuario usuario, ResourceBundle msj) {
 
     } catch (Exception e) {
         System.out.println("[" + msj.getString("login.alert.attention")
-                + "] " + e.getMessage());
+                + "] " + msj.getString("viaje.error.finalizacion"));
+    }
+}
+
+private void calificarViaje(Usuario usuario, ResourceBundle msj) {
+
+    Viaje viaje = gestorViajes.consultarViajeActivo(usuario);
+
+    if (viaje == null || viaje.estadoActual() != EstadoViaje.INICIADO) {
+        System.out.println(msj.getString("viaje.error.sin_viaje_iniciado"));
+        return;
+    }
+
+    // Comprobar si el usuario ya calificó este viaje.
+    CalificacionViaje calificacionExistente;
+
+    if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
+        calificacionExistente = viaje.getCalificacionCliente();
+    } else {
+        calificacionExistente = viaje.getCalificacionConductor();
+    }
+
+    if (calificacionExistente != null) {
+        System.out.println(msj.getString("calificacion.error.ya_calificado"));
+        return;
+    }
+
+    System.out.println("\n--- " + msj.getString("calificacion.titulo") + " ---");
+
+    System.out.println("1. " + msj.getString("calificacion.opcion.malo"));
+    System.out.println("2. " + msj.getString("calificacion.opcion.regular"));
+    System.out.println("3. " + msj.getString("calificacion.opcion.bueno"));
+    System.out.println("4. " + msj.getString("calificacion.opcion.muy_bueno"));
+    System.out.println("5. " + msj.getString("calificacion.opcion.excelente"));
+    System.out.println("0. " + msj.getString("calificacion.opcion.no_calificar"));
+
+    int opcion = leerOpcionRango(
+            msj.getString("calificacion.seleccione") + ": ",
+            0,
+            5,
+            msj);
+
+    if (opcion == 0) {
+        System.out.println(msj.getString("calificacion.mensaje.omitida"));
+        return;
+    }
+
+    CalificacionViaje calificacion = switch (opcion) {
+        case 1 -> CalificacionViaje.MALO;
+        case 2 -> CalificacionViaje.REGULAR;
+        case 3 -> CalificacionViaje.BUENO;
+        case 4 -> CalificacionViaje.MUY_BUENO;
+        case 5 -> CalificacionViaje.EXCELENTE;
+        default -> throw new IllegalStateException();
+    };
+
+    try {
+
+        if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
+
+            calificacionServicio.calificarComoCliente(
+                    usuario, viaje, calificacion);
+
+        } else {
+
+            calificacionServicio.calificarComoConductor(
+                    usuario, viaje, calificacion);
+        }
+
+        System.out.println(msj.getString("calificacion.mensaje.registrada"));
+
+    } catch (IllegalArgumentException | IllegalStateException e) {
+        System.out.println(msj.getString("calificacion.error.registro"));
     }
 }
 

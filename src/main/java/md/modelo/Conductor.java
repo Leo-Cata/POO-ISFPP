@@ -73,8 +73,8 @@ public class Conductor {
 	}
 
 	public void agregarCalificacion(CalificacionViaje calificacion) {
-		if (calificacion == null || calificacion == CalificacionViaje.NO_CALIFICADO) {
-			throw new IllegalArgumentException("La calificación no es válida.");
+		if (calificacion == null) {
+			throw new IllegalArgumentException("La calificación no puede ser null.");
 		}
 
 		if (calificaciones.size() == MAX_CALIFICACIONES) {
