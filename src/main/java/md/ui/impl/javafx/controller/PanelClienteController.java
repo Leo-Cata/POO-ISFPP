@@ -1,6 +1,6 @@
 package md.ui.impl.javafx.controller;
 
-import java.util.ResourceBundle; 
+import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -47,9 +47,6 @@ public class PanelClienteController {
 
         // 2\. Activa la espera del primer clic (Origen)
         visualizador.activarSeleccion("origen");
-        // Reorganiza las teselas si cambia el ancho o alto del WebView
-        mapaView.widthProperty().addListener((obs, oldV, newV) -> visualizador.refrescarTamano());
-        mapaView.heightProperty().addListener((obs, oldV, newV) -> visualizador.refrescarTamano());
 
         // setea todos los servicios en el comboBox
         comboServicios.getItems().setAll(ContextoAplicacion.getDatosIniciales().getServicios());
@@ -145,16 +142,19 @@ public class PanelClienteController {
                 || txtLonDestino.getText().isBlank()
                 || servicio == null) {
 
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),resource.getString("client.error.missingData"));
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                    resource.getString("client.error.missingData"));
 
             return;
         }
 
         try {
 
-            Ubicacion origen = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),Double.parseDouble(txtLonOrigen.getText()));
+            Ubicacion origen = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),
+                    Double.parseDouble(txtLonOrigen.getText()));
 
-            Ubicacion destino = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),Double.parseDouble(txtLonDestino.getText()));
+            Ubicacion destino = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),
+                    Double.parseDouble(txtLonDestino.getText()));
 
             Usuario cliente = ContextoAplicacion.getUsuarioLogeado();
 
@@ -165,12 +165,14 @@ public class PanelClienteController {
             // Delegamos todo el procesamiento a la capa lógica.
             GestorViajes gestor = new GestorViajes();
 
-            GestorViajes.ResultadoSolicitud resultado =gestor.procesarSolicitudViaje(cliente,servicio,origen,destino);
+            GestorViajes.ResultadoSolicitud resultado = gestor.procesarSolicitudViaje(cliente, servicio, origen,
+                    destino);
 
             // No se encontró ningún conductor compatible.
             if (resultado == null) {
 
-                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),resource.getString("client.error.noDriver"));
+                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                        resource.getString("client.error.noDriver"));
 
                 return;
             }
@@ -183,7 +185,7 @@ public class PanelClienteController {
             }
 
             // Mostramos los recorridos reales calculados por GestorViajes.
-            visualizador.mostrar(resultado.rutas(),vehiculo.getUbicacion(),origen,destino);
+            visualizador.mostrar(resultado.rutas(), vehiculo.getUbicacion(), origen, destino);
 
             GestorViajes.Cotizacion cotizacion = resultado.cotizacion();
 
@@ -192,29 +194,33 @@ public class PanelClienteController {
             alerta.setHeaderText("Conductor asignado: " + resultado.conductor().getNombre());
 
             alerta.setContentText(String.format("El viaje fue aceptado.%n%n" + "Distancia estimada: %.2f km%n"
-                    + "Duración estimada: %.2f minutos%n"+ "Costo estimado: $%.2f",cotizacion.distanciaKm(),cotizacion.duracionMinutos(),
+                    + "Duración estimada: %.2f minutos%n" + "Costo estimado: $%.2f", cotizacion.distanciaKm(),
+                    cotizacion.duracionMinutos(),
                     cotizacion.costoTotal()));
 
             alerta.showAndWait();
 
         } catch (NumberFormatException e) {
 
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),"Las coordenadas ingresadas no son válidas.");
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                    "Las coordenadas ingresadas no son válidas.");
 
         } catch (RutaNoDisponibleException e) {
 
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),resource.getString("client.error.noRoute"));
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                    resource.getString("client.error.noRoute"));
 
         } catch (IllegalArgumentException | IllegalStateException e) {
 
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),e.getMessage());
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
         }
     }
+
     @FXML
     void handleCerrarSesion(ActionEvent event) {
 
         ContextoAplicacion.setUsuarioLogeado(null);
 
-        NavegadorVistas.cambiarEscena(event,"/ui/javafx/view/login.fxml");
+        NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/login.fxml");
     }
 }

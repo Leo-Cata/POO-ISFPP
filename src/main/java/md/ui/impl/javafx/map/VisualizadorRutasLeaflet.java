@@ -178,13 +178,6 @@ public final class VisualizadorRutasLeaflet implements VisualizadorMapa {
     }
 
     @Override
-    public void refrescarTamano() {
-        if (paginaLista) {
-            webEngine.executeScript("window.refrescarTamano();");
-        }
-    }
-
-    @Override
     public void limpiarMarcador(String tipo) {
         ejecutarJS("window.limpiarMarcador('" + tipo + "');");
     }
