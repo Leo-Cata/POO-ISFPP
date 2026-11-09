@@ -1,5 +1,6 @@
 package md.modelo;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import net.datastructures.Entry;
@@ -7,6 +8,9 @@ import net.datastructures.ProbeHashMap;
 
 public class Conductor {
 
+	private static final int MAX_CALIFICACIONES = 200;
+
+	private ArrayList<CalificacionViaje> calificaciones = new ArrayList<CalificacionViaje>();
 	private String licenciaConducir;
 	private CategoriaVehiculo categoriaVehiculoActivo;
 	private ProbeHashMap<String, Vehiculo> vehiculos;// alamcenar los autos en un mapa y como clave la patente
@@ -68,6 +72,26 @@ public class Conductor {
 		return this.estado == EstadoConductor.VIAJE_A_ORIGEN || this.estado == EstadoConductor.VIAJE_A_DESTINO;
 	}
 
+	public void agregarCalificacion(CalificacionViaje calificacion) {
+		if (calificacion == null || calificacion == CalificacionViaje.NO_CALIFICADO) {
+			throw new IllegalArgumentException("La calificación no es válida.");
+		}
+
+		if (calificaciones.size() == MAX_CALIFICACIONES) {
+			calificaciones.remove(0);
+		}
+
+		calificaciones.addLast(calificacion);
+		;
+	}
+
+	public ArrayList<CalificacionViaje> getCalificaciones() {
+		ArrayList<CalificacionViaje> copiaCalificaciones = new ArrayList<CalificacionViaje>();
+
+		copiaCalificaciones.addAll(calificaciones);
+
+		return copiaCalificaciones;
+	}
 	// setters y getters de conductor
 
 	public Vehiculo getVehiculoActivo() {
@@ -75,6 +99,15 @@ public class Conductor {
 	}
 
 	public void setVehiculoActivo(Vehiculo vehiculoActivo) {
+	    if (vehiculoActivo == null) {
+	        throw new IllegalArgumentException("El vehículo no puede ser null.");
+	    }
+
+	    if (this.vehiculos.get(vehiculoActivo.getPatente()) == null) {
+	        throw new IllegalArgumentException(
+	                "El vehículo no está registrado para este conductor.");
+	    }
+		
 		this.vehiculoActivo = vehiculoActivo;
 	}
 

@@ -114,6 +114,11 @@ public class GestorViajes {
 
         //Crear y registrar el viaje.
         Viaje nuevoViaje = new Viaje(clienteUsuario,origen,destino,servicio);
+        
+        nuevoViaje.setCostoTotal(cotizacion.costoTotal());
+        nuevoViaje.setDuracionEstimadaMinutos(cotizacion.duracionMinutos());
+        nuevoViaje.setDistanciaTotal(cotizacion.distanciaKm());
+        
 
         nuevoViaje.solicitar(LocalDateTime.now());
 
@@ -138,23 +143,32 @@ public class GestorViajes {
      *
      * @return true si se canceló un viaje; false si no había uno activo.
      */
-    public boolean procesarCancelacionViaje(Usuario clienteUsuario,String motivo) {
+    public boolean procesarCancelacionViaje(Usuario usuario,String motivo) {
 
-        if (clienteUsuario == null || clienteUsuario.getCliente() == null) {
-            throw new IllegalArgumentException("El usuario debe tener un perfil de cliente.");
+
+        if (usuario == null) {
+            throw new IllegalArgumentException("El usuario es obligatorio.");
         }
 
         if (motivo == null || motivo.isBlank()) {
             throw new IllegalArgumentException("El motivo de cancelación es obligatorio.");
         }
 
-        for (Viaje viaje : clienteUsuario.getCliente().getViajes().values()) {
+        Iterable<Viaje> viajesUsuario = obtenerViajesUsuario(usuario);
+
+        for (Viaje viaje : viajesUsuario) {
 
             EstadoViaje estado = viaje.estadoActual();
 
             if (estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
-
-                viaje.cancelar(LocalDateTime.now(),clienteUsuario,motivo);
+            	
+            	EstadoViaje estadoAnterior = viaje.estadoActual();
+            	
+            	double costo = calcularCostoCancelacion(viaje, usuario, estadoAnterior);
+            	
+            	viaje.setCostoCancelacion(costo);
+            	
+                viaje.cancelar(LocalDateTime.now(),usuario,motivo);
 
                 return true;
             }
@@ -208,6 +222,17 @@ public class GestorViajes {
         return true;
     }
 
+    
+    /**
+     * Consulta el viaje activo asociado al conductor.
+     *
+     * @param conductorUsuario usuario cuyo perfil de conductor se desea consultar.
+     * @return viaje aceptado o iniciado del conductor, o null si no tiene uno activo.
+     */
+    public Viaje consultarViajeActivoConductor(Usuario conductorUsuario) {
+    	return obtenerViajeActivoConductor(conductorUsuario);
+    }
+
     /**
      * Busca el viaje aceptado o iniciado del conductor.
      */
@@ -229,4 +254,111 @@ public class GestorViajes {
 
         return null;
     }
+    
+    /**
+     * Calcula el costo correspondiente a la cancelación de un viaje,
+     * según su estado anterior y el usuario que solicita la cancelación.
+     *
+     * Para viajes solicitados no se aplica ningún cargo.
+     * Para viajes aceptados se aplica el porcentaje configurado si cancela
+     * el cliente.
+     * Para viajes iniciados se calcula un importe proporcional al tiempo
+     * transcurrido si cancela el cliente.
+     *
+     * @param viaje viaje que se desea cancelar.
+     * @param usuario usuario que solicita la cancelación.
+     * @param estadoAnterior estado del viaje antes de su cancelación.
+     * @return importe correspondiente al costo de cancelación.
+     */
+    private double calcularCostoCancelacion(
+            Viaje viaje, Usuario usuario, EstadoViaje estadoAnterior) {
+
+        if (estadoAnterior == EstadoViaje.SOLICITADO) {
+            return 0.0;
+        }
+
+        double costoCancelacionCliente = CargarParametros.getCostoCancelacionViajeAceptado();
+        if (estadoAnterior == EstadoViaje.ACEPTADO) {
+            if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
+                return viaje.getCostoTotal() * costoCancelacionCliente;
+            }
+
+            return 0.0;
+        }
+        
+        if (estadoAnterior == EstadoViaje.INICIADO) {
+        	if (usuario.getRolActivo() == RolUsuario.CONDUCTOR) {
+                return 0.0;
+            }
+        	
+        	LocalDateTime fechaInicio = obtenerFechaInicio(viaje);
+            LocalDateTime fechaCancelacion = LocalDateTime.now();
+
+            double minutosTranscurridos =
+                    java.time.Duration.between(fechaInicio, fechaCancelacion).toSeconds() / 60.0;
+
+            double proporcion = minutosTranscurridos
+                    / viaje.getDuracionEstimadaMinutos();
+
+            proporcion = Math.min(proporcion, 1.0);
+
+            return viaje.getCostoTotal() * proporcion;
+        	// Calcular costo proporcional a la distancia recorrida.
+        }
+
+        return 0.0;
+    }
+    
+    /**
+     * Busca y obtiene la fecha y hora en que se inició el viaje.
+     *
+     * @param viaje viaje del que se desea obtener la fecha de inicio.
+     * @return fecha y hora del registro correspondiente al estado INICIADO.
+     * @throws IllegalStateException si el viaje no contiene un registro de inicio.
+     */
+    private LocalDateTime obtenerFechaInicio(Viaje viaje) {
+
+        for (var registro : viaje.getRegistroViaje()) {
+            if (registro.getEstado() == EstadoViaje.INICIADO) {
+                return registro.getFechaHora();
+            }
+        }
+
+        throw new IllegalStateException(
+                "No se encontró el registro de inicio del viaje.");
+    }
+    
+    /**
+     * Obtiene los viajes asociados al perfil correspondiente al rol activo del usuario.
+     *
+     * @param usuario usuario del que se desean obtener los viajes.
+     * @return colección de viajes del cliente o conductor.
+     * @throws IllegalArgumentException si el usuario no tiene el perfil correspondiente.
+     * @throws IllegalStateException si el usuario no tiene un rol activo válido.
+     */
+    private Iterable<Viaje> obtenerViajesUsuario(Usuario usuario) {
+
+        if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
+
+            if (usuario.getCliente() == null) {
+                throw new IllegalArgumentException(
+                        "El usuario no tiene un perfil de cliente.");
+            }
+
+            return usuario.getCliente().getViajes().values();
+        }
+
+        if (usuario.getRolActivo() == RolUsuario.CONDUCTOR) {
+
+            if (usuario.getConductor() == null) {
+                throw new IllegalArgumentException(
+                        "El usuario no tiene un perfil de conductor.");
+            }
+
+            return usuario.getConductor().getViajes().values();
+        }
+
+        throw new IllegalStateException("El usuario no tiene un rol activo válido.");
+    }
+    
 }

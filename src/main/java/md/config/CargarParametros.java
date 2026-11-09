@@ -28,8 +28,7 @@ public class CargarParametros {
 	private static final String CLAVE_ARCHIVO_OSM = "rutas.osm";
 	private static final String CLAVE_CACHE_RUTAS = "rutas.cache";
 	private static final String CLAVE_VELOCIDAD_MEDIA ="viaje.velocidad.media.kmh";
-	private static double velocidadMediaKmH;
-	private static double toleranciaAjusteMetros;
+	private static final String CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO ="costo.cancelacion.aceptado";
 
 	// la tabla clave->valor queda guardada para que los getters la consulten
 	// despues.
@@ -43,6 +42,9 @@ public class CargarParametros {
 	private static double latitudMax;
 	private static double longitudMin;
 	private static double longitudMax;
+	private static double costoCancelacionViajeAceptado;
+	private static double velocidadMediaKmH;
+	private static double toleranciaAjusteMetros;
 
 	/**
 	 * Carga y procesa los parámetros de configuración de la aplicación desde el
@@ -89,6 +91,8 @@ public class CargarParametros {
 		longitudMin = Math.min(longitud1, longitud2);
 		longitudMax = Math.max(longitud1, longitud2);
 
+		costoCancelacionViajeAceptado = Double.parseDouble(leerClave(properties, CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO));
+		
 		toleranciaAjusteMetros = Double.parseDouble(leerClave(properties, CLAVE_TOLERANCIA_AJUSTE));
 
 		if (!Double.isFinite(toleranciaAjusteMetros) || toleranciaAjusteMetros <= 0) {
@@ -188,5 +192,9 @@ public class CargarParametros {
 	
 	public static double getVelocidadMediaKmH() {
 	    return velocidadMediaKmH;
+	}
+	
+	public static double getCostoCancelacionViajeAceptado() {
+	    return costoCancelacionViajeAceptado;
 	}
 }

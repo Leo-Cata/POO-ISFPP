@@ -46,18 +46,22 @@ public class InicializadorEscenario {
                 continue;
             }
 
-            Vehiculo vehiculo = conductor.getVehiculoActivo();
-
-            if (vehiculo == null) {
+            if (conductor.getVehiculos().isEmpty()) {
                 throw new IllegalStateException("El conductor " + usuario.getEmail()
-                        + " no tiene un vehículo activo.");
+                        + " no tiene vehículos registrados.");
             }
 
-            // Primero obtenemos una ubicación vial válida.
-            Ubicacion ubicacion = generador.generar();
+            // Inicializamos la ubicación de todos los vehículos del conductor.
+            for (Vehiculo vehiculo : conductor.getVehiculos().values()) {
 
-            // Asignamos la ubicación al vehículo activo.
-            vehiculo.setUbicacion(ubicacion);
+                if (vehiculo == null) {
+                    throw new IllegalStateException("El conductor " + usuario.getEmail()
+                            + " tiene un vehículo null.");
+                }
+
+                Ubicacion ubicacion = generador.generar();
+                vehiculo.setUbicacion(ubicacion);
+            }
 
             // Activamos el rol de conductor.
             // El cambio de rol también lo pone en estado DISPONIBLE.

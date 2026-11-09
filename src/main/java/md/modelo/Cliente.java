@@ -1,5 +1,6 @@
 package md.modelo;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import net.datastructures.Entry;
@@ -7,6 +8,9 @@ import net.datastructures.ProbeHashMap;
 
 public class Cliente {
 
+	private static final int MAX_CALIFICACIONES = 100;
+
+	private ArrayList<CalificacionViaje> calificaciones = new ArrayList<CalificacionViaje>();
 	private ProbeHashMap<UUID, Viaje> viajes;
 
 	public Cliente() {
@@ -15,10 +19,10 @@ public class Cliente {
 
 	public ProbeHashMap<UUID, Viaje> getViajes() {
 		ProbeHashMap<UUID, Viaje> viajesCopia = new ProbeHashMap<UUID, Viaje>();
-		
-		for(Entry<UUID, Viaje> viaj : viajes.entrySet())
+
+		for (Entry<UUID, Viaje> viaj : viajes.entrySet())
 			viajesCopia.put(viaj.getKey(), viaj.getValue());
-		//se devuelve una copia de viajes
+		// se devuelve una copia de viajes
 		return viajesCopia;
 	}
 
@@ -28,16 +32,15 @@ public class Cliente {
 	 * @param viaje del cual se obtendra su UUID para ser usada como llave
 	 */
 	public void agregarViajes(Viaje viaje) {
-		
+
 		if (viaje == null) {
 			throw new IllegalArgumentException("El viaje no puede ser null");
 		}
 
-		if(viajes.get(viaje.getId()) != null) {
+		if (viajes.get(viaje.getId()) != null) {
 			throw new IllegalArgumentException("El viaje ya esta registrado.");
 		}
-			
-		
+
 		this.viajes.put(viaje.getId(), viaje);
 	}
 
@@ -56,10 +59,30 @@ public class Cliente {
 		return false;
 	}
 
+	public void agregarCalificacion(CalificacionViaje calificacion) {
+		if (calificacion == null || calificacion == CalificacionViaje.NO_CALIFICADO) {
+			throw new IllegalArgumentException("La calificación no es válida.");
+		}
+
+		if (calificaciones.size() == MAX_CALIFICACIONES) {
+			calificaciones.remove(0);
+		}
+
+		calificaciones.addLast(calificacion);
+		;
+	}
+
 	// to string
 	@Override
 	public String toString() {
 		return "Cliente [viajes=" + viajes + "]";
 	}
 
+	public ArrayList<CalificacionViaje> getCalificaciones() {
+		ArrayList<CalificacionViaje> copiaCalificaciones = new ArrayList<CalificacionViaje>();
+
+		copiaCalificaciones.addAll(calificaciones);
+
+		return copiaCalificaciones;
+	}
 }

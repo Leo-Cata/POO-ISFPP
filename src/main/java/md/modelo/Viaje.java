@@ -6,6 +6,10 @@ import java.util.UUID;
 
 public class Viaje {
 	private UUID id;
+	private double costoTotal;
+	private double duracionEstimadaMinutos;
+	private double distanciaTotal;
+	private double costoCancelacion;
 	private String motivoCancelacion;
 	private RolUsuario rolCancela;
 	private Usuario cliente, conductor;
@@ -190,8 +194,8 @@ public class Viaje {
 			throw new IllegalStateException("El viaje todavia no fue solicitado");
 		}
 
-		if (estadoActual() == EstadoViaje.FINALIZADO
-				|| estadoActual() == EstadoViaje.CANCELADO || estadoActual() == EstadoViaje.RECHAZADO) {
+		if (estadoActual() == EstadoViaje.FINALIZADO || estadoActual() == EstadoViaje.CANCELADO
+				|| estadoActual() == EstadoViaje.RECHAZADO) {
 			throw new IllegalStateException("El viaje se encuentra finalizado, cancelado o rechazado");
 		}
 
@@ -249,6 +253,96 @@ public class Viaje {
 
 	public void setId(UUID id) {
 		this.id = id;
+	}
+
+	/**
+	 * Obtiene el costo total cotizado originalmente para el viaje.
+	 *
+	 * @return costo total del viaje.
+	 */
+	public double getCostoTotal() {
+		return costoTotal;
+	}
+
+	/**
+	 * Establece el costo total correspondiente a la cotización inicial del viaje.
+	 *
+	 * @param costoTotal importe total cotizado.
+	 * @throws IllegalArgumentException si el costo es negativo.
+	 */
+	public void setCostoTotal(double costoTotal) {
+		if (costoTotal < 0) {
+			throw new IllegalArgumentException("El costo no puede ser negativo.");
+		}
+
+		this.costoTotal = costoTotal;
+	}
+
+	/**
+	 * Obtiene la duración estimada del viaje, calculada al momento de solicitarlo.
+	 *
+	 * @return duración estimada del viaje expresada en minutos.
+	 */
+	public double getDuracionEstimadaMinutos() {
+		return duracionEstimadaMinutos;
+	}
+
+	/**
+	 * Establece la duración estimada del viaje según la cotización inicial.
+	 *
+	 * @param duracionEstimadaMinutos duración estimada expresada en minutos.
+	 * @throws IllegalArgumentException si la duración no es válida.
+	 */
+	public void setDuracionEstimadaMinutos(double duracionEstimadaMinutos) {
+		if (duracionEstimadaMinutos < 0) {
+			throw new IllegalArgumentException("La duracion no puede ser negativa.");
+		}
+		this.duracionEstimadaMinutos = duracionEstimadaMinutos;
+	}
+
+	/**
+	 * Obtiene la distancia total del viaje.
+	 *
+	 * @return distancia total del viaje expresada en km.
+	 */
+	public double getDistanciaTotal() {
+		return distanciaTotal;
+	}
+
+	/**
+	 * Establece la distancia total del viaje según la cotización inicial.
+	 *
+	 * @param distanciaTotal distancia total expresada en km.
+	 * @throws IllegalArgumentException si la distancia no es válida.
+	 */
+	public void setDistanciaTotal(double distanciaTotal) {
+		if (distanciaTotal < 0) {
+			throw new IllegalArgumentException("La distancia total del recorrido no puede ser negativa.");
+		}
+
+		this.distanciaTotal = distanciaTotal;
+	}
+
+	/**
+	 * Obtiene el importe calculado por la cancelación del viaje.
+	 *
+	 * @return costo de cancelación del viaje.
+	 */
+	public double getCostoCancelacion() {
+		return costoCancelacion;
+	}
+
+	/**
+	 * Establece el importe correspondiente a la cancelación del viaje.
+	 *
+	 * @param costoCancelacion importe calculado por la cancelación.
+	 * @throws IllegalArgumentException si el costo es negativo.
+	 */
+	public void setCostoCancelacion(double costoCancelacion) {
+		if (costoCancelacion < 0) {
+			throw new IllegalArgumentException("El costo de cancelacion no puede ser negativo.");
+		}
+		this.costoCancelacion = costoCancelacion;
 	}
 
 	public String getMotivoCancelacion() {
