@@ -4,7 +4,7 @@ import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.web.WebView;
@@ -35,6 +35,27 @@ public class PanelClienteController {
     private TextField txtLatDestino;
     @FXML
     private TextField txtLonDestino;
+    @FXML
+    private ResourceBundle resource;
+    @FXML
+    private ComboBox<Servicio> comboServicios;
+    @FXML
+    private Button botonClienteCotizar;
+    @FXML
+    private Button botonClienteSolicitar;
+
+    // gesto de viaje para delegar todo el procesamiento a la capa lógica.
+    private GestorViajes gestor;
+    private GestorViajes.Cotizacion cotizacion;
+    private GestorViajes.ResultadoSolicitud resultadoSolicitud;
+
+    // variables de ubicacion para cotizar/solicitar
+    private Ubicacion origenActual;
+    private Ubicacion destinoActual;
+
+    // variables de servicio y cliente
+    private Usuario cliente;
+    private Servicio servicio;
 
     @FXML
     public void initialize() {
@@ -63,6 +84,11 @@ public class PanelClienteController {
             }
         });
 
+        // se genera un nuevo gestor
+        gestor = new GestorViajes();
+
+        // al iniciar, se desactiva el boton de solicitar viaje
+        botonClienteSolicitar.setDisable(true);
     }
 
     private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
@@ -122,54 +148,35 @@ public class PanelClienteController {
         }
         visualizador.limpiarMarcador(tipo);
         visualizador.activarSeleccion(tipo);
+
+        invalidarCotizacion();
     }
 
-    @FXML
-    private ResourceBundle resource;
-
-    @FXML
-    ComboBox<Servicio> comboServicios;
+    // metodo auxiliar para no permitir cambiar de puntos una vez cotizado
+    private void invalidarCotizacion() {
+        cotizacion = null;
+        if (botonClienteSolicitar != null) {
+            botonClienteSolicitar.setDisable(true);
+        }
+    }
 
     @FXML
     void handleSolicitarViaje(ActionEvent event) {
 
-        Servicio servicio = comboServicios.getValue();
-
-        // Verificamos que estén completos todos los datos.
-        if (txtLatOrigen.getText().isBlank()
-                || txtLonOrigen.getText().isBlank()
-                || txtLatDestino.getText().isBlank()
-                || txtLonDestino.getText().isBlank()
-                || servicio == null) {
-
+        // chequea que se haya cotizado primero el viaje
+        if (cotizacion == null || origenActual == null || destinoActual == null || servicio == null) {
+            botonClienteSolicitar.setDisable(true);
             AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    resource.getString("client.error.missingData"));
-
+                    "Debe cotizar el viaje antes de solicitarlo.");
             return;
         }
-
         try {
 
-            Ubicacion origen = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),
-                    Double.parseDouble(txtLonOrigen.getText()));
-
-            Ubicacion destino = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),
-                    Double.parseDouble(txtLonDestino.getText()));
-
-            Usuario cliente = ContextoAplicacion.getUsuarioLogeado();
-
-            if (cliente == null || cliente.getRolActivo() != RolUsuario.CLIENTE) {
-                throw new IllegalStateException("No hay un usuario logueado con el rol CLIENTE.");
-            }
-
-            // Delegamos todo el procesamiento a la capa lógica.
-            GestorViajes gestor = new GestorViajes();
-
-            GestorViajes.ResultadoSolicitud resultado = gestor.procesarSolicitudViaje(cliente, servicio, origen,
-                    destino);
+            resultadoSolicitud = gestor.procesarSolicitudViaje(cliente, servicio, origenActual,
+                    destinoActual);
 
             // No se encontró ningún conductor compatible.
-            if (resultado == null) {
+            if (resultadoSolicitud == null) {
 
                 AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
                         resource.getString("client.error.noDriver"));
@@ -178,28 +185,19 @@ public class PanelClienteController {
             }
 
             // El vehículo es el que realmente quedó asignado al viaje.
-            Vehiculo vehiculo = resultado.viaje().getVehiculo();
+            Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
 
             if (vehiculo == null || vehiculo.getUbicacion() == null) {
                 throw new IllegalStateException("El viaje no tiene un vehículo con ubicación asignada.");
             }
 
             // Mostramos los recorridos reales calculados por GestorViajes.
-            visualizador.mostrar(resultado.rutas(), vehiculo.getUbicacion(), origen, destino);
+            visualizador.mostrar(resultadoSolicitud.rutas(), vehiculo.getUbicacion(), origenActual, destinoActual);
 
-            GestorViajes.Cotizacion cotizacion = resultado.cotizacion();
+            botonClienteSolicitar.setDisable(true);
 
-            Alert alerta = new Alert(Alert.AlertType.INFORMATION);
-            alerta.setTitle("Solicitud procesada");
-            alerta.setHeaderText("Conductor asignado: " + resultado.conductor().getNombre());
-
-            alerta.setContentText(String.format("El viaje fue aceptado.%n%n" + "Distancia estimada: %.2f km%n"
-                    + "Duración estimada: %.2f minutos%n" + "Costo estimado: $%.2f", cotizacion.distanciaKm(),
-                    cotizacion.duracionMinutos(),
-                    cotizacion.costoTotal()));
-
-            alerta.showAndWait();
-
+            AlertaUtil.mostrarAlerta("Solicitud procesada", "Conductor asignado: "
+                    + resultadoSolicitud.conductor().getNombre() + "\\nViaje aceptado exitosamente.");
         } catch (NumberFormatException e) {
 
             AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
@@ -222,5 +220,56 @@ public class PanelClienteController {
         ContextoAplicacion.setUsuarioLogeado(null);
 
         NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/login.fxml");
+    }
+
+    @FXML
+    void handleCotizarViaje(ActionEvent event) {
+        servicio = comboServicios.getValue();
+
+        // Verificamos que estén completos todos los datos.
+        if (txtLatOrigen.getText().isBlank()
+                || txtLonOrigen.getText().isBlank()
+                || txtLatDestino.getText().isBlank()
+                || txtLonDestino.getText().isBlank()
+                || servicio == null) {
+
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                    resource.getString("client.error.missingData"));
+
+            return;
+        }
+
+        try {
+
+            origenActual = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),
+                    Double.parseDouble(txtLonOrigen.getText()));
+
+            destinoActual = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),
+                    Double.parseDouble(txtLonDestino.getText()));
+
+            cliente = ContextoAplicacion.getUsuarioLogeado();
+
+            if (cliente == null || cliente.getRolActivo() != RolUsuario.CLIENTE) {
+                throw new IllegalStateException("No hay un usuario logueado con el rol CLIENTE.");
+            }
+
+            cotizacion = gestor.calcularCotizacion(servicio, origenActual, destinoActual);
+
+            // muestra el detalle de la cotizacion
+            String detalle = String.format(
+                    "Servicio: %s%n%n" + "Distancia estimada: %.2f km%n" + "Duración estimada: %.2f minutos%n"
+                            + "Costo estimado: $%.2f",
+                    servicio.getNombre(), cotizacion.distanciaKm(), cotizacion.duracionMinutos(),
+                    cotizacion.costoTotal());
+
+            AlertaUtil.mostrarAlerta("Cotizacion", detalle);
+
+            botonClienteSolicitar.setDisable(false);
+        } catch (NumberFormatException e) {
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                    "Las coordenadas ingresadas no son válidas.");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
+        }
     }
 }

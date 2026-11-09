@@ -8,35 +8,25 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
 
-<VBox prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/26"
-  xmlns:fx="http://javafx.com/fxml/1"
-  fx:controller="md.ui.impl.javafx.controller.PanelClienteController">
+<VBox prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.PanelClienteController">
   <children>
-    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0"
-      VBox.vgrow="ALWAYS">
+    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
       <children>
-        <WebView fx:id="mapaView" layoutX="313.0" layoutY="7.0" maxHeight="400.0" maxWidth="600.0"
-          prefHeight="368.0" prefWidth="486.0" style="-fx-max-height: 400;"
-          AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+        <WebView fx:id="mapaView" layoutX="313.0" layoutY="7.0" maxHeight="400.0" maxWidth="600.0" prefHeight="368.0" prefWidth="486.0" style="-fx-max-height: 400;" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
 
-        <Label fx:id="labelClienteOrigen" layoutX="14.0" layoutY="4.0" prefHeight="19.0"
-          prefWidth="76.0" text="%client.label.origin" />
+        <Label fx:id="labelClienteOrigen" layoutX="14.0" layoutY="4.0" prefHeight="19.0" prefWidth="76.0" text="%client.label.origin" />
         <TextField fx:id="txtLatOrigen" layoutX="14.0" layoutY="27.0" />
         <TextField fx:id="txtLonOrigen" layoutX="14.0" layoutY="62.0" />
-        <Button fx:id="botonClienteBorrarOrigen" layoutX="186.0" layoutY="27.0"
-          mnemonicParsing="false" onAction="#handleBorrarOrigen" text="%client.delete.origin" />
-		<Button layoutX="210.0" layoutY="320.0" text="Cambiar usuario" onAction="#handleCerrarSesion" />
-        <Label fx:id="labelClienteDestino" layoutX="14.0" layoutY="102.0" prefHeight="19.0"
-          prefWidth="76.0" text="%client.label.destination" />
+        <Button fx:id="botonClienteBorrarOrigen" layoutX="186.0" layoutY="27.0" mnemonicParsing="false" onAction="#handleBorrarOrigen" style="-fx-max-width: 100px;" text="%client.delete.origin" />
+		<Button layoutX="14.0" layoutY="552.0" onAction="#handleCerrarSesion" style="-fx-max-width: 100px;" text="\%cliente.change.user" />
+        <Label fx:id="labelClienteDestino" layoutX="14.0" layoutY="102.0" prefHeight="19.0" prefWidth="76.0" text="%client.label.destination" />
         <TextField fx:id="txtLatDestino" layoutX="14.0" layoutY="122.0" />
         <TextField fx:id="txtLonDestino" layoutX="14.0" layoutY="157.0" />
-        <Button fx:id="botonClienteBorrarDestino" layoutX="186.0" layoutY="135.0"
-          mnemonicParsing="false" onAction="#handleBorrarDestino" text="%client.delete.destination" />
-        <Label layoutX="52.0" layoutY="245.0" text="%client.label.service" />
-        <ComboBox fx:id="comboServicios" layoutX="31.0" layoutY="273.0" prefWidth="150.0" />
-        <Button fx:id="botonClienteSolicitar" layoutX="210.0" layoutY="273.0"
-          mnemonicParsing="false" onAction="#handleSolicitarViaje"
-          text="%client.action.requestTrip" />
+        <Button fx:id="botonClienteBorrarDestino" layoutX="182.0" layoutY="122.0" mnemonicParsing="false" onAction="#handleBorrarDestino" style="-fx-max-width: 100px;" text="%client.delete.destination" />
+        <Label layoutX="15.0" layoutY="247.0" text="%client.label.service" />
+        <ComboBox fx:id="comboServicios" layoutX="15.0" layoutY="273.0" prefWidth="150.0" />
+        <Button fx:id="botonClienteSolicitar" layoutX="182.0" layoutY="272.0" mnemonicParsing="false" onAction="#handleSolicitarViaje" prefHeight="27.0" prefWidth="127.0" style="-fx-max-width: 100px;" text="%client.action.requestTrip" />
+            <Button fx:id="botonClienteCotizar" layoutX="14.0" layoutY="194.0" mnemonicParsing="false" onAction="#handleCotizarViaje" prefHeight="27.0" prefWidth="127.0" style="-fx-max-width: 100px;" text="cotizar" />
       </children>
     </AnchorPane>
   </children>
