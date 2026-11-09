@@ -6,6 +6,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.web.WebView;
 import javafx.util.StringConverter;
@@ -43,6 +44,20 @@ public class PanelClienteController {
     private Button botonClienteCotizar;
     @FXML
     private Button botonClienteSolicitar;
+    @FXML
+    private Label clienetDriver;
+    @FXML
+    private Label clienteConductorNom;
+    @FXML
+    private Label clienteConductorVehiculoTitulo;
+    @FXML
+    private Label clienteVehiculoModelo;
+    @FXML
+    private Label clienteConductorPatente;
+    @FXML
+    private Label clienteViajeEstadoActual;
+    @FXML
+    private Label clienteViajeEstadoTitulo;
 
     // gesto de viaje para delegar todo el procesamiento a la capa lógica.
     private GestorViajes gestor;
@@ -89,6 +104,9 @@ public class PanelClienteController {
 
         // al iniciar, se desactiva el boton de solicitar viaje
         botonClienteSolicitar.setDisable(true);
+
+        // al iniciar, se ocultaran los labels de la info del conductor
+        mostrarOcultarInfoConductor(false);
     }
 
     private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
@@ -198,6 +216,9 @@ public class PanelClienteController {
 
             AlertaUtil.mostrarAlerta("Solicitud procesada", "Conductor asignado: "
                     + resultadoSolicitud.conductor().getNombre() + "\\nViaje aceptado exitosamente.");
+
+            asignarConductorInfo();
+            mostrarOcultarInfoConductor(true);
         } catch (NumberFormatException e) {
 
             AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
@@ -278,5 +299,24 @@ public class PanelClienteController {
         } catch (IllegalArgumentException | IllegalStateException e) {
             AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
         }
+    }
+
+    // funcion auxiliar para mostrar los datos del conductor en pantalla
+    private void asignarConductorInfo() {
+        clienteConductorNom.setText(resultadoSolicitud.conductor().getNombre());
+        clienteVehiculoModelo.setText(resultadoSolicitud.conductor().getConductor().getVehiculoActivo().getModelo());
+        clienteConductorPatente.setText(resultadoSolicitud.conductor().getConductor().getVehiculoActivo().getPatente());
+        clienteViajeEstadoActual.setText(resultadoSolicitud.viaje().estadoActual().name());
+    }
+
+    // funcion auxiliar para mostrar/ocultar los labels de los datos del conductor
+    private void mostrarOcultarInfoConductor(boolean mostrar) {
+        clienetDriver.setVisible(mostrar);
+        clienteConductorNom.setVisible(mostrar);
+        clienteConductorVehiculoTitulo.setVisible(mostrar);
+        clienteVehiculoModelo.setVisible(mostrar);
+        clienteConductorPatente.setVisible(mostrar);
+        clienteViajeEstadoActual.setVisible(mostrar);
+        clienteViajeEstadoTitulo.setVisible(mostrar);
     }
 }
