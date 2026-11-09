@@ -257,12 +257,19 @@ public class PanelClienteController {
 
             // muestra el detalle de la cotizacion
             String detalle = String.format(
-                    "Servicio: %s%n%n" + "Distancia estimada: %.2f km%n" + "Duración estimada: %.2f minutos%n"
-                            + "Costo estimado: $%.2f",
-                    servicio.getNombre(), cotizacion.distanciaKm(), cotizacion.duracionMinutos(),
+                    "%s: %.2f km%n" +
+                            "%s: %.2f minutos%n" +
+                            "%s: $%.2f",
+                    resource.getString("viaje.cotizacion.distancia"),
+                    cotizacion.distanciaKm(),
+                    resource.getString("viaje.cotizacion.duracion"),
+                    cotizacion.duracionMinutos(),
+                    resource.getString("viaje.costo_estimado"),
                     cotizacion.costoTotal());
 
-            AlertaUtil.mostrarAlerta("Cotizacion", detalle);
+            AlertaUtil.mostrarAlerta(
+                    resource.getString("viaje.cotizacion.titulo"),
+                    detalle);
 
             botonClienteSolicitar.setDisable(false);
         } catch (NumberFormatException e) {
