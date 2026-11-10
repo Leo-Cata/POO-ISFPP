@@ -18,22 +18,26 @@
         <TextField fx:id="txtLatOrigen" layoutX="14.0" layoutY="27.0" />
         <TextField fx:id="txtLonOrigen" layoutX="14.0" layoutY="62.0" />
         <Button fx:id="botonClienteBorrarOrigen" layoutX="186.0" layoutY="27.0" mnemonicParsing="false" onAction="#handleBorrarOrigen" style="-fx-max-width: 100px;" text="%client.delete.origin" />
-        <Button layoutX="14.0" layoutY="552.0" onAction="#handleCerrarSesion" style="-fx-max-width: 125px;" text="\%cliente.change.user" />
+        <Button layoutX="14.0" layoutY="552.0" onAction="#handleCerrarSesion" style="-fx-max-width: 125px;" text="%client.change.user" />
         <Label fx:id="labelClienteDestino" layoutX="14.0" layoutY="102.0" prefHeight="19.0" prefWidth="76.0" text="%client.label.destination" />
         <TextField fx:id="txtLatDestino" layoutX="14.0" layoutY="122.0" />
         <TextField fx:id="txtLonDestino" layoutX="14.0" layoutY="157.0" />
-        <Button fx:id="botonClienteBorrarDestino" layoutX="182.0" layoutY="122.0" mnemonicParsing="false" onAction="#handleBorrarDestino" style="-fx-max-width: 100px;" text="%client.delete.destination" />
-        <Label layoutX="15.0" layoutY="247.0" text="%client.label.service" />
-        <ComboBox fx:id="comboServicios" layoutX="15.0" layoutY="273.0" prefWidth="150.0" />
-        <Button fx:id="botonClienteSolicitar" layoutX="182.0" layoutY="272.0" mnemonicParsing="false" onAction="#handleSolicitarViaje" prefHeight="27.0" prefWidth="127.0" style="-fx-max-width: 100px;" text="%client.action.requestTrip" />
-        <Button fx:id="botonClienteCotizar" layoutX="14.0" layoutY="194.0" mnemonicParsing="false" onAction="#handleCotizarViaje" prefHeight="27.0" prefWidth="127.0" style="-fx-max-width: 100px;" text="%client.quoteTrip" />
+        <Button fx:id="botonClienteBorrarDestino" layoutX="186.0" layoutY="122.0" mnemonicParsing="false" onAction="#handleBorrarDestino" style="-fx-max-width: 100px;" text="%client.delete.destination" />
+        <Label layoutX="15.0" layoutY="197.0" text="%client.label.service" />
+        <ComboBox fx:id="comboServicios" layoutX="15.0" layoutY="223.0" prefWidth="150.0" />
+        <Button fx:id="botonClienteSolicitar" layoutX="186.0" layoutY="272.0" mnemonicParsing="false" onAction="#handleSolicitarViaje" prefHeight="27.0" prefWidth="127.0" style="-fx-max-width: 100px;" text="%client.action.requestTrip" />
+        <Button fx:id="botonClienteCotizar" layoutX="18.0" layoutY="272.0" mnemonicParsing="false" onAction="#handleCotizarViaje" prefHeight="27.0" prefWidth="127.0" style="-fx-max-width: 100px;" text="%client.quote.trip" />
             <Label fx:id="clienetDriver" layoutX="314.0" layoutY="390.0" text="%cliente.driver" />
-            <Label fx:id="clienteConductorNom" layoutX="314.0" layoutY="417.0" style="-fx-min-width: 60px;" text="nombre" />
-            <Label fx:id="clienteConductorVehiculoTitulo" layoutX="314.0" layoutY="452.0" text="%client.driver.vehicle" />
-            <Label fx:id="clienteVehiculoModelo" layoutX="314.0" layoutY="481.0" text="vehiculo modelo" />
+            <Label fx:id="clienteConductorNom" layoutX="314.0" layoutY="407.0" style="-fx-min-width: 60px;" text="nombre" />
+            <Label fx:id="clienteConductorVehiculoTitulo" layoutX="314.0" layoutY="436.0" text="%client.driver.vehicle" />
+            <Label fx:id="clienteVehiculoModelo" layoutX="314.0" layoutY="455.0" text="vehiculo modelo" />
             <Label fx:id="clienteViajeEstadoTitulo" layoutX="528.0" layoutY="390.0" text="%client.trip.status" />
-            <Label fx:id="clienteViajeEstadoActual" layoutX="528.0" layoutY="417.0" text="estado viaje" />
-            <Label fx:id="clienteConductorPatente" layoutX="420.0" layoutY="481.0" text="vehiculo patente" />
+            <Label fx:id="clienteViajeEstadoActual" layoutX="528.0" layoutY="407.0" text="estado viaje" />
+            <Label fx:id="clienteConductorPatente" layoutX="420.0" layoutY="455.0" text="vehiculo patente" />
+            <Button fx:id="clienteCancelarViaje" layoutX="19.0" layoutY="321.0" mnemonicParsing="false" onAction="#handleCancelarViaje" text="%client.cancel.trip" />
+            <TextField fx:id="clienteTextfieldCancelar" alignment="TOP_LEFT" layoutX="19.0" layoutY="359.0" prefHeight="115.0" prefWidth="257.0" promptText="%client.cancel.placeholder" />
+            <Button fx:id="clienteConfirmarCancelar" layoutX="21.0" layoutY="481.0" mnemonicParsing="false" onAction="#handleConfirmarCancelar" text="%client.confirm.cancel" />
+            <Label fx:id="clienteCostoPagar" layoutX="661.0" layoutY="390.0" text="COSTO CUANDO CANCELA" />
 
       </children>
     </AnchorPane>

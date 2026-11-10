@@ -40,8 +40,8 @@ public class PanelClienteController {
     private ResourceBundle resource;
     @FXML
     private ComboBox<Servicio> comboServicios;
-    @FXML
-    private Button botonClienteCotizar;
+    // @FXML
+    // private Button botonClienteCotizar;
     @FXML
     private Button botonClienteSolicitar;
     @FXML
@@ -58,6 +58,15 @@ public class PanelClienteController {
     private Label clienteViajeEstadoActual;
     @FXML
     private Label clienteViajeEstadoTitulo;
+
+    @FXML
+    private Button clienteCancelarViaje;
+    @FXML
+    private TextField clienteTextfieldCancelar;
+    @FXML
+    private Button clienteConfirmarCancelar;
+
+    private boolean cancelacionBoolean = false;
 
     // gesto de viaje para delegar todo el procesamiento a la capa lógica.
     private GestorViajes gestor;
@@ -106,7 +115,11 @@ public class PanelClienteController {
         botonClienteSolicitar.setDisable(true);
 
         // al iniciar, se ocultaran los labels de la info del conductor
-        mostrarOcultarInfoConductor(false);
+        mostrarOcultarInfoViaje(false);
+
+        // oculta el textfield y el boton de confirmar cancelar al inicio
+        clienteConfirmarCancelar.setVisible(false);
+        clienteTextfieldCancelar.setVisible(false);
     }
 
     private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
@@ -215,10 +228,10 @@ public class PanelClienteController {
             botonClienteSolicitar.setDisable(true);
 
             AlertaUtil.mostrarAlerta("Solicitud procesada", "Conductor asignado: "
-                    + resultadoSolicitud.conductor().getNombre() + "\\nViaje aceptado exitosamente.");
+                    + resultadoSolicitud.conductor().getNombre() + "\n Viaje aceptado exitosamente.");
 
             asignarConductorInfo();
-            mostrarOcultarInfoConductor(true);
+            mostrarOcultarInfoViaje(true);
         } catch (NumberFormatException e) {
 
             AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
@@ -301,6 +314,39 @@ public class PanelClienteController {
         }
     }
 
+    // se encarga de mostrar el textfield y el boton de confirmar, al volver a
+    // apretar oculta
+    @FXML
+    void handleCancelarViaje() {
+        cancelacionBoolean = !cancelacionBoolean;
+
+        clienteTextfieldCancelar.setVisible(cancelacionBoolean);
+        clienteConfirmarCancelar.setVisible(cancelacionBoolean);
+    }
+
+    // boton encargado de llamar al metodo para la cancelacion
+    @FXML
+    void handleConfirmarCancelar() {
+        try {
+            // si devuelve false es que hubo un error
+            if (!gestor.procesarCancelacionViaje(cliente, clienteTextfieldCancelar.getText())) {
+                AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"),
+                        resource.getString("client.unable.cancel.text"));
+                return;
+            }
+            // si se pudo cancelar:
+            clienteViajeEstadoActual.setText(resultadoSolicitud.viaje().estadoActual().name());
+            AlertaUtil.mostrarAlerta(resource.getString("client.cancel.success.title"),
+                    resource.getString("client.cancel.success.text"));
+
+            // por ultimo limpia el mapa
+            limpiarMapa();
+            mostrarOcultarInfoViaje(false);
+        } catch (IllegalArgumentException e) {
+            AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"), e.getLocalizedMessage());
+        }
+    }
+
     // funcion auxiliar para mostrar los datos del conductor en pantalla
     private void asignarConductorInfo() {
         clienteConductorNom.setText(resultadoSolicitud.conductor().getNombre());
@@ -309,8 +355,8 @@ public class PanelClienteController {
         clienteViajeEstadoActual.setText(resultadoSolicitud.viaje().estadoActual().name());
     }
 
-    // funcion auxiliar para mostrar/ocultar los labels de los datos del conductor
-    private void mostrarOcultarInfoConductor(boolean mostrar) {
+    // funcion auxiliar para mostrar/ocultar los labels de los datos del viaje
+    private void mostrarOcultarInfoViaje(boolean mostrar) {
         clienetDriver.setVisible(mostrar);
         clienteConductorNom.setVisible(mostrar);
         clienteConductorVehiculoTitulo.setVisible(mostrar);
@@ -318,5 +364,13 @@ public class PanelClienteController {
         clienteConductorPatente.setVisible(mostrar);
         clienteViajeEstadoActual.setVisible(mostrar);
         clienteViajeEstadoTitulo.setVisible(mostrar);
+        clienteCancelarViaje.setVisible(mostrar);
+    }
+
+    // funcion auxiliar para limpiar todos los datos del mapa
+    private void limpiarMapa() {
+        borrarPunto("origen");
+        borrarPunto("destino");
+        visualizador.limpiarRutas();
     }
 }
