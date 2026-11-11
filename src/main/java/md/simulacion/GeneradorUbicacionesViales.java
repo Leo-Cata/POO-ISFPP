@@ -57,8 +57,7 @@ public class GeneradorUbicacionesViales {
             }
         }
 
-        throw new IllegalStateException("No se pudo generar una ubicación vial válida "
-                						+ "después de " + MAX_INTENTOS + " intentos."
+        throw new IllegalStateException("No se pudo generar una ubicación vial válida "+ "después de " + MAX_INTENTOS + " intentos."
         );
     }
 
