@@ -1,5 +1,6 @@
 package md.ui.impl.javafx.controller;
 
+import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
 import javafx.concurrent.Task;
@@ -28,7 +29,6 @@ import md.logica.GestorViajes;
 public class PanelClienteController {
     @FXML
     private WebView mapaView;
-    private VisualizadorMapa visualizador;
     @FXML
     private TextField txtLatOrigen;
     @FXML
@@ -41,8 +41,6 @@ public class PanelClienteController {
     private ResourceBundle resource;
     @FXML
     private ComboBox<Servicio> comboServicios;
-    // @FXML
-    // private Button botonClienteCotizar;
     @FXML
     private Button botonClienteSolicitar;
     @FXML
@@ -67,6 +65,7 @@ public class PanelClienteController {
     @FXML
     private Button clienteConfirmarCancelar;
 
+    private VisualizadorMapa visualizador;
     private boolean cancelacionBoolean = false;
 
     // gesto de viaje para delegar todo el procesamiento a la capa lógica.
@@ -199,10 +198,11 @@ public class PanelClienteController {
         if (cotizacion == null || origenActual == null || destinoActual == null || servicio == null) {
             botonClienteSolicitar.setDisable(true);
             AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    "Debe cotizar el viaje antes de solicitarlo.");
+                    resource.getString("client.request.quote.required"));
             return;
         }
-     // Valores capturados en el hilo de JavaFX: el hilo de fondo no lee campos de la UI
+        // Valores capturados en el hilo de JavaFX: el hilo de fondo no lee campos de la
+        // UI
         Usuario clienteActual = cliente;
         Servicio servicioActual = servicio;
         Ubicacion origen = origenActual;
@@ -211,7 +211,8 @@ public class PanelClienteController {
         // evita pedir dos veces el mismo viaje mientras se calcula
         botonClienteSolicitar.setDisable(true);
 
-        // El cálculo de rutas (GraphHopper) corre en un hilo de fondo para no congelar la ventana
+        // El cálculo de rutas (GraphHopper) corre en un hilo de fondo para no congelar
+        // la ventana
         Task<GestorViajes.ResultadoSolicitud> tarea = new Task<>() {
             @Override
             protected GestorViajes.ResultadoSolicitud call() throws Exception {
@@ -225,7 +226,8 @@ public class PanelClienteController {
 
             // No se encontró ningún conductor compatible.
             if (resultadoSolicitud == null) {
-                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),resource.getString("client.error.noDriver"));
+                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                        resource.getString("client.error.noDriver"));
                 botonClienteSolicitar.setDisable(false);
                 return;
             }
@@ -234,16 +236,18 @@ public class PanelClienteController {
             Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
             if (vehiculo == null || vehiculo.getUbicacion() == null) {
                 botonClienteSolicitar.setDisable(false);
-                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),"El viaje no tiene un vehículo con ubicación asignada.");
+                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                        resource.getString("client.request.vehicle.location.missing"));
                 return;
             }
 
             // Mostramos los recorridos reales calculados por GestorViajes.
             visualizador.mostrar(resultadoSolicitud.rutas(), vehiculo.getUbicacion(), origen, destino);
 
-            AlertaUtil.mostrarAlerta("Solicitud procesada", "Conductor asignado: "
-                    + resultadoSolicitud.conductor().getNombre() + "\n Viaje aceptado exitosamente.");
-
+            AlertaUtil.mostrarAlerta(resource.getString("client.request.success.title"),
+                    MessageFormat.format(
+                            resource.getString("client.request.success.message"),
+                            resultadoSolicitud.conductor().getNombre()));
             asignarConductorInfo();
             mostrarOcultarInfoViaje(true);
         });
@@ -304,16 +308,17 @@ public class PanelClienteController {
 
             // muestra el detalle de la cotizacion
             String detalle = String.format(
-                    "%s: %.2f km%n" +
-                            "%s: %.2f minutos%n" +
+                    "%s: %.2f %s%n" +
+                            "%s: %.2f %s%n" +
                             "%s: $%.2f",
                     resource.getString("viaje.cotizacion.distancia"),
                     cotizacion.distanciaKm(),
+                    resource.getString("viaje.unidad.km"),
                     resource.getString("viaje.cotizacion.duracion"),
                     cotizacion.duracionMinutos(),
+                    resource.getString("viaje.unidad.min"),
                     resource.getString("viaje.costo_estimado"),
                     cotizacion.costoTotal());
-
             AlertaUtil.mostrarAlerta(
                     resource.getString("viaje.cotizacion.titulo"),
                     detalle);
@@ -321,7 +326,7 @@ public class PanelClienteController {
             botonClienteSolicitar.setDisable(false);
         } catch (NumberFormatException e) {
             AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    "Las coordenadas ingresadas no son válidas.");
+                    resource.getString("client.invalid.coords"));
         } catch (IllegalArgumentException | IllegalStateException e) {
             AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
         }
@@ -353,9 +358,9 @@ public class PanelClienteController {
                     resource.getString("client.cancel.success.text"));
 
             // por ultimo limpia el mapa
-            limpiarMapa();
+            limpiarEstadoViaje();
             mostrarOcultarInfoViaje(false);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"), e.getLocalizedMessage());
         }
     }
@@ -381,9 +386,17 @@ public class PanelClienteController {
     }
 
     // funcion auxiliar para limpiar todos los datos del mapa
-    private void limpiarMapa() {
+    private void limpiarEstadoViaje() {
         borrarPunto("origen");
         borrarPunto("destino");
         visualizador.limpiarRutas();
+        resultadoSolicitud = null;
+        cancelacionBoolean = false;
+        cotizacion = null;
+        origenActual = null;
+        destinoActual = null;
+        clienteTextfieldCancelar.clear();
+        clienteTextfieldCancelar.setVisible(false);
+        clienteConfirmarCancelar.setVisible(false);
     }
 }
