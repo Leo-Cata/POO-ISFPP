@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane fx:id="labelSubtitulo" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="750.0" prefHeight="750.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.PanelConductorController">
+   <top>
+      <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+         <children>
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="12.0">
+               <children>
+                  <Label fx:id="labelMenuCliente" text="%driver.panel.title" />
+                  <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                  <Label fx:id="labelRol" text="%driver.panel.role" />
+                  <Button fx:id="botonCambiarUsuario" mnemonicParsing="false" onAction="#handleCerrarSesion" text="%driver.change.user" />
+               </children>
+               <padding>
+                  <Insets top="16.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <VBox prefHeight="200.0" prefWidth="100.0">
+                     <children>
+                        <Label fx:id="labelSaludo" text="%driver.panel.greeting">
+                           <font>
+                              <Font name="System Bold" size="24.0" />
+                           </font></Label>
+                        <Label fx:id="labelSubtitulo" text="%driver.panel.subtitle" textFill="#a4a1a1" />
+                     </children>
+                  </VBox>
+                  <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                  <Label fx:id="labelEstadoConductor" text="%driver.status" />
+               </children></HBox>
+         </children>
+      </VBox>
+   </top>
+   <center>
+      <ScrollPane fitToWidth="true" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <content>
+            <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0">
+               <padding>
+                  <Insets top="20.0" />
+               </padding>
+               <children>
+                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="8.0">
+                     <children>
+                        <Label text="%driver.personal.title">
+                           <font>
+                              <Font size="18.0" />
+                           </font></Label>
+                        <HBox prefHeight="100.0" prefWidth="200.0">
+                           <children>
+                              <Label text="%driver.personal.name">
+                                 <font>
+                                    <Font size="16.0" />
+                                 </font>
+                              </Label>
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="labelNombreConductor" text="Label" />
+                           </children>
+                        </HBox>
+                        <HBox prefHeight="100.0" prefWidth="200.0">
+                           <children>
+                              <Label text="%driver.personal.email" textFill="#868484" />
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="labelEmailConductor" text="Label" />
+                           </children>
+                        </HBox>
+                        <HBox prefHeight="100.0" prefWidth="200.0">
+                           <children>
+                              <Label text="%driver.personal.phone" textFill="#868484" />
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="labelTelefonoConductor" text="Label" />
+                           </children>
+                        </HBox>
+                        <HBox prefHeight="100.0" prefWidth="200.0">
+                           <children>
+                              <Label text="%driver.personal.license" textFill="#868484" />
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="labelLicenciaConductor" text="Label" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <HBox prefHeight="100.0" prefWidth="200.0" spacing="16.0">
+                     <children>
+                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label fx:id="labelVehiculoTitulo" text="Label" />
+                              <ComboBox fx:id="comboVehiculos" prefWidth="150.0" />
+                              <Label fx:id="labelModeloVehiculo" text="Label" />
+                              <Label fx:id="labelPatenteVehiculo" text="Label" />
+                              <Label fx:id="labelCategoriaVehiculo" text="Label" />
+                           </children>
+                           <padding>
+                              <Insets top="16.0" />
+                           </padding>
+                        </VBox>
+                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label text="Label" />
+                              <Label fx:id="labelServiciosVehiculo" text="Label" />
+                           </children>
+                           <padding>
+                              <Insets top="16.0" />
+                           </padding>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="12.0" VBox.vgrow="ALWAYS">
+                     <padding>
+                        <Insets top="16.0" />
+                     </padding>
+                     <children>
+                        <HBox prefHeight="100.0" prefWidth="200.0">
+                           <children>
+                              <Label text="%driver.trip.title" />
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="labelEstadoViaje" text="%driver.trip.status" />
+                           </children>
+                        </HBox>
+                        <Label fx:id="labelClienteViaje" text="Label" />
+                        <Label fx:id="labelOrigenViaje" text="Label" />
+                        <Label fx:id="labelDestinoViaje" text="Label" />
+                        <GridPane>
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
+                           <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" />
+                              <VBox prefHeight="200.0" prefWidth="100.0" />
+                              <VBox prefHeight="200.0" prefWidth="100.0" />
+                           </children>
+                        </GridPane>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane>
