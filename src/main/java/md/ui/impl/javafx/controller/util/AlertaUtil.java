@@ -12,4 +12,17 @@ public class AlertaUtil {
         alert.setContentText(mensaje);
         alert.showAndWait();
     }
+    
+    // Permite elegir el tipo de alerta.
+    public static void mostrarAlerta(
+            Alert.AlertType tipo, String titulo, String mensaje) {
+
+        Alert alert = new Alert(tipo);
+
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+
+        alert.showAndWait();
+    }
 }

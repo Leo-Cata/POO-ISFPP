@@ -22,6 +22,8 @@
                <children>
                   <Label fx:id="labelMenuCliente" text="%driver.panel.title" />
                   <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="botonCambiarDisponibilidad" mnemonicParsing="false" onAction="#handleCambiarDisponibilidad" text="%menu.conductor.panel.estado.accion.pasar_fuera_servicio" />
+                  <Button mnemonicParsing="false" onAction="#handleCambiarRolCliente" text="%menu.conductor.opcion.cambiar_cliente" />
                   <Button fx:id="botonCambiarUsuario" mnemonicParsing="false" onAction="#handleCerrarSesion" text="%driver.change.user" />
                </children>
                <padding>
@@ -40,7 +42,12 @@
                      </children>
                   </VBox>
                   <Region prefHeight="0.0" prefWidth="800.0" HBox.hgrow="ALWAYS" />
-                  <Label fx:id="labelEstadoConductor" text="%driver.status" />
+                  <VBox prefHeight="200.0" prefWidth="100.0">
+                     <children>
+                        <Label fx:id="labelEstadoConductor" text="%driver.status" />
+                        <Label fx:id="labelEstadoConductor" text="Label" />
+                     </children>
+                  </VBox>
                </children></HBox>
          </children>
       </VBox>
@@ -99,13 +106,10 @@
                            <children>
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
-                                    <Label text="%driver.vehicle.title" />
-                                    <Region prefHeight="200.0" prefWidth="200.0" />
-                                    <Label fx:id="labelVehiculoTitulo" text="Label">
-                                       <HBox.margin>
-                                          <Insets />
-                                       </HBox.margin>
-                                    </Label>
+                                    <Label text="%driver.vehicle.title">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font></Label>
                                  </children>
                               </HBox>
                               <HBox prefHeight="100.0" prefWidth="200.0">
@@ -124,23 +128,33 @@
                               </HBox>
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
-                                    <Label text="%driver.vehicle.model" />
-                                    <Region prefHeight="200.0" prefWidth="200.0" />
-                                    <Label fx:id="labelModeloVehiculo" text="Label" />
+                                    <Label text="%driver.vehicle.model">
+                                       <font>
+                                          <Font name="System Bold" size="13.0" />
+                                       </font></Label>
+                                    <Label fx:id="labelModeloVehiculo" text="Label">
+                                       <padding>
+                                          <Insets left="192.0" />
+                                       </padding></Label>
+                                    <Region layoutX="130.0" layoutY="10.0" prefHeight="200.0" prefWidth="200.0" />
                                  </children>
                               </HBox>
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
                                     <Label text="%driver.vehicle.plate" />
-                                    <Region prefHeight="200.0" prefWidth="200.0" />
-                                    <Label fx:id="labelPatenteVehiculo" text="Label" />
+                                    <Label fx:id="labelPatenteVehiculo" text="Label">
+                                       <HBox.margin>
+                                          <Insets left="200.0" />
+                                       </HBox.margin></Label>
                                  </children>
                               </HBox>
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
                                     <Label text="%driver.vehicle.category" />
-                                    <Region prefHeight="200.0" prefWidth="200.0" />
-                                    <Label fx:id="labelCategoriaVehiculo" text="Label" />
+                                    <Label fx:id="labelCategoriaVehiculo" text="Label">
+                                       <padding>
+                                          <Insets left="180.0" />
+                                       </padding></Label>
                                  </children>
                               </HBox>
                            </children>
@@ -159,14 +173,18 @@
                         </VBox>
                      </children>
                   </HBox>
-                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="12.0" VBox.vgrow="ALWAYS">
+                  <VBox fx:id="contenedorViajeActual" prefHeight="200.0" prefWidth="100.0" spacing="12.0" VBox.vgrow="ALWAYS">
                      <padding>
                         <Insets top="10.0" />
                      </padding>
                      <children>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
-                              <Label text="%driver.trip.title" />
+                              <Label text="%driver.trip.title">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Label>
                               <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
                               <Label fx:id="labelEstadoViaje" text="%driver.trip.status" />
                               <Label fx:id="labelEstadoViaje" text="Label" />
@@ -175,19 +193,28 @@
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <Label text="%driver.trip.client" />
-                              <Label fx:id="labelClienteViaje" text="Label" />
+                              <Label fx:id="labelClienteViaje" text="Label">
+                                 <HBox.margin>
+                                    <Insets left="50.0" />
+                                 </HBox.margin></Label>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <Label text="%driver.trip.origin" />
-                              <Label fx:id="labelOrigenViaje" text="Label" />
+                              <Label fx:id="labelOrigenViaje" text="Label">
+                                 <HBox.margin>
+                                    <Insets left="50.0" />
+                                 </HBox.margin></Label>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <Label text="%driver.trip.destination" />
-                              <Label fx:id="labelDestinoViaje" text="Label" />
+                              <Label fx:id="labelDestinoViaje" text="Label">
+                                 <HBox.margin>
+                                    <Insets left="20.0" />
+                                 </HBox.margin></Label>
                            </children>
                         </HBox>
                         <GridPane>
@@ -204,17 +231,20 @@
                                  <children>
                                     <Label text="%driver.trip.distance" />
                                     <Label fx:id="labelDistanciaViaje" text="Label" />
-                                 </children></VBox>
+                                 </children>
+                              </VBox>
                               <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1">
                                  <children>
                                     <Label text="%driver.trip.duration" />
                                     <Label fx:id="labelDuracionViaje" text="Label" />
-                                 </children></VBox>
+                                 </children>
+                              </VBox>
                               <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="2">
                                  <children>
                                     <Label text="%driver.trip.amount" />
-                                    <Label fx:id="labelImporteViaje" text="Label" />
-                                 </children></VBox>
+                                    <Label fx:id="labelCostoViaje" text="Label" />
+                                 </children>
+                              </VBox>
                            </children>
                            <padding>
                               <Insets top="16.0" />
@@ -228,16 +258,20 @@
                         <Label fx:id="labelHoraInicioViaje" text="Label" />
                         <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
                            <children>
-                              <Button fx:id="botonIniciarViaje" mnemonicParsing="false" onAction="#handleIniciarViaje" text="Button" />
-                              <Region prefHeight="200.0" prefWidth="300.0" />
-                              <Button fx:id="botonCalificarCliente" mnemonicParsing="false" onAction="#handleCalificarCliente" text="Button" HBox.hgrow="ALWAYS" />
-                              <Region prefHeight="200.0" prefWidth="300.0" />
-                              <Button fx:id="botonFinalizarViaje" mnemonicParsing="false" onAction="#handleFinalizarViaje" text="Button" HBox.hgrow="ALWAYS" />
+                              <Button fx:id="botonIniciarViaje" mnemonicParsing="false" onAction="#handleIniciarViaje" text="%menu.conductor.opcion.iniciar_viaje" />
+                              <Button fx:id="botonCalificarCliente" mnemonicParsing="false" onAction="#handleCalificarCliente" text="%menu.conductor.opcion.calificar_viaje" HBox.hgrow="ALWAYS">
+                                 <HBox.margin>
+                                    <Insets left="130.0" />
+                                 </HBox.margin></Button>
+                              <Button fx:id="botonFinalizarViaje" mnemonicParsing="false" onAction="#handleFinalizarViaje" text="%menu.conductor.opcion.finalizar_viaje" HBox.hgrow="ALWAYS">
+                                 <HBox.margin>
+                                    <Insets left="150.0" />
+                                 </HBox.margin></Button>
                            </children>
                         </HBox>
-                        <Label fx:id="labelSinViaje" text="%driver.trip.noActive" />
                      </children>
                   </VBox>
+                  <Label fx:id="labelSinViaje" text="%driver.trip.noActive" />
                </children>
             </VBox>
          </content>
