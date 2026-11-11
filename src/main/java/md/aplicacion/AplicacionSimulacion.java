@@ -57,6 +57,18 @@ public class AplicacionSimulacion {
             Estadisticas estadisticas = new Estadisticas();
             Despachador despachador = new Despachador(datos.getUsuarios(), ContextoAplicacion.getMotorVial(),
                     politica, esperaMaximaMs, estadisticas);
+            
+            System.out.println("====================================================");
+            System.out.println("           SIMULACIÓN DE MOVILIDAD DIGITAL");
+            System.out.println("====================================================");
+            System.out.println("Conductores: " + conductores.size());
+            System.out.println("Pasajeros: " + pasajeros.size());
+            System.out.println("Duración: " + duracionMs / 1000 + " segundos");
+            System.out.println("Política de asignación: " + politica);
+            System.out.println("Factor de aceleración: " + factor);
+            System.out.println("----------------------------------------------------");
+
+            despachador.mostrarEstadoInicial();
 
             // Un hilo virtual por tarea: un hilo por conductor, más el generador de pasajeros
             ExecutorService hilos = Executors.newVirtualThreadPerTaskExecutor();
@@ -67,7 +79,6 @@ public class AplicacionSimulacion {
                     hilos.execute(new ConductorSimulado(conductor, despachador, factor));
                 }
 
-                System.out.println("Simulación en curso durante " + duracionMs / 1000 + " segundos...");
                 Thread.sleep(duracionMs);
             } finally {
                 // Primero se corta el despachador, después se espera a los hilos
@@ -75,11 +86,15 @@ public class AplicacionSimulacion {
                 hilos.shutdown();
                 if (!hilos.awaitTermination(30, TimeUnit.SECONDS)) {
                     hilos.shutdownNow();
+                    hilos.awaitTermination(10, TimeUnit.SECONDS);
                 }
             }
 
-            System.out.println("--- Estadísticas ---");
+            System.out.println();
+            System.out.println("================ RESUMEN FINAL ================");
             System.out.println(estadisticas.resumen());
+            System.out.println("Cancelaciones registradas: " + despachador.getCantidadCancelaciones());
+            System.out.println("================================================");
         } finally {
             ContextoAplicacion.cerrar();
         }

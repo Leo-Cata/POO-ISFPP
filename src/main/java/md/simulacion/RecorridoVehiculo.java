@@ -1,6 +1,7 @@
 package md.simulacion;
 
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import md.logica.BloqueoViajes;
 import md.modelo.Ubicacion;
@@ -40,29 +41,52 @@ public class RecorridoVehiculo {
     }
 
     /**
-     * Recorre la ruta punto a punto. Bloquea el hilo que lo llama durante el recorrido.
-     *
-     * @throws InterruptedException si el hilo se interrumpe (por ejemplo, al cerrar la simulación).
+     * Recorre la ruta completa. Se conserva este método para usos que no necesiten
+     * comprobar una cancelación durante el desplazamiento.
      */
     public void recorrer(RutaCalculada ruta) throws InterruptedException {
-        List<PuntoRuta> puntos = ruta.geometria();
+        recorrer(ruta, () -> true);
+    }
 
-        // La geometría tiene al menos dos puntos, así que hay al menos un tramo
+    /**
+     * Recorre la ruta mientras continuar devuelva true.
+     *
+     * @return true si llegó al último punto; false si el viaje fue cancelado.
+     */
+    public boolean recorrer(RutaCalculada ruta, BooleanSupplier continuar) throws InterruptedException {
+        if (ruta == null || continuar == null) {
+            throw new IllegalArgumentException("La ruta y la condición de continuidad son obligatorias.");
+        }
+
+        List<PuntoRuta> puntos = ruta.geometria();
+        if (puntos == null || puntos.size() < 2) {
+            throw new IllegalArgumentException("La ruta debe contener al menos dos puntos.");
+        }
+
         double tramos = puntos.size() - 1.0;
         long pasoMs = Math.max(PASO_MINIMO_MS,
                 Math.round(ruta.duracionMilisegundos() / tramos / factorAceleracion));
 
         for (PuntoRuta punto : puntos) {
-            Ubicacion nueva = new Ubicacion(punto.latitud(), punto.longitud());
+            if (!continuar.getAsBoolean()) {
+                return false;
+            }
 
             BloqueoViajes.LOCK.lock();
             try {
-                vehiculo.setUbicacion(nueva);
+                // Se vuelve a comprobar dentro del bloqueo para que una cancelación
+                // no quede intercalada entre la comprobación y la actualización.
+                if (!continuar.getAsBoolean()) {
+                    return false;
+                }
+                vehiculo.setUbicacion(new Ubicacion(punto.latitud(), punto.longitud()));
             } finally {
                 BloqueoViajes.LOCK.unlock();
             }
 
             Thread.sleep(pasoMs);
         }
+
+        return continuar.getAsBoolean();
     }
 }

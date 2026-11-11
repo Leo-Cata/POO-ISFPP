@@ -42,16 +42,35 @@ public class ConductorSimulado implements Runnable {
     }
 
     private void atender(Viaje viaje) throws InterruptedException {
-        RutasViaje rutas = viaje.getRutas();
-        RecorridoVehiculo recorrido = new RecorridoVehiculo(viaje.getVehiculo(), factorAceleracion);
+    	try {
+            RutasViaje rutas = viaje.getRutas();
+            if (rutas == null || viaje.getVehiculo() == null) {
+                // No debería suceder: el despachador prepara la ruta antes de aceptar.
+                despachador.cancelarViaje(viaje, conductor, "No se pudo obtener la ruta del viaje.");
+                return;
+            }
 
-        recorrido.recorrer(rutas.acercamiento());
-        despachador.iniciarViaje(viaje);
+            RecorridoVehiculo recorrido = new RecorridoVehiculo(viaje.getVehiculo(), factorAceleracion);
 
-        recorrido.recorrer(rutas.traslado());
-        despachador.finalizarViaje(viaje);
+            boolean llegóAlPasajero = recorrido.recorrer(
+                    rutas.acercamiento(), () -> despachador.sigueActivo(viaje));
+            if (!llegóAlPasajero) {
+                return;
+            }
 
-        System.out.printf("Viaje finalizado por %s: $%.2f, %.1f min estimados%n",
-                conductor.getNombre(), viaje.getCostoTotal(), viaje.getDuracionEstimadaMinutos());
+            if (!despachador.iniciarViaje(viaje)) {
+                return;
+            }
+
+            boolean llegóAlDestino = recorrido.recorrer(
+                    rutas.traslado(), () -> despachador.sigueActivo(viaje));
+            if (!llegóAlDestino) {
+                return;
+            }
+
+            despachador.finalizarViaje(viaje);
+        } finally {
+            despachador.liberarAtencion(conductor, viaje);
+        }
     }
 }
