@@ -1,0 +1,68 @@
+package md.simulacion;
+
+import java.util.List;
+
+import md.logica.BloqueoViajes;
+import md.modelo.Ubicacion;
+import md.modelo.Vehiculo;
+import md.rutas.api.PuntoRuta;
+import md.rutas.api.RutaCalculada;
+
+/**
+ * Mueve un vehículo a lo largo de una ruta calculada.
+ *
+ * Se ejecuta en el hilo que lo llama (el del conductor), no crea hilos propios.
+ * En cada punto de la ruta actualiza la posición del vehículo y espera el tiempo
+ * correspondiente, reducido por el factor de aceleración.
+ */
+public class RecorridoVehiculo {
+
+    /** Pausa mínima entre dos puntos, para que la animación no sea imperceptible. */
+    private static final long PASO_MINIMO_MS = 20;
+
+    private final Vehiculo vehiculo;
+    private final double factorAceleracion;
+
+    /**
+     * @param vehiculo           vehículo que se mueve.
+     * @param factorAceleracion  cuántas veces más rápido que el tiempo real. Por ejemplo,
+     *                           60 significa que 1 minuto de viaje dura 1 segundo.
+     */
+    public RecorridoVehiculo(Vehiculo vehiculo, double factorAceleracion) {
+        if (vehiculo == null) {
+            throw new IllegalArgumentException("El vehículo no puede ser null.");
+        }
+        if (!Double.isFinite(factorAceleracion) || factorAceleracion <= 0) {
+            throw new IllegalArgumentException("El factor de aceleración debe ser mayor que cero.");
+        }
+        this.vehiculo = vehiculo;
+        this.factorAceleracion = factorAceleracion;
+    }
+
+    /**
+     * Recorre la ruta punto a punto. Bloquea el hilo que lo llama durante el recorrido.
+     *
+     * @throws InterruptedException si el hilo se interrumpe (por ejemplo, al cerrar la simulación).
+     */
+    public void recorrer(RutaCalculada ruta) throws InterruptedException {
+        List<PuntoRuta> puntos = ruta.geometria();
+
+        // La geometría tiene al menos dos puntos, así que hay al menos un tramo
+        double tramos = puntos.size() - 1.0;
+        long pasoMs = Math.max(PASO_MINIMO_MS,
+                Math.round(ruta.duracionMilisegundos() / tramos / factorAceleracion));
+
+        for (PuntoRuta punto : puntos) {
+            Ubicacion nueva = new Ubicacion(punto.latitud(), punto.longitud());
+
+            BloqueoViajes.LOCK.lock();
+            try {
+                vehiculo.setUbicacion(nueva);
+            } finally {
+                BloqueoViajes.LOCK.unlock();
+            }
+
+            Thread.sleep(pasoMs);
+        }
+    }
+}

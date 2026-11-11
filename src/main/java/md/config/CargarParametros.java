@@ -29,7 +29,12 @@ public class CargarParametros {
 	private static final String CLAVE_CACHE_RUTAS = "rutas.cache";
 	private static final String CLAVE_VELOCIDAD_MEDIA ="viaje.velocidad.media.kmh";
 	private static final String CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO ="costo.cancelacion.aceptado";
-
+	private static final String CLAVE_SIMULACION_DURACION = "simulacion.duracion.segundos";
+	private static final String CLAVE_SIMULACION_FACTOR = "simulacion.factor.aceleracion";
+	private static final String CLAVE_SIMULACION_POLITICA = "simulacion.politica";
+	private static final String CLAVE_SIMULACION_ESPERA = "simulacion.espera.maxima.segundos";
+	private static final String CLAVE_SIMULACION_INTERVALO = "simulacion.intervalo.solicitudes.ms";
+	
 	// la tabla clave->valor queda guardada para que los getters la consulten
 	// despues.
 	private static final Properties properties = new Properties();
@@ -99,8 +104,7 @@ public class CargarParametros {
 			throw new IllegalStateException("La tolerancia de ajuste debe ser un número positivo.");
 		}
 		
-		velocidadMediaKmH = Double.parseDouble(
-		        leerClave(properties, CLAVE_VELOCIDAD_MEDIA));
+		velocidadMediaKmH = Double.parseDouble(leerClave(properties, CLAVE_VELOCIDAD_MEDIA));
 
 		if (!Double.isFinite(velocidadMediaKmH) || velocidadMediaKmH <= 0) {
 		    throw new IllegalStateException(
@@ -192,6 +196,56 @@ public class CargarParametros {
 	
 	public static double getVelocidadMediaKmH() {
 	    return velocidadMediaKmH;
+	}
+	
+	/** Duración total de la simulación, en segundos reales. */
+	public static long getSimulacionDuracionSegundos() {
+		return leerEntero(CLAVE_SIMULACION_DURACION);
+	}
+
+	/** Cuántas veces más rápido que el tiempo real se mueven los conductores. */
+	public static double getSimulacionFactorAceleracion() {
+		double factor = leerDecimal(CLAVE_SIMULACION_FACTOR);
+		if (!Double.isFinite(factor) || factor <= 0) {
+			throw new IllegalStateException("La clave '" + CLAVE_SIMULACION_FACTOR + "' debe ser mayor que cero.");
+		}
+		return factor;
+	}
+
+	/** Política de asignación: SORTEO, CERCANIA o ROTACION. */
+	public static String getSimulacionPolitica() {
+		return leerClave(properties, CLAVE_SIMULACION_POLITICA).trim().toUpperCase(Locale.ROOT);
+	}
+
+	/** Segundos reales que un viaje puede esperar conductor antes de rechazarse. */
+	public static long getSimulacionEsperaMaximaSegundos() {
+		return leerEntero(CLAVE_SIMULACION_ESPERA);
+	}
+
+	/** Pausa entre dos pedidos de pasajeros, en milisegundos. */
+	public static long getSimulacionIntervaloSolicitudesMs() {
+		return leerEntero(CLAVE_SIMULACION_INTERVALO);
+	}
+
+	private static long leerEntero(String clave) {
+		String valor = leerClave(properties, clave).trim();
+		try {
+			long numero = Long.parseLong(valor);
+			if (numero <= 0) {
+				throw new IllegalStateException("La clave '" + clave + "' debe ser mayor que cero.");
+			}
+			return numero;
+		} catch (NumberFormatException e) {
+			throw new IllegalStateException("La clave '" + clave + "' debe ser un número entero.");
+		}
+	}
+
+	private static double leerDecimal(String clave) {
+		try {
+			return Double.parseDouble(leerClave(properties, clave).trim());
+		} catch (NumberFormatException e) {
+			throw new IllegalStateException("La clave '" + clave + "' debe ser un número.");
+		}
 	}
 	
 	public static double getCostoCancelacionViajeAceptado() {

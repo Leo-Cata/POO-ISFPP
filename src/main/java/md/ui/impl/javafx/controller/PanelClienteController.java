@@ -2,6 +2,7 @@ package md.ui.impl.javafx.controller;
 
 import java.util.ResourceBundle;
 
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -201,51 +202,63 @@ public class PanelClienteController {
                     "Debe cotizar el viaje antes de solicitarlo.");
             return;
         }
-        try {
+     // Valores capturados en el hilo de JavaFX: el hilo de fondo no lee campos de la UI
+        Usuario clienteActual = cliente;
+        Servicio servicioActual = servicio;
+        Ubicacion origen = origenActual;
+        Ubicacion destino = destinoActual;
 
-            resultadoSolicitud = gestor.procesarSolicitudViaje(cliente, servicio, origenActual,
-                    destinoActual);
+        // evita pedir dos veces el mismo viaje mientras se calcula
+        botonClienteSolicitar.setDisable(true);
+
+        // El cálculo de rutas (GraphHopper) corre en un hilo de fondo para no congelar la ventana
+        Task<GestorViajes.ResultadoSolicitud> tarea = new Task<>() {
+            @Override
+            protected GestorViajes.ResultadoSolicitud call() throws Exception {
+                return gestor.procesarSolicitudViaje(clienteActual, servicioActual, origen, destino);
+            }
+        };
+
+        // Se ejecuta en el hilo de JavaFX: acá sí se puede tocar la interfaz
+        tarea.setOnSucceeded(e -> {
+            resultadoSolicitud = tarea.getValue();
 
             // No se encontró ningún conductor compatible.
             if (resultadoSolicitud == null) {
-
-                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                        resource.getString("client.error.noDriver"));
-
+                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),resource.getString("client.error.noDriver"));
+                botonClienteSolicitar.setDisable(false);
                 return;
             }
 
             // El vehículo es el que realmente quedó asignado al viaje.
             Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
-
             if (vehiculo == null || vehiculo.getUbicacion() == null) {
-                throw new IllegalStateException("El viaje no tiene un vehículo con ubicación asignada.");
+                botonClienteSolicitar.setDisable(false);
+                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),"El viaje no tiene un vehículo con ubicación asignada.");
+                return;
             }
 
             // Mostramos los recorridos reales calculados por GestorViajes.
-            visualizador.mostrar(resultadoSolicitud.rutas(), vehiculo.getUbicacion(), origenActual, destinoActual);
-
-            botonClienteSolicitar.setDisable(true);
+            visualizador.mostrar(resultadoSolicitud.rutas(), vehiculo.getUbicacion(), origen, destino);
 
             AlertaUtil.mostrarAlerta("Solicitud procesada", "Conductor asignado: "
                     + resultadoSolicitud.conductor().getNombre() + "\n Viaje aceptado exitosamente.");
 
             asignarConductorInfo();
             mostrarOcultarInfoViaje(true);
-        } catch (NumberFormatException e) {
+        });
 
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    "Las coordenadas ingresadas no son válidas.");
+        // Se ejecuta en el hilo de JavaFX si el cálculo lanzó una excepción
+        tarea.setOnFailed(e -> {
+            botonClienteSolicitar.setDisable(false);
+            Throwable error = tarea.getException();
+            String mensaje = (error instanceof RutaNoDisponibleException)
+                    ? resource.getString("client.error.noRoute")
+                    : error.getMessage();
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), mensaje);
+        });
 
-        } catch (RutaNoDisponibleException e) {
-
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    resource.getString("client.error.noRoute"));
-
-        } catch (IllegalArgumentException | IllegalStateException e) {
-
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
-        }
+        Thread.ofVirtual().name("solicitud-viaje").start(tarea);
     }
 
     @FXML

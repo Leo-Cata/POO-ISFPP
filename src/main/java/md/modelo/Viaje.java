@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import md.rutas.api.RutasViaje;
+
 public class Viaje {
 	private UUID id;
 	private double costoTotal;
@@ -18,6 +20,8 @@ public class Viaje {
 	private ArrayList<RegistroViaje> registroViaje;
 	private Servicio servicio;
 	private CalificacionViaje calificacionConductor, calificacionCliente;
+	// recorridos calculados al asignar el conductor: acercamiento y traslado
+	private RutasViaje rutas;
 
 	public Viaje(Usuario cliente, Ubicacion origen, Ubicacion destino, Servicio servicio) {
 		this.id = UUID.randomUUID();
@@ -428,6 +432,14 @@ public class Viaje {
 
 	public void agregarRegistroViaje(RegistroViaje nuevoRegistroViaje) {
 		this.registroViaje.addLast(nuevoRegistroViaje);
+	}
+	
+	public RutasViaje getRutas() {
+		return rutas;
+	}
+
+	public void setRutas(RutasViaje rutas) {
+		this.rutas = rutas;
 	}
 
 	public Servicio getServicio() {

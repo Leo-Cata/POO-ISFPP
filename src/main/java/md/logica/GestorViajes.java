@@ -92,7 +92,7 @@ public class GestorViajes {
 			throw new IllegalStateException("El cliente ya tiene un viaje activo.");
 		}
 
-		// Calcular la cotización definitiva.
+		// Calcular la cotización definitiva (no toca estado compartido).
 		Cotizacion cotizacion = calcularCotizacion(servicio, origen, destino);
 
 		// Obtener los datos de la aplicación.
@@ -102,44 +102,56 @@ public class GestorViajes {
 			throw new IllegalStateException("Los datos iniciales no están disponibles.");
 		}
 
-		// Seleccionar el conductor compatible más cercano.
-		Movilidad movilidad = new Movilidad(datos.getUsuarios());
-
-		Usuario conductorSeleccionado = movilidad.seleccionarConductor(servicio, origen);
-
-		if (conductorSeleccionado == null) {
-			return null;
-		}
-
-		// Calcular los dos recorridos viales.
-		RutasViaje rutas = new PlanificacionViajeService(ContextoAplicacion.getMotorVial())
-				.planificar(conductorSeleccionado.getConductor().getVehiculoActivo(), origen, destino);
-
-		// Crear y registrar el viaje.
-		Viaje nuevoViaje = new Viaje(clienteUsuario, origen, destino, servicio);
-
-		nuevoViaje.setCostoTotal(cotizacion.costoTotal());
-		nuevoViaje.setDuracionEstimadaMinutos(cotizacion.duracionMinutos());
-		nuevoViaje.setDistanciaTotal(cotizacion.distanciaKm());
-
-		nuevoViaje.solicitar(LocalDateTime.now());
-
+		// Desde acá hasta el final se decide la asignación y se cambian estados.
+		// Todo bajo el mismo lock que usa la simulación.
+		BloqueoViajes.LOCK.lock();
 		try {
-			nuevoViaje.aceptar(LocalDateTime.now(), conductorSeleccionado);
-
-		} catch (RuntimeException e) {
-
-			// Si no pudo aceptarse, no dejamos la solicitud pendiente.
-			if (nuevoViaje.estadoActual() == EstadoViaje.SOLICITADO) {
-				nuevoViaje.rechazar(LocalDateTime.now());
+			// Se vuelve a chequear dentro del lock: otro hilo pudo crear un viaje mientras tanto.
+			if (clienteUsuario.getCliente().enViaje()) {
+				throw new IllegalStateException("El cliente ya tiene un viaje activo.");
 			}
 
-			throw e;
+			// Seleccionar el conductor compatible más cercano.
+			Movilidad movilidad = new Movilidad(datos.getUsuarios());
+
+			Usuario conductorSeleccionado = movilidad.seleccionarConductor(servicio, origen);
+
+			if (conductorSeleccionado == null) {
+				return null;
+			}
+
+			// Calcular los dos recorridos viales.
+			RutasViaje rutas = new PlanificacionViajeService(ContextoAplicacion.getMotorVial())
+					.planificar(conductorSeleccionado.getConductor().getVehiculoActivo(), origen, destino);
+
+			// Crear y registrar el viaje.
+			Viaje nuevoViaje = new Viaje(clienteUsuario, origen, destino, servicio);
+
+			nuevoViaje.setCostoTotal(cotizacion.costoTotal());
+			nuevoViaje.setDuracionEstimadaMinutos(cotizacion.duracionMinutos());
+			nuevoViaje.setDistanciaTotal(cotizacion.distanciaKm());
+			nuevoViaje.setRutas(rutas);
+
+			nuevoViaje.solicitar(LocalDateTime.now());
+
+			try {
+				nuevoViaje.aceptar(LocalDateTime.now(), conductorSeleccionado);
+
+			} catch (RuntimeException e) {
+
+				// Si no pudo aceptarse, no dejamos la solicitud pendiente.
+				if (nuevoViaje.estadoActual() == EstadoViaje.SOLICITADO) {
+					nuevoViaje.rechazar(LocalDateTime.now());
+				}
+
+				throw e;
+			}
+
+			return new ResultadoSolicitud(nuevoViaje, rutas, cotizacion, conductorSeleccionado);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
 		}
-
-		return new ResultadoSolicitud(nuevoViaje, rutas, cotizacion, conductorSeleccionado);
 	}
-
 	/**
 	 * Cancela el viaje activo.
 	 *
@@ -155,29 +167,33 @@ public class GestorViajes {
 			throw new IllegalArgumentException("El motivo de cancelación es obligatorio.");
 		}
 
-		Iterable<Viaje> viajesUsuario = obtenerViajesUsuario(usuario);
+		BloqueoViajes.LOCK.lock();
+		try {
+			Iterable<Viaje> viajesUsuario = obtenerViajesUsuario(usuario);
 
-		for (Viaje viaje : viajesUsuario) {
+			for (Viaje viaje : viajesUsuario) {
 
-			EstadoViaje estado = viaje.estadoActual();
+				EstadoViaje estado = viaje.estadoActual();
 
-			if (estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
+				if (estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
 
-				EstadoViaje estadoAnterior = viaje.estadoActual();
+					EstadoViaje estadoAnterior = viaje.estadoActual();
 
-				double costo = calcularCostoCancelacion(viaje, usuario, estadoAnterior);
+					double costo = calcularCostoCancelacion(viaje, usuario, estadoAnterior);
 
-				viaje.setCostoCancelacion(costo);
+					viaje.setCostoCancelacion(costo);
 
-				viaje.cancelar(LocalDateTime.now(), usuario, motivo);
+					viaje.cancelar(LocalDateTime.now(), usuario, motivo);
 
-				return true;
+					return true;
+				}
 			}
+
+			return false;
+		} finally {
+			BloqueoViajes.LOCK.unlock();
 		}
-
-		return false;
 	}
-
 	/**
 	 * Inicia el viaje aceptado del conductor.
 	 *
@@ -190,15 +206,20 @@ public class GestorViajes {
 			throw new IllegalArgumentException("Se requiere un usuario con el rol CONDUCTOR activo.");
 		}
 
-		Viaje viajeActivo = obtenerViajeActivoConductor(conductorUsuario);
+		BloqueoViajes.LOCK.lock();
+		try {
+			Viaje viajeActivo = obtenerViajeActivoConductor(conductorUsuario);
 
-		if (viajeActivo == null || viajeActivo.estadoActual() != EstadoViaje.ACEPTADO) {
-			return false;
+			if (viajeActivo == null || viajeActivo.estadoActual() != EstadoViaje.ACEPTADO) {
+				return false;
+			}
+
+			viajeActivo.iniciar(LocalDateTime.now());
+
+			return true;
+		} finally {
+			BloqueoViajes.LOCK.unlock();
 		}
-
-		viajeActivo.iniciar(LocalDateTime.now());
-
-		return true;
 	}
 
 	/**
@@ -213,40 +234,49 @@ public class GestorViajes {
 			throw new IllegalArgumentException("Se requiere un usuario con el rol CONDUCTOR activo.");
 		}
 
-		Viaje viajeActivo = obtenerViajeActivoConductor(conductorUsuario);
+		BloqueoViajes.LOCK.lock();
+		try {
+			Viaje viajeActivo = obtenerViajeActivoConductor(conductorUsuario);
 
-		if (viajeActivo == null || viajeActivo.estadoActual() != EstadoViaje.INICIADO) {
-			return false;
+			if (viajeActivo == null || viajeActivo.estadoActual() != EstadoViaje.INICIADO) {
+				return false;
+			}
+
+			calificacionServicio.completarCalificacionesPendientes(viajeActivo);
+
+			// Finalizar el viaje y registrar las calificaciones.
+			viajeActivo.finalizar(LocalDateTime.now(), viajeActivo.getCalificacionCliente(),
+					viajeActivo.getCalificacionConductor());
+
+			calificacionServicio.registrarCalificacionesEnHistorial(viajeActivo);
+
+			return true;
+		} finally {
+			BloqueoViajes.LOCK.unlock();
 		}
-
-		calificacionServicio.completarCalificacionesPendientes(viajeActivo);
-
-		// Finalizar el viaje y registrar las calificaciones.
-		viajeActivo.finalizar(LocalDateTime.now(), viajeActivo.getCalificacionCliente(),
-				viajeActivo.getCalificacionConductor());
-
-		calificacionServicio.registrarCalificacionesEnHistorial(viajeActivo);
-
-		return true;
 	}
 	
 	public Viaje consultarViajeActivo(Usuario usuario) {
 
-	    if (usuario == null) {
-	        throw new IllegalArgumentException("El usuario es obligatorio.");
-	    }
+		if (usuario == null) {
+			throw new IllegalArgumentException("El usuario es obligatorio.");
+		}
 
-	    for (Viaje viaje : obtenerViajesUsuario(usuario)) {
+		BloqueoViajes.LOCK.lock();
+		try {
+			for (Viaje viaje : obtenerViajesUsuario(usuario)) {
 
-	        EstadoViaje estado = viaje.estadoActual();
+				EstadoViaje estado = viaje.estadoActual();
 
-	        if (estado == EstadoViaje.ACEPTADO
-	                || estado == EstadoViaje.INICIADO) {
-	            return viaje;
-	        }
-	    }
+				if (estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
+					return viaje;
+				}
+			}
 
-	    return null;
+			return null;
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
 	}
 
 	/**
@@ -257,11 +287,17 @@ public class GestorViajes {
 	 *         activo.
 	 */
 	public Viaje consultarViajeActivoConductor(Usuario conductorUsuario) {
-		return obtenerViajeActivoConductor(conductorUsuario);
+		BloqueoViajes.LOCK.lock();
+		try {
+			return obtenerViajeActivoConductor(conductorUsuario);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
 	}
 
 	/**
 	 * Busca el viaje aceptado o iniciado del conductor.
+	 * Se llama siempre con el lock tomado.
 	 */
 	private Viaje obtenerViajeActivoConductor(Usuario conductorUsuario) {
 

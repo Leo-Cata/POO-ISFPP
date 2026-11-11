@@ -134,7 +134,7 @@ public class CommandLineInterface implements UIEngine {
         boolean tienePerfilConductor = usuario.getConductor() != null;
 
         if (tienePerfilConductor) {
-            System.out.println("3. " + msj.getString("menu.cliente.opcion.cambiar_conductor"));
+            System.out.println("4. " + msj.getString("menu.cliente.opcion.cambiar_conductor"));
         }
 
         System.out.println("0. " + msj.getString("menu.opcion.cerrar_sesion"));
