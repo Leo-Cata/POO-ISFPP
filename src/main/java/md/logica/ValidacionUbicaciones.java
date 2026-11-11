@@ -11,22 +11,40 @@ public final class ValidacionUbicaciones {
     private ValidacionUbicaciones() {
     }
 
+    /**
+     * Valida una ubicación y la ajusta a la calle transitable más cercana.
+     * <p>
+     * Comprueba que las coordenadas sean válidas y estén dentro del área de
+     * simulación, pide al motor vial la calle más próxima dentro de la tolerancia
+     * configurada ({@code ubicacion.tolerancia.ajuste.metros}) y vuelve a validar
+     * el punto ajustado.
+     *
+     * @param candidata ubicación elegida por el usuario o generada.
+     * @param motorVial motor de rutas usado para ajustar el punto a una calle.
+     * @return la ubicación ajustada, apta para calcular rutas.
+     * @throws IllegalArgumentException si algún parámetro es {@code null}, las
+     *                                  coordenadas
+     *                                  son inválidas, están fuera del área o no hay
+     *                                  una
+     *                                  calle cercana.
+     * @throws IllegalStateException    si la tolerancia configurada no es válida o
+     *                                  el motor
+     *                                  vial devuelve un resultado inválido.
+     */
     public static Ubicacion validarYAjustar(
             Ubicacion candidata,
             PlanificadorRutas motorVial) {
 
         if (candidata == null || motorVial == null) {
             throw new IllegalArgumentException(
-                    "La ubicación y el motor vial son obligatorios."
-            );
+                    "La ubicación y el motor vial son obligatorios.");
         }
 
         validarCoordenadas(candidata);
 
         validarDentroDelArea(candidata);
 
-        double tolerancia =
-                CargarParametros.getToleranciaAjusteMetros();
+        double tolerancia = CargarParametros.getToleranciaAjusteMetros();
 
         if (!Double.isFinite(tolerancia) || tolerancia <= 0) {
             throw new IllegalStateException("La tolerancia de ajuste no es válida.");
@@ -39,7 +57,7 @@ public final class ValidacionUbicaciones {
         }
 
         Ubicacion ajustada = resultado.orElseThrow(() -> new IllegalArgumentException(
-                        "No se encontró una calle cercana a la ubicación."));
+                "No se encontró una calle cercana a la ubicación."));
 
         validarCoordenadas(ajustada);
         validarDentroDelArea(ajustada);
@@ -65,8 +83,7 @@ public final class ValidacionUbicaciones {
 
     private static void validarDentroDelArea(Ubicacion ubicacion) {
 
-        boolean fueraDelArea =
-                ubicacion.getLatitud() < CargarParametros.getLatitudMin() ||
+        boolean fueraDelArea = ubicacion.getLatitud() < CargarParametros.getLatitudMin() ||
                 ubicacion.getLatitud() > CargarParametros.getLatitudMax() ||
                 ubicacion.getLongitud() < CargarParametros.getLongitudMin() ||
                 ubicacion.getLongitud() > CargarParametros.getLongitudMax();

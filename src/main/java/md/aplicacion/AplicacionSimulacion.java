@@ -22,11 +22,28 @@ import md.simulacion.PoliticaAsignacion;
  * Punto de entrada de la simulación por consola.
  *
  * Lanza un hilo por conductor y un hilo generador de pasajeros, deja correr la
- * simulación durante el tiempo configurado y, al final, muestra las estadísticas.
+ * simulación durante el tiempo configurado y, al final, muestra las
+ * estadísticas.
  * Se ejecuta como cualquier otro main, por separado de la interfaz gráfica.
  */
 public class AplicacionSimulacion {
-
+    /**
+     * Punto de entrada de la simulación por consola.
+     * <p>
+     * Carga los datos, separa a los usuarios en conductores y pasajeros, lanza un
+     * hilo virtual por conductor y un hilo generador de pasajeros, deja correr la
+     * simulación el tiempo configurado y al final cierra el {@link Despachador}
+     * e imprime el resumen de {@link Estadisticas}.
+     *
+     * @param args argumentos de línea de comandos (no se utilizan).
+     * @throws IOException           si falla la lectura de la configuración o de
+     *                               los datos.
+     * @throws DAOException          si ocurre un error al cargar los datos.
+     * @throws InterruptedException  si el hilo principal es interrumpido mientras
+     *                               espera.
+     * @throws IllegalStateException si no hay conductores, pasajeros o servicios
+     *                               para simular.
+     */
     public static void main(String[] args) throws IOException, DAOException, InterruptedException {
         try {
             DAOFactory persistencia = DAOLoader.getFactory();
@@ -57,7 +74,7 @@ public class AplicacionSimulacion {
             Estadisticas estadisticas = new Estadisticas();
             Despachador despachador = new Despachador(datos.getUsuarios(), ContextoAplicacion.getMotorVial(),
                     politica, esperaMaximaMs, estadisticas);
-            
+
             System.out.println("====================================================");
             System.out.println("           SIMULACIÓN DE MOVILIDAD DIGITAL");
             System.out.println("====================================================");
@@ -70,7 +87,8 @@ public class AplicacionSimulacion {
 
             despachador.mostrarEstadoInicial();
 
-            // Un hilo virtual por tarea: un hilo por conductor, más el generador de pasajeros
+            // Un hilo virtual por tarea: un hilo por conductor, más el generador de
+            // pasajeros
             ExecutorService hilos = Executors.newVirtualThreadPerTaskExecutor();
             try {
                 hilos.execute(new GeneradorPasajeros(pasajeros, datos.getServicios(), despachador,

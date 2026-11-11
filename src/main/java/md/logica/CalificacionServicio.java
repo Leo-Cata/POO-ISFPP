@@ -1,6 +1,5 @@
 package md.logica;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import md.modelo.CalificacionViaje;
@@ -19,8 +18,8 @@ public class CalificacionServicio {
     /**
      * Registra la calificación que el cliente otorga al conductor.
      *
-     * @param cliente usuario que realiza la calificación.
-     * @param viaje viaje que se desea calificar.
+     * @param cliente      usuario que realiza la calificación.
+     * @param viaje        viaje que se desea calificar.
      * @param calificacion calificación otorgada al conductor.
      */
     public void calificarComoCliente(
@@ -44,8 +43,8 @@ public class CalificacionServicio {
     /**
      * Registra la calificación que el conductor otorga al cliente.
      *
-     * @param conductor usuario que realiza la calificación.
-     * @param viaje viaje que se desea calificar.
+     * @param conductor    usuario que realiza la calificación.
+     * @param viaje        viaje que se desea calificar.
      * @param calificacion calificación otorgada al cliente.
      */
     public void calificarComoConductor(
@@ -87,15 +86,13 @@ public class CalificacionServicio {
                     "El viaje debe estar finalizado para registrar las calificaciones.");
         }
 
-        CalificacionViaje calificacionCliente =
-                viaje.getCalificacionCliente();
+        CalificacionViaje calificacionCliente = viaje.getCalificacionCliente();
 
-        CalificacionViaje calificacionConductor =
-                viaje.getCalificacionConductor();
+        CalificacionViaje calificacionConductor = viaje.getCalificacionConductor();
 
         if (calificacionCliente == null || calificacionConductor == null) {
             throw new IllegalStateException(
-            		"El viaje no tiene registradas las calificaciones.");
+                    "El viaje no tiene registradas las calificaciones.");
         }
 
         Usuario cliente = viaje.getCliente();
@@ -145,7 +142,17 @@ public class CalificacionServicio {
 
         return calcularPromedio(conductor.getCalificaciones());
     }
-    
+
+    /**
+     * Completa con {@link CalificacionViaje#NO_CALIFICADO} las calificaciones del
+     * viaje que todavía no fueron cargadas (la del cliente y la del conductor).
+     * No modifica las calificaciones que ya tienen un valor.
+     *
+     * @param viaje viaje en curso cuyas calificaciones pendientes se completan.
+     * @throws IllegalArgumentException si el viaje es {@code null}.
+     * @throws IllegalStateException    si el viaje no está en estado
+     *                                  {@code INICIADO}.
+     */
     public void completarCalificacionesPendientes(Viaje viaje) {
 
         if (viaje == null) {
@@ -165,7 +172,6 @@ public class CalificacionServicio {
             viaje.setCalificacionConductor(CalificacionViaje.NO_CALIFICADO);
         }
     }
-    
 
     /**
      * Valida los datos necesarios para registrar una calificación.
@@ -211,7 +217,7 @@ public class CalificacionServicio {
                 cantidadCalificaciones++;
             }
         }
-        
+
         if (cantidadCalificaciones == 0) {
             return 0.0;
         }

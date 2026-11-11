@@ -21,121 +21,127 @@ public class ContextoAplicacion {
 	private static Locale locale;
 	private static ResourceBundle mensajes;
 	private static Usuario usuarioLogeado; // mantiene el usuario logeado
-	private static PlanificadorRutas motorVial; //conserva la instancia del motor de rutas que creamos mediante PlanificadorRutasFactory
-	private static GeneradorUbicacionesViales generadorUbicaciones; //conserva el generador que utiliza ese motor para producir ubicaciones válidas
+	private static PlanificadorRutas motorVial; // conserva la instancia del motor de rutas que creamos mediante
+												// PlanificadorRutasFactory
+	private static GeneradorUbicacionesViales generadorUbicaciones; // conserva el generador que utiliza ese motor para
+																	// producir ubicaciones válidas
 
-	
-    /**
-     * Carga los datos iniciales y prepara los recursos viales
-     * necesarios para iniciar la aplicación.
-     */
+	/**
+	 * Carga los datos iniciales y prepara los recursos viales
+	 * necesarios para iniciar la aplicación.
+	 */
 	public static void inicializar(DAOFactory persistencia) throws DAOException, FileNotFoundException {
 
-		  if (persistencia == null) {throw new IllegalArgumentException("La persistencia no puede ser null.");
-	        }
+		if (persistencia == null) {
+			throw new IllegalArgumentException("La persistencia no puede ser null.");
+		}
 
-	        if (motorVial != null) {
-	            throw new IllegalStateException("El contexto ya fue inicializado.");
-	        }
-		
-	        CargadorModelo.DatosIniciales nuevosDatos = new CargadorModelo(persistencia).cargar();
-	        PlanificadorRutas nuevoMotor = null;
-		
-	        try {
+		if (motorVial != null) {
+			throw new IllegalStateException("El contexto ya fue inicializado.");
+		}
 
-	            // Creamos el motor vial configurado.
-	            nuevoMotor = PlanificadorRutasFactory.crear();
+		CargadorModelo.DatosIniciales nuevosDatos = new CargadorModelo(persistencia).cargar();
+		PlanificadorRutas nuevoMotor = null;
 
-	            // Creamos el generador utilizando el motor compartido.
-	            GeneradorUbicacionesViales nuevoGenerador =
-	                    new GeneradorUbicacionesViales(nuevoMotor);
+		try {
 
-	            // Preparamos las ubicaciones y el estado de los conductores.
-	            InicializadorEscenario inicializador =
-	                    new InicializadorEscenario(nuevoGenerador);
+			// Creamos el motor vial configurado.
+			nuevoMotor = PlanificadorRutasFactory.crear();
 
-	            inicializador.inicializar(nuevosDatos.getUsuarios());
+			// Creamos el generador utilizando el motor compartido.
+			GeneradorUbicacionesViales nuevoGenerador = new GeneradorUbicacionesViales(nuevoMotor);
 
-	            // Conservamos los recursos para el resto de la aplicación.
-	            datos = nuevosDatos;
-	            motorVial = nuevoMotor;
-	            generadorUbicaciones = nuevoGenerador;
+			// Preparamos las ubicaciones y el estado de los conductores.
+			InicializadorEscenario inicializador = new InicializadorEscenario(nuevoGenerador);
 
-	        } catch (RuntimeException e) {
+			inicializador.inicializar(nuevosDatos.getUsuarios());
 
-	            // Si falla la inicialización, liberamos el motor creado.
-	            if (nuevoMotor != null) {
-	                try {
-	                    nuevoMotor.close();
-	                } catch (RuntimeException errorCierre) {
-	                    e.addSuppressed(errorCierre);
-	                }
-	            }
+			// Conservamos los recursos para el resto de la aplicación.
+			datos = nuevosDatos;
+			motorVial = nuevoMotor;
+			generadorUbicaciones = nuevoGenerador;
 
-	            throw e;
-	        }
+		} catch (RuntimeException e) {
+
+			// Si falla la inicialización, liberamos el motor creado.
+			if (nuevoMotor != null) {
+				try {
+					nuevoMotor.close();
+				} catch (RuntimeException errorCierre) {
+					e.addSuppressed(errorCierre);
+				}
+			}
+
+			throw e;
+		}
 	}
-	
+
+	/**
+	 * Establece el idioma de la aplicación y carga el paquete de mensajes
+	 * {@code ui.i18n.labels} correspondiente.
+	 *
+	 * @param idioma código de idioma (por ejemplo, {@code "es"} o {@code "en"}).
+	 * @param pais   código de país (por ejemplo, {@code "ES"} o {@code "US"}).
+	 */
 	public static void inicializarIdioma(String idioma, String pais) {
 
-	    locale = new Locale(idioma, pais);
+		locale = new Locale(idioma, pais);
 
-	    mensajes = ResourceBundle.getBundle(
-	        "ui.i18n.labels",
-	        locale
-	    );
+		mensajes = ResourceBundle.getBundle(
+				"ui.i18n.labels",
+				locale);
 	}
 
 	public static CargadorModelo.DatosIniciales getDatosIniciales() {
-        return datos;
-    }
-	
+		return datos;
+	}
+
 	public static Locale getLocale() {
-	    return locale;
+		return locale;
 	}
 
 	public static ResourceBundle getMensajes() {
-	    return mensajes;
+		return mensajes;
 	}
 
-    public static Usuario getUsuarioLogeado() {
-        return usuarioLogeado;
-    }
+	public static Usuario getUsuarioLogeado() {
+		return usuarioLogeado;
+	}
 
-    public static void setUsuarioLogeado(Usuario usuario) {
-        usuarioLogeado = usuario;
-    }
+	public static void setUsuarioLogeado(Usuario usuario) {
+		usuarioLogeado = usuario;
+	}
 
-    public static PlanificadorRutas getMotorVial() {
+	public static PlanificadorRutas getMotorVial() {
 
-        if (motorVial == null) {
-            throw new IllegalStateException("El motor vial todavía no fue inicializado.");
-        }
+		if (motorVial == null) {
+			throw new IllegalStateException("El motor vial todavía no fue inicializado.");
+		}
 
-        return motorVial;
-    }
+		return motorVial;
+	}
 
-    public static GeneradorUbicacionesViales getGeneradorUbicaciones() {
+	public static GeneradorUbicacionesViales getGeneradorUbicaciones() {
 
-        if (generadorUbicaciones == null) {
-            throw new IllegalStateException("El generador de ubicaciones todavía no fue inicializado.");
-        }
+		if (generadorUbicaciones == null) {
+			throw new IllegalStateException("El generador de ubicaciones todavía no fue inicializado.");
+		}
 
-        return generadorUbicaciones;
-    }
+		return generadorUbicaciones;
+	}
 
-    /**
-     * Cierra el motor vial y libera sus recursos.
-     */
-    public static void cerrar() {
+	/**
+	 * Cierra el motor vial y libera sus recursos.
+	 */
+	public static void cerrar() {
 
-        if (motorVial != null) {
-            try {
-                motorVial.close();
-            } finally {
-                motorVial = null;
-                generadorUbicaciones = null;
-            }
-        }
-    }
+		if (motorVial != null) {
+			try {
+				motorVial.close();
+			} finally {
+				motorVial = null;
+				generadorUbicaciones = null;
+			}
+		}
+	}
 }

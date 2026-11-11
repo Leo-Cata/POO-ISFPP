@@ -72,6 +72,13 @@ public class Conductor {
 		return this.estado == EstadoConductor.VIAJE_A_ORIGEN || this.estado == EstadoConductor.VIAJE_A_DESTINO;
 	}
 
+	/**
+	 * Agrega una calificación recibida por el conductor. Se conservan como máximo
+	 * 200; al superarse ese límite se descarta la más antigua.
+	 *
+	 * @param calificacion calificación a registrar.
+	 * @throws IllegalArgumentException si la calificación es {@code null}.
+	 */
 	public void agregarCalificacion(CalificacionViaje calificacion) {
 		if (calificacion == null) {
 			throw new IllegalArgumentException("La calificación no puede ser null.");
@@ -99,15 +106,15 @@ public class Conductor {
 	}
 
 	public void setVehiculoActivo(Vehiculo vehiculoActivo) {
-	    if (vehiculoActivo == null) {
-	        throw new IllegalArgumentException("El vehículo no puede ser null.");
-	    }
+		if (vehiculoActivo == null) {
+			throw new IllegalArgumentException("El vehículo no puede ser null.");
+		}
 
-	    if (this.vehiculos.get(vehiculoActivo.getPatente()) == null) {
-	        throw new IllegalArgumentException(
-	                "El vehículo no está registrado para este conductor.");
-	    }
-		
+		if (this.vehiculos.get(vehiculoActivo.getPatente()) == null) {
+			throw new IllegalArgumentException(
+					"El vehículo no está registrado para este conductor.");
+		}
+
 		this.vehiculoActivo = vehiculoActivo;
 	}
 

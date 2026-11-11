@@ -430,10 +430,16 @@ public class Viaje {
 		return copiaRegistroViaje;
 	}
 
+	/**
+	 * Agrega un registro al final del historial de estados del viaje.
+	 *
+	 * @param nuevoRegistroViaje registro con el estado y la fecha y hora a
+	 *                           incorporar.
+	 */
 	public void agregarRegistroViaje(RegistroViaje nuevoRegistroViaje) {
 		this.registroViaje.addLast(nuevoRegistroViaje);
 	}
-	
+
 	public RutasViaje getRutas() {
 		return rutas;
 	}

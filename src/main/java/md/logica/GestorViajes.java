@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import md.aplicacion.ContextoAplicacion;
 import md.config.CargarParametros;
-import md.modelo.CalificacionViaje;
 import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
 import md.modelo.Servicio;
@@ -106,7 +105,8 @@ public class GestorViajes {
 		// Todo bajo el mismo lock que usa la simulación.
 		BloqueoViajes.LOCK.lock();
 		try {
-			// Se vuelve a chequear dentro del lock: otro hilo pudo crear un viaje mientras tanto.
+			// Se vuelve a chequear dentro del lock: otro hilo pudo crear un viaje mientras
+			// tanto.
 			if (clienteUsuario.getCliente().enViaje()) {
 				throw new IllegalStateException("El cliente ya tiene un viaje activo.");
 			}
@@ -152,6 +152,7 @@ public class GestorViajes {
 			BloqueoViajes.LOCK.unlock();
 		}
 	}
+
 	/**
 	 * Cancela el viaje activo.
 	 *
@@ -175,7 +176,8 @@ public class GestorViajes {
 
 				EstadoViaje estado = viaje.estadoActual();
 
-				if (estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
+				if (estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO
+						|| estado == EstadoViaje.INICIADO) {
 
 					EstadoViaje estadoAnterior = viaje.estadoActual();
 
@@ -194,6 +196,7 @@ public class GestorViajes {
 			BloqueoViajes.LOCK.unlock();
 		}
 	}
+
 	/**
 	 * Inicia el viaje aceptado del conductor.
 	 *
@@ -255,7 +258,17 @@ public class GestorViajes {
 			BloqueoViajes.LOCK.unlock();
 		}
 	}
-	
+
+	/**
+	 * Consulta el viaje activo del usuario cuando actúa como cliente.
+	 * Se considera activo un viaje en estado {@code ACEPTADO} o {@code INICIADO}.
+	 * La búsqueda se hace bajo el bloqueo compartido de viajes para ser segura
+	 * entre hilos.
+	 *
+	 * @param usuario usuario cuyo viaje activo se desea consultar.
+	 * @return el viaje activo, o {@code null} si el usuario no tiene ninguno.
+	 * @throws IllegalArgumentException si el usuario es {@code null}.
+	 */
 	public Viaje consultarViajeActivo(Usuario usuario) {
 
 		if (usuario == null) {

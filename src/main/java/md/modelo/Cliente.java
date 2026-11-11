@@ -59,6 +59,13 @@ public class Cliente {
 		return false;
 	}
 
+	/**
+	 * Agrega una calificación recibida por el cliente. Se conservan como máximo
+	 * 100; al superarse ese límite se descarta la más antigua.
+	 *
+	 * @param calificacion calificación a registrar.
+	 * @throws IllegalArgumentException si la calificación es {@code null}.
+	 */
 	public void agregarCalificacion(CalificacionViaje calificacion) {
 		if (calificacion == null) {
 			throw new IllegalArgumentException("La calificación no puede ser null.");

@@ -29,6 +29,11 @@ public class LoginController {
 
 	private ProbeHashMap<String, Usuario> usuarios = new ProbeHashMap<>();
 
+	/**
+	 * Inicializa la pantalla de ingreso: carga los usuarios disponibles en el
+	 * combo de selección y define cómo se muestra cada uno (nombre, email y perfil
+	 * de conductor o cliente). Lo invoca JavaFX después de cargar el FXML.
+	 */
 	public void initialize() {
 		// chequea que hayan datos, guarda los usuarios y los pobla en el comboBox
 		if (ContextoAplicacion.getDatosIniciales() != null) {

@@ -28,6 +28,11 @@ public class MainApp extends Application {
 		}
 	}
 
+	/**
+	 * Lanza la aplicación JavaFX.
+	 *
+	 * @param args argumentos de línea de comandos que se pasan a {@code launch}.
+	 */
 	public static void main(String[] args) {
 		launch(args);
 	}

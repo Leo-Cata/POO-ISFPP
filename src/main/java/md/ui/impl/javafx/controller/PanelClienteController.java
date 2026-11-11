@@ -90,6 +90,11 @@ public class PanelClienteController {
     // variable para que no deje solicitar un viaje si tiene una deuda
     private boolean deuda;
 
+    /**
+     * Inicializa el panel del cliente: carga el mapa, registra la selección de
+     * puntos por clic, activa la espera del origen, carga los servicios en el combo
+     * y crea el {@link GestorViajes}. Lo invoca JavaFX después de cargar el FXML.
+     */
     @FXML
     public void initialize() {
         resource = ContextoAplicacion.getMensajes();
@@ -172,11 +177,21 @@ public class PanelClienteController {
         }
     }
 
+    /**
+     * Borra las coordenadas y el marcador del origen y espera un nuevo clic.
+     *
+     * @param event evento del botón.
+     */
     @FXML
     void handleBorrarOrigen(ActionEvent event) {
         borrarPunto("origen");
     }
 
+    /**
+     * Borra las coordenadas y el marcador del destino y espera un nuevo clic.
+     *
+     * @param event evento del botón.
+     */
     @FXML
     void handleBorrarDestino(ActionEvent event) {
         borrarPunto("destino");
@@ -208,6 +223,15 @@ public class PanelClienteController {
         }
     }
 
+    /**
+     * Solicita el viaje cotizado. Exige que no haya deuda pendiente y que el viaje
+     * haya sido cotizado. El cálculo de rutas y la asignación del conductor se
+     * ejecutan en un hilo virtual para no congelar la ventana; al terminar, se
+     * dibujan las rutas y se muestran los datos del conductor, o se informa el
+     * error (sin conductor, sin ruta, etc.).
+     *
+     * @param event evento del botón.
+     */
     @FXML
     void handleSolicitarViaje(ActionEvent event) {
         if (deuda) {
@@ -286,6 +310,11 @@ public class PanelClienteController {
         Thread.ofVirtual().name("solicitud-viaje").start(tarea);
     }
 
+    /**
+     * Cierra la sesión del usuario y vuelve a la pantalla de ingreso.
+     *
+     * @param event evento del botón.
+     */
     @FXML
     void handleCerrarSesion(ActionEvent event) {
 
@@ -294,6 +323,15 @@ public class PanelClienteController {
         NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/login.fxml");
     }
 
+    /**
+     * Calcula y muestra la cotización del viaje (distancia, duración y costo
+     * estimado) a partir de las coordenadas cargadas y del servicio elegido.
+     * Valida que los datos estén completos y que el usuario tenga el rol de
+     * cliente;
+     * si todo es correcto habilita el botón de solicitar.
+     *
+     * @param event evento del botón.
+     */
     @FXML
     void handleCotizarViaje(ActionEvent event) {
         servicio = comboServicios.getValue();
@@ -353,8 +391,10 @@ public class PanelClienteController {
         }
     }
 
-    // se encarga de mostrar el textfield y el boton de confirmar, al volver a
-    // apretar oculta
+    /**
+     * Muestra u oculta el campo de motivo y el botón de confirmar cancelación
+     * (alterna cada vez que se presiona).
+     */
     @FXML
     void handleCancelarViaje() {
         cancelacionBoolean = !cancelacionBoolean;
@@ -363,7 +403,12 @@ public class PanelClienteController {
         clienteConfirmarCancelar.setVisible(cancelacionBoolean);
     }
 
-    // boton encargado de llamar al metodo para la cancelacion
+    /**
+     * Confirma la cancelación del viaje con el motivo ingresado. Si se pudo
+     * cancelar, muestra el costo de cancelación a pagar y deja al cliente con
+     * deuda, lo que le impide solicitar otro viaje hasta pagar. Si no se pudo,
+     * informa el problema.
+     */
     @FXML
     void handleConfirmarCancelar() {
         try {
@@ -406,6 +451,10 @@ public class PanelClienteController {
 
     }
 
+    /**
+     * Registra el pago del costo de cancelación: oculta el importe y el botón de
+     * pago y levanta la deuda del cliente.
+     */
     @FXML
     void handleCancelarPagar() {
         clienteLabelCancelacion.setVisible(false);
