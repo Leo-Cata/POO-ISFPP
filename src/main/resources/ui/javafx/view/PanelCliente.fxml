@@ -37,7 +37,9 @@
             <Button fx:id="clienteCancelarViaje" layoutX="19.0" layoutY="321.0" mnemonicParsing="false" onAction="#handleCancelarViaje" text="%client.cancel.trip" />
             <TextField fx:id="clienteTextfieldCancelar" alignment="TOP_LEFT" layoutX="19.0" layoutY="359.0" prefHeight="115.0" prefWidth="257.0" promptText="%client.cancel.placeholder" />
             <Button fx:id="clienteConfirmarCancelar" layoutX="21.0" layoutY="481.0" mnemonicParsing="false" onAction="#handleConfirmarCancelar" text="%client.confirm.cancel" />
-            <Label fx:id="clienteCostoPagar" layoutX="661.0" layoutY="390.0" text="COSTO CUANDO CANCELA" />
+            <Label fx:id="clienteCostoPagar" layoutX="672.0" layoutY="407.0" style="-fx-min-width: 100px;" />
+            <Label fx:id="clienteLabelCancelacion" layoutX="672.0" layoutY="390.0" text="%client.cancelation.pay" />
+            <Button fx:id="clienteBotonCancelacionPagar" layoutX="672.0" layoutY="432.0" mnemonicParsing="false" onAction="#handleCancelarPagar" text="%client.cancelation.button" />
 
       </children>
     </AnchorPane>

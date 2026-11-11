@@ -64,6 +64,12 @@ public class PanelClienteController {
     private TextField clienteTextfieldCancelar;
     @FXML
     private Button clienteConfirmarCancelar;
+    @FXML
+    private Button clienteBotonCancelacionPagar;
+    @FXML
+    private Label clienteLabelCancelacion;
+    @FXML
+    private Label clienteCostoPagar;
 
     private VisualizadorMapa visualizador;
     private boolean cancelacionBoolean = false;
@@ -80,6 +86,9 @@ public class PanelClienteController {
     // variables de servicio y cliente
     private Usuario cliente;
     private Servicio servicio;
+
+    // variable para que no deje solicitar un viaje si tiene una deuda
+    private boolean deuda;
 
     @FXML
     public void initialize() {
@@ -120,6 +129,14 @@ public class PanelClienteController {
         // oculta el textfield y el boton de confirmar cancelar al inicio
         clienteConfirmarCancelar.setVisible(false);
         clienteTextfieldCancelar.setVisible(false);
+
+        // Oculta la interfaz de cancelación al iniciar
+        clienteLabelCancelacion.setVisible(false);
+        clienteCostoPagar.setVisible(false);
+        clienteBotonCancelacionPagar.setVisible(false);
+
+        // setea la deuda como false
+        deuda = false;
     }
 
     private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
@@ -193,7 +210,11 @@ public class PanelClienteController {
 
     @FXML
     void handleSolicitarViaje(ActionEvent event) {
-
+        if (deuda) {
+            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+                    resource.getString("client.request.debt.text"));
+            return;
+        }
         // chequea que se haya cotizado primero el viaje
         if (cotizacion == null || origenActual == null || destinoActual == null || servicio == null) {
             botonClienteSolicitar.setDisable(true);
@@ -346,23 +367,52 @@ public class PanelClienteController {
     @FXML
     void handleConfirmarCancelar() {
         try {
-            // si devuelve false es que hubo un error
+            // Si devuelve false, no se pudo cancelar
             if (!gestor.procesarCancelacionViaje(cliente, clienteTextfieldCancelar.getText())) {
-                AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"),
+                AlertaUtil.mostrarAlerta(
+                        resource.getString("client.unable.cancel.title"),
                         resource.getString("client.unable.cancel.text"));
                 return;
             }
-            // si se pudo cancelar:
-            clienteViajeEstadoActual.setText(resultadoSolicitud.viaje().estadoActual().name());
-            AlertaUtil.mostrarAlerta(resource.getString("client.cancel.success.title"),
-                    resource.getString("client.cancel.success.text"));
 
-            // por ultimo limpia el mapa
+            // Se obtiene el costo antes de limpiar el estado
+            double costoCancelacion = resultadoSolicitud.viaje().getCostoCancelacion();
+
+            clienteViajeEstadoActual.setText(resultadoSolicitud.viaje().estadoActual().name());
+
+            // Se muestra la información del importe pendiente
+            clienteLabelCancelacion.setVisible(true);
+            clienteCostoPagar.setText(String.format("$%.2f", costoCancelacion));
+            clienteCostoPagar.setVisible(true);
+            clienteBotonCancelacionPagar.setVisible(true);
+            clienteBotonCancelacionPagar.setDisable(false);
+
+            AlertaUtil.mostrarAlerta(
+                    resource.getString("client.cancel.success.title"),
+                    resource.getString("client.cancel.success.text") + String.format("%.2f", costoCancelacion));
+
+            // setea con deuda
+            deuda = true;
+
+            // Se limpia el estado del viaje
             limpiarEstadoViaje();
             mostrarOcultarInfoViaje(false);
+
         } catch (IllegalArgumentException | IllegalStateException e) {
-            AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"), e.getLocalizedMessage());
+            AlertaUtil.mostrarAlerta(
+                    resource.getString("client.unable.cancel.title"),
+                    resource.getString("client.unable.cancel.text"));
         }
+
+    }
+
+    @FXML
+    void handleCancelarPagar() {
+        clienteLabelCancelacion.setVisible(false);
+        clienteCostoPagar.setText("");
+        clienteCostoPagar.setVisible(false);
+        clienteBotonCancelacionPagar.setVisible(false);
+        deuda = false;
     }
 
     // funcion auxiliar para mostrar los datos del conductor en pantalla
