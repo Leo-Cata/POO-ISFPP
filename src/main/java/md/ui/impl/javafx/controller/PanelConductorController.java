@@ -31,6 +31,8 @@ import md.modelo.Vehiculo;
 import md.modelo.Viaje;
 import md.ui.impl.javafx.controller.util.AlertaUtil;
 import md.ui.impl.javafx.util.NavegadorVistas;
+import md.modelo.TipoServicio;
+import java.util.stream.Collectors;
 
 public class PanelConductorController {
 
@@ -62,6 +64,9 @@ public class PanelConductorController {
 
 	@FXML
 	private Label labelCategoriaVehiculo;
+	
+	@FXML
+	private Label labelServiciosVehiculo;
 
 	@FXML
 	private Button botonCambiarDisponibilidad;
@@ -96,6 +101,9 @@ public class PanelConductorController {
 
 	@FXML
 	private Label labelHoraInicioViaje;
+	
+	@FXML
+	private Label labelEstadoViaje;
 
 	@FXML
 	private Node contenedorViajeActual;
@@ -479,6 +487,7 @@ public class PanelConductorController {
 			labelModeloVehiculo.setText("—");
 			labelPatenteVehiculo.setText("—");
 			labelCategoriaVehiculo.setText("—");
+			labelServiciosVehiculo.setText("—");
 			return;
 		}
 
@@ -487,6 +496,8 @@ public class PanelConductorController {
 		labelPatenteVehiculo.setText(vehiculo.getPatente());
 
 		labelCategoriaVehiculo.setText(vehiculo.getCategoriaVehiculo().toString());
+		
+		mostrarServicios(vehiculo);
 	}
 
 	private void actualizarEstadoConductor() {
@@ -610,6 +621,10 @@ public class PanelConductorController {
 		// Hora de inicio.
 		labelHoraInicioViaje.setText(
 				obtenerHoraInicio(viaje, locale));
+		
+		// Estado actual del viaje.
+		labelEstadoViaje.setText(
+		        obtenerTextoEstadoViaje(viaje.estadoActual()));
 	}
 
 	private String formatearUbicacion(
@@ -652,5 +667,39 @@ public class PanelConductorController {
 
 		// El viaje fue aceptado, pero todavía no comenzó.
 		return "—";
+	}
+	
+	private String obtenerClaveServicio(TipoServicio tipoServicio) {
+	    return switch (tipoServicio) {
+	        case PASAJEROS -> "servicio.pasajeros";
+	        case ENVIOS -> "servicio.envios";
+	    };
+	}
+	private void mostrarServicios(Vehiculo vehiculo) {
+	    String servicios = vehiculo.getTipoServicios()
+	            .stream()
+	            .map(tipo -> ContextoAplicacion.getMensajes()
+	                    .getString(obtenerClaveServicio(tipo)))
+	            .collect(Collectors.joining(" · "));
+
+	    labelServiciosVehiculo.setText(servicios.isEmpty() ? "—" : servicios);
+	}
+	
+	private String obtenerTextoEstadoViaje(EstadoViaje estado) {
+
+	    if (estado == null) {
+	        return "—";
+	    }
+
+	    String clave = switch (estado) {
+	        case SOLICITADO -> "viaje.estado.solicitado";
+	        case ACEPTADO -> "viaje.estado.aceptado";
+	        case INICIADO -> "viaje.estado.iniciado";
+	        case FINALIZADO -> "viaje.estado.finalizado";
+	        case CANCELADO -> "viaje.estado.cancelado";
+	        case RECHAZADO -> "viaje.estado.rechazado";
+	    };
+
+	    return ContextoAplicacion.getMensajes().getString(clave);
 	}
 }
