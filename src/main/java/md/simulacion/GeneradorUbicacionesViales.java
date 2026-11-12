@@ -9,16 +9,26 @@ import md.modelo.Ubicacion;
 import md.rutas.api.PlanificadorRutas;
 
 public class GeneradorUbicacionesViales {
-	/*fija una cantidad concreta para evitar que el método quede ejecutándose indefinidamente 
-	 * cuando no consigue una ubicación apta
-	 */
+    /*
+     * fija una cantidad concreta para evitar que el método quede ejecutándose
+     * indefinidamente
+     * cuando no consigue una ubicación apta
+     */
     private static final int MAX_INTENTOS = 100;
 
+    /**
+     * ubicacion de respaldo en caso que despues de 100 intentos no sea posible
+     * generar una ubicacion
+     */
+    private static final Ubicacion UBICACION_RESPALDO = new Ubicacion(-42.76711046538174, -65.03593669533258);
     private final PlanificadorRutas motorVial;
     private final Random random;
 
-    /*recibir PlanificadorRutas por el constructor permite que el generador utilice cualquier 
-     * implementación del contrato, sin depender de una biblioteca concreta (GraphHopperPlanificador).
+    /*
+     * recibir PlanificadorRutas por el constructor permite que el generador utilice
+     * cualquier
+     * implementación del contrato, sin depender de una biblioteca concreta
+     * (GraphHopperPlanificador).
      */
     public GeneradorUbicacionesViales(PlanificadorRutas motorVial) {
 
@@ -36,29 +46,38 @@ public class GeneradorUbicacionesViales {
      *
      * @return ubicación válida sobre una calle.
      * @throws IllegalStateException si no se encuentra una ubicación
-     * válida después de varios intentos.
+     *                               válida después de varios intentos.
      */
     public Ubicacion generar() {
 
         for (int intento = 1; intento <= MAX_INTENTOS; intento++) {
 
-            double latitud = generarCoordenada(CargarParametros.getLatitudMin(),CargarParametros.getLatitudMax());
+            double latitud = generarCoordenada(CargarParametros.getLatitudMin(), CargarParametros.getLatitudMax());
 
-            double longitud = generarCoordenada(CargarParametros.getLongitudMin(),CargarParametros.getLongitudMax());
+            double longitud = generarCoordenada(CargarParametros.getLongitudMin(), CargarParametros.getLongitudMax());
 
             Ubicacion candidata = new Ubicacion(latitud, longitud);
 
             try {
-                return ValidacionUbicaciones.validarYAjustar(candidata,motorVial);
+                return ValidacionUbicaciones.validarYAjustar(candidata, motorVial);
 
             } catch (IllegalArgumentException e) {
-                // La ubicación no encontró una calle válida.
-                // Se genera otra candidata.
+                // La candidata no encontró una calle válida.
+                // El ciclo continúa con un nuevo intento.
             }
         }
+        try {
+            Ubicacion respaldo = UBICACION_RESPALDO;
 
-        throw new IllegalStateException("No se pudo generar una ubicación vial válida "+ "después de " + MAX_INTENTOS + " intentos."
-        );
+            return ValidacionUbicaciones.validarYAjustar(respaldo, motorVial);
+
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(
+                    "No se pudo generar una ubicación vial válida después de "
+                            + MAX_INTENTOS
+                            + " intentos, ni validar la ubicación de respaldo.",
+                    e);
+        }
     }
 
     /**
