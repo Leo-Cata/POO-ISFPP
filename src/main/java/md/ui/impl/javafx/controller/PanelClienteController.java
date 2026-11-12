@@ -122,6 +122,12 @@ public class PanelClienteController {
             }
         });
 
+        // Invalida la cotización si el cliente modifica el servicio seleccionado.
+        comboServicios.valueProperty().addListener((obs, servicioAnterior, servicioNuevo) -> {
+            if (servicioAnterior != servicioNuevo) {
+                invalidarCotizacion();
+            }
+        });
         // se genera un nuevo gestor
         gestor = new GestorViajes();
 
@@ -142,6 +148,12 @@ public class PanelClienteController {
 
         // setea la deuda como false
         deuda = false;
+
+        // Impide la modificación manual de las coordenadas.
+        txtLatOrigen.setEditable(false);
+        txtLonOrigen.setEditable(false);
+        txtLatDestino.setEditable(false);
+        txtLonDestino.setEditable(false);
     }
 
     private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
@@ -154,6 +166,10 @@ public class PanelClienteController {
             visualizador.activarSeleccion(tipo);
             return;
         }
+        // Invalida la cotización anterior al modificar el origen o destino desde el
+        // mapa.
+        invalidarCotizacion();
+
         if ("origen".equals(tipo)) {
             txtLatOrigen.setText(String.valueOf(sobreCalle.getLatitud()));
             txtLonOrigen.setText(String.valueOf(sobreCalle.getLongitud()));
@@ -334,6 +350,8 @@ public class PanelClienteController {
      */
     @FXML
     void handleCotizarViaje(ActionEvent event) {
+        // Descarta cualquier cotización anterior antes de intentar calcular una nueva.
+        invalidarCotizacion();
         servicio = comboServicios.getValue();
 
         // Verificamos que estén completos todos los datos.
@@ -486,8 +504,8 @@ public class PanelClienteController {
 
     // funcion auxiliar para limpiar todos los datos del mapa
     private void limpiarEstadoViaje() {
-        borrarPunto("origen");
         borrarPunto("destino");
+        borrarPunto("origen");
         visualizador.limpiarRutas();
         resultadoSolicitud = null;
         cancelacionBoolean = false;
