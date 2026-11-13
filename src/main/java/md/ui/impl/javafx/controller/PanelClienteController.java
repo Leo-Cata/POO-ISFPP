@@ -11,509 +11,571 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.web.WebView;
-import javafx.util.StringConverter;
 import md.aplicacion.ContextoAplicacion;
 import md.logica.ValidacionUbicaciones;
+import md.modelo.CategoriaVehiculo;
+import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
 import md.modelo.Servicio;
+import md.modelo.TipoServicio;
+import md.modelo.TipoVehiculo;
 import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Vehiculo;
+import md.modelo.Viaje;
 import md.rutas.api.RutaNoDisponibleException;
 import md.ui.api.VisualizadorMapa;
 import md.ui.impl.javafx.controller.util.AlertaUtil;
 import md.ui.impl.javafx.map.VisualizadorRutasLeaflet;
 import md.ui.impl.javafx.util.NavegadorVistas;
+import java.util.List;
 import md.logica.GestorViajes;
 
 public class PanelClienteController {
-    @FXML
-    private WebView mapaView;
-    @FXML
-    private TextField txtLatOrigen;
-    @FXML
-    private TextField txtLonOrigen;
-    @FXML
-    private TextField txtLatDestino;
-    @FXML
-    private TextField txtLonDestino;
-    @FXML
-    private ResourceBundle resource;
-    @FXML
-    private ComboBox<Servicio> comboServicios;
-    @FXML
-    private Button botonClienteSolicitar;
-    @FXML
-    private Label clienetDriver;
-    @FXML
-    private Label clienteConductorNom;
-    @FXML
-    private Label clienteConductorVehiculoTitulo;
-    @FXML
-    private Label clienteVehiculoModelo;
-    @FXML
-    private Label clienteConductorPatente;
-    @FXML
-    private Label clienteViajeEstadoActual;
-    @FXML
-    private Label clienteViajeEstadoTitulo;
-
-    @FXML
-    private Button clienteCancelarViaje;
-    @FXML
-    private TextField clienteTextfieldCancelar;
-    @FXML
-    private Button clienteConfirmarCancelar;
-    @FXML
-    private Button clienteBotonCancelacionPagar;
-    @FXML
-    private Label clienteLabelCancelacion;
-    @FXML
-    private Label clienteCostoPagar;
-
-    private VisualizadorMapa visualizador;
-    private boolean cancelacionBoolean = false;
-
-    // gesto de viaje para delegar todo el procesamiento a la capa lógica.
-    private GestorViajes gestor;
-    private GestorViajes.Cotizacion cotizacion;
-    private GestorViajes.ResultadoSolicitud resultadoSolicitud;
-
-    // variables de ubicacion para cotizar/solicitar
-    private Ubicacion origenActual;
-    private Ubicacion destinoActual;
-
-    // variables de servicio y cliente
-    private Usuario cliente;
-    private Servicio servicio;
-
-    // variable para que no deje solicitar un viaje si tiene una deuda
-    private boolean deuda;
-
-    /**
-     * Inicializa el panel del cliente: carga el mapa, registra la selección de
-     * puntos por clic, activa la espera del origen, carga los servicios en el combo
-     * y crea el {@link GestorViajes}. Lo invoca JavaFX después de cargar el FXML.
-     */
-    @FXML
-    public void initialize() {
-        resource = ContextoAplicacion.getMensajes();
-
-        // Instancia el adaptador pasando la referencia del WebView
-        visualizador = new VisualizadorRutasLeaflet(mapaView);
-
-        visualizador.configurarSeleccion(this::recibirPuntoMapa);
-
-        // 2\. Activa la espera del primer clic (Origen)
-        visualizador.activarSeleccion("origen");
-
-        // setea todos los servicios en el comboBox
-        comboServicios.getItems().setAll(ContextoAplicacion.getDatosIniciales().getServicios());
-
-        comboServicios.setConverter(new StringConverter<Servicio>() {
-            @Override
-            public String toString(Servicio servicio) {
-                return servicio != null ? servicio.getNombre() : "";
-            }
-
-            @Override
-            public Servicio fromString(String texxt) {
-                return null;
-            }
-        });
-
-        // Invalida la cotización si el cliente modifica el servicio seleccionado.
-        comboServicios.valueProperty().addListener((obs, servicioAnterior, servicioNuevo) -> {
-            if (servicioAnterior != servicioNuevo) {
-                invalidarCotizacion();
-            }
-        });
-        // se genera un nuevo gestor
-        gestor = new GestorViajes();
-
-        // al iniciar, se desactiva el boton de solicitar viaje
-        botonClienteSolicitar.setDisable(true);
-
-        // al iniciar, se ocultaran los labels de la info del conductor
-        mostrarOcultarInfoViaje(false);
-
-        // oculta el textfield y el boton de confirmar cancelar al inicio
-        clienteConfirmarCancelar.setVisible(false);
-        clienteTextfieldCancelar.setVisible(false);
-
-        // Oculta la interfaz de cancelación al iniciar
-        clienteLabelCancelacion.setVisible(false);
-        clienteCostoPagar.setVisible(false);
-        clienteBotonCancelacionPagar.setVisible(false);
-
-        // setea la deuda como false
-        deuda = false;
-
-        // Impide la modificación manual de las coordenadas.
-        txtLatOrigen.setEditable(false);
-        txtLonOrigen.setEditable(false);
-        txtLatDestino.setEditable(false);
-        txtLonDestino.setEditable(false);
-    }
-
-    private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
-        Ubicacion sobreCalle;
-        try {
-            sobreCalle = ValidacionUbicaciones.validarYAjustar(ubicacionClick, ContextoAplicacion.getMotorVial());
-
-        } catch (Exception e) {
-            AlertaUtil.mostrarAlerta(resource.getString("client.alert.invalidLocation"), e.getMessage());
-            visualizador.activarSeleccion(tipo);
-            return;
-        }
-        // Invalida la cotización anterior al modificar el origen o destino desde el
-        // mapa.
-        invalidarCotizacion();
-
-        if ("origen".equals(tipo)) {
-            txtLatOrigen.setText(String.valueOf(sobreCalle.getLatitud()));
-            txtLonOrigen.setText(String.valueOf(sobreCalle.getLongitud()));
-            visualizador.mostrarMarcadorSeleccion("origen", sobreCalle);
-
-            if (txtLatDestino.getText().isBlank()) {
-                visualizador.activarSeleccion("destino");
-            } else {
-                visualizador.cancelarSeleccion();
-            }
-        } else if ("destino".equals(tipo)) {
-            txtLatDestino.setText(String.valueOf(sobreCalle.getLatitud()));
-            txtLonDestino.setText(String.valueOf(sobreCalle.getLongitud()));
-            visualizador.mostrarMarcadorSeleccion("destino", sobreCalle);
-
-            if (txtLatOrigen.getText().isBlank()) {
-                visualizador.activarSeleccion("origen");
-            } else {
-                visualizador.cancelarSeleccion();
-            }
-        }
-    }
-
-    /**
-     * Borra las coordenadas y el marcador del origen y espera un nuevo clic.
-     *
-     * @param event evento del botón.
-     */
-    @FXML
-    void handleBorrarOrigen(ActionEvent event) {
-        borrarPunto("origen");
-    }
-
-    /**
-     * Borra las coordenadas y el marcador del destino y espera un nuevo clic.
-     *
-     * @param event evento del botón.
-     */
-    @FXML
-    void handleBorrarDestino(ActionEvent event) {
-        borrarPunto("destino");
-    }
-
-    /**
-     * Borra los campos y el marcador del punto indicado y espera un nuevo clic de
-     * ese tipo.
-     */
-    private void borrarPunto(String tipo) {
-        if ("origen".equals(tipo)) {
-            txtLatOrigen.clear();
-            txtLonOrigen.clear();
-        } else {
-            txtLatDestino.clear();
-            txtLonDestino.clear();
-        }
-        visualizador.limpiarMarcador(tipo);
-        visualizador.activarSeleccion(tipo);
-
-        invalidarCotizacion();
-    }
-
-    // metodo auxiliar para no permitir cambiar de puntos una vez cotizado
-    private void invalidarCotizacion() {
-        cotizacion = null;
-        if (botonClienteSolicitar != null) {
-            botonClienteSolicitar.setDisable(true);
-        }
-    }
-
-    /**
-     * Solicita el viaje cotizado. Exige que no haya deuda pendiente y que el viaje
-     * haya sido cotizado. El cálculo de rutas y la asignación del conductor se
-     * ejecutan en un hilo virtual para no congelar la ventana; al terminar, se
-     * dibujan las rutas y se muestran los datos del conductor, o se informa el
-     * error (sin conductor, sin ruta, etc.).
-     *
-     * @param event evento del botón.
-     */
-    @FXML
-    void handleSolicitarViaje(ActionEvent event) {
-        if (deuda) {
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    resource.getString("client.request.debt.text"));
-            return;
-        }
-        // chequea que se haya cotizado primero el viaje
-        if (cotizacion == null || origenActual == null || destinoActual == null || servicio == null) {
-            botonClienteSolicitar.setDisable(true);
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    resource.getString("client.request.quote.required"));
-            return;
-        }
-        // Valores capturados en el hilo de JavaFX: el hilo de fondo no lee campos de la
-        // UI
-        Usuario clienteActual = cliente;
-        Servicio servicioActual = servicio;
-        Ubicacion origen = origenActual;
-        Ubicacion destino = destinoActual;
-
-        // evita pedir dos veces el mismo viaje mientras se calcula
-        botonClienteSolicitar.setDisable(true);
-
-        // El cálculo de rutas (GraphHopper) corre en un hilo de fondo para no congelar
-        // la ventana
-        Task<GestorViajes.ResultadoSolicitud> tarea = new Task<>() {
-            @Override
-            protected GestorViajes.ResultadoSolicitud call() throws Exception {
-                return gestor.procesarSolicitudViaje(clienteActual, servicioActual, origen, destino);
-            }
-        };
-
-        // Se ejecuta en el hilo de JavaFX: acá sí se puede tocar la interfaz
-        tarea.setOnSucceeded(e -> {
-            resultadoSolicitud = tarea.getValue();
-
-            // No se encontró ningún conductor compatible.
-            if (resultadoSolicitud == null) {
-                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                        resource.getString("client.error.noDriver"));
-                botonClienteSolicitar.setDisable(false);
-                return;
-            }
-
-            // El vehículo es el que realmente quedó asignado al viaje.
-            Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
-            if (vehiculo == null || vehiculo.getUbicacion() == null) {
-                botonClienteSolicitar.setDisable(false);
-                AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                        resource.getString("client.request.vehicle.location.missing"));
-                return;
-            }
-
-            // Mostramos los recorridos reales calculados por GestorViajes.
-            visualizador.mostrar(resultadoSolicitud.rutas(), vehiculo.getUbicacion(), origen, destino);
-
-            AlertaUtil.mostrarAlerta(resource.getString("client.request.success.title"),
-                    MessageFormat.format(
-                            resource.getString("client.request.success.message"),
-                            resultadoSolicitud.conductor().getNombre()));
-            asignarConductorInfo();
-            mostrarOcultarInfoViaje(true);
-        });
-
-        // Se ejecuta en el hilo de JavaFX si el cálculo lanzó una excepción
-        tarea.setOnFailed(e -> {
-            botonClienteSolicitar.setDisable(false);
-            Throwable error = tarea.getException();
-            String mensaje = (error instanceof RutaNoDisponibleException)
-                    ? resource.getString("client.error.noRoute")
-                    : error.getMessage();
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), mensaje);
-        });
-
-        Thread.ofVirtual().name("solicitud-viaje").start(tarea);
-    }
-
-    /**
-     * Cierra la sesión del usuario y vuelve a la pantalla de ingreso.
-     *
-     * @param event evento del botón.
-     */
-    @FXML
-    void handleCerrarSesion(ActionEvent event) {
-
-        ContextoAplicacion.setUsuarioLogeado(null);
-
-        NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/login.fxml");
-    }
-
-    /**
-     * Calcula y muestra la cotización del viaje (distancia, duración y costo
-     * estimado) a partir de las coordenadas cargadas y del servicio elegido.
-     * Valida que los datos estén completos y que el usuario tenga el rol de
-     * cliente;
-     * si todo es correcto habilita el botón de solicitar.
-     *
-     * @param event evento del botón.
-     */
-    @FXML
-    void handleCotizarViaje(ActionEvent event) {
-        // Descarta cualquier cotización anterior antes de intentar calcular una nueva.
-        invalidarCotizacion();
-        servicio = comboServicios.getValue();
-
-        // Verificamos que estén completos todos los datos.
-        if (txtLatOrigen.getText().isBlank()
-                || txtLonOrigen.getText().isBlank()
-                || txtLatDestino.getText().isBlank()
-                || txtLonDestino.getText().isBlank()
-                || servicio == null) {
-
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    resource.getString("client.error.missingData"));
-
-            return;
-        }
-
-        try {
-
-            origenActual = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),
-                    Double.parseDouble(txtLonOrigen.getText()));
-
-            destinoActual = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),
-                    Double.parseDouble(txtLonDestino.getText()));
-
-            cliente = ContextoAplicacion.getUsuarioLogeado();
-
-            if (cliente == null || cliente.getRolActivo() != RolUsuario.CLIENTE) {
-                throw new IllegalStateException("No hay un usuario logueado con el rol CLIENTE.");
-            }
-
-            cotizacion = gestor.calcularCotizacion(servicio, origenActual, destinoActual);
-
-            // muestra el detalle de la cotizacion
-            String detalle = String.format(
-                    "%s: %.2f %s%n" +
-                            "%s: %.2f %s%n" +
-                            "%s: $%.2f",
-                    resource.getString("viaje.cotizacion.distancia"),
-                    cotizacion.distanciaKm(),
-                    resource.getString("viaje.unidad.km"),
-                    resource.getString("viaje.cotizacion.duracion"),
-                    cotizacion.duracionMinutos(),
-                    resource.getString("viaje.unidad.min"),
-                    resource.getString("viaje.costo_estimado"),
-                    cotizacion.costoTotal());
-            AlertaUtil.mostrarAlerta(
-                    resource.getString("viaje.cotizacion.titulo"),
-                    detalle);
-
-            botonClienteSolicitar.setDisable(false);
-        } catch (NumberFormatException e) {
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-                    resource.getString("client.invalid.coords"));
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
-        }
-    }
-
-    /**
-     * Muestra u oculta el campo de motivo y el botón de confirmar cancelación
-     * (alterna cada vez que se presiona).
-     */
-    @FXML
-    void handleCancelarViaje() {
-        cancelacionBoolean = !cancelacionBoolean;
-
-        clienteTextfieldCancelar.setVisible(cancelacionBoolean);
-        clienteConfirmarCancelar.setVisible(cancelacionBoolean);
-    }
-
-    /**
-     * Confirma la cancelación del viaje con el motivo ingresado. Si se pudo
-     * cancelar, muestra el costo de cancelación a pagar y deja al cliente con
-     * deuda, lo que le impide solicitar otro viaje hasta pagar. Si no se pudo,
-     * informa el problema.
-     */
-    @FXML
-    void handleConfirmarCancelar() {
-        try {
-            // Si devuelve false, no se pudo cancelar
-            if (!gestor.procesarCancelacionViaje(cliente, clienteTextfieldCancelar.getText())) {
-                AlertaUtil.mostrarAlerta(
-                        resource.getString("client.unable.cancel.title"),
-                        resource.getString("client.unable.cancel.text"));
-                return;
-            }
-
-            // Se obtiene el costo antes de limpiar el estado
-            double costoCancelacion = resultadoSolicitud.viaje().getCostoCancelacion();
-
-            clienteViajeEstadoActual.setText(resultadoSolicitud.viaje().estadoActual().name());
-
-            // Se muestra la información del importe pendiente
-            clienteLabelCancelacion.setVisible(true);
-            clienteCostoPagar.setText(String.format("$%.2f", costoCancelacion));
-            clienteCostoPagar.setVisible(true);
-            clienteBotonCancelacionPagar.setVisible(true);
-            clienteBotonCancelacionPagar.setDisable(false);
-
-            AlertaUtil.mostrarAlerta(
-                    resource.getString("client.cancel.success.title"),
-                    resource.getString("client.cancel.success.text") + String.format("%.2f", costoCancelacion));
-
-            // setea con deuda
-            deuda = true;
-
-            // Se limpia el estado del viaje
-            limpiarEstadoViaje();
-            mostrarOcultarInfoViaje(false);
-
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            AlertaUtil.mostrarAlerta(
-                    resource.getString("client.unable.cancel.title"),
-                    resource.getString("client.unable.cancel.text"));
-        }
-
-    }
-
-    /**
-     * Registra el pago del costo de cancelación: oculta el importe y el botón de
-     * pago y levanta la deuda del cliente.
-     */
-    @FXML
-    void handleCancelarPagar() {
-        clienteLabelCancelacion.setVisible(false);
-        clienteCostoPagar.setText("");
-        clienteCostoPagar.setVisible(false);
-        clienteBotonCancelacionPagar.setVisible(false);
-        deuda = false;
-    }
-
-    // funcion auxiliar para mostrar los datos del conductor en pantalla
-    private void asignarConductorInfo() {
-        clienteConductorNom.setText(resultadoSolicitud.conductor().getNombre());
-        clienteVehiculoModelo.setText(resultadoSolicitud.conductor().getConductor().getVehiculoActivo().getModelo());
-        clienteConductorPatente.setText(resultadoSolicitud.conductor().getConductor().getVehiculoActivo().getPatente());
-        clienteViajeEstadoActual.setText(resultadoSolicitud.viaje().estadoActual().name());
-    }
-
-    // funcion auxiliar para mostrar/ocultar los labels de los datos del viaje
-    private void mostrarOcultarInfoViaje(boolean mostrar) {
-        clienetDriver.setVisible(mostrar);
-        clienteConductorNom.setVisible(mostrar);
-        clienteConductorVehiculoTitulo.setVisible(mostrar);
-        clienteVehiculoModelo.setVisible(mostrar);
-        clienteConductorPatente.setVisible(mostrar);
-        clienteViajeEstadoActual.setVisible(mostrar);
-        clienteViajeEstadoTitulo.setVisible(mostrar);
-        clienteCancelarViaje.setVisible(mostrar);
-    }
-
-    // funcion auxiliar para limpiar todos los datos del mapa
-    private void limpiarEstadoViaje() {
-        borrarPunto("destino");
-        borrarPunto("origen");
-        visualizador.limpiarRutas();
-        resultadoSolicitud = null;
-        cancelacionBoolean = false;
-        cotizacion = null;
-        origenActual = null;
-        destinoActual = null;
-        clienteTextfieldCancelar.clear();
-        clienteTextfieldCancelar.setVisible(false);
-        clienteConfirmarCancelar.setVisible(false);
-    }
+	@FXML
+	private WebView mapaView;
+	@FXML
+	private TextField txtLatOrigen;
+	@FXML
+	private TextField txtLonOrigen;
+	@FXML
+	private TextField txtLatDestino;
+	@FXML
+	private TextField txtLonDestino;
+	@FXML
+	private ResourceBundle resource;
+	@FXML
+	private ComboBox<CategoriaVehiculo> comboCategoriaVehiculo;
+	@FXML
+	private ComboBox<TipoVehiculo> comboTipoVehiculo;
+	@FXML
+	private ComboBox<TipoServicio> comboTipoServicio;
+	@FXML
+	private Button botonClienteSolicitar;
+	@FXML
+	private Label clienetDriver;
+	@FXML
+	private Label clienteConductorNom;
+	@FXML
+	private Label clienteConductorVehiculoTitulo;
+	@FXML
+	private Label clienteVehiculoModelo;
+	@FXML
+	private Label clienteConductorPatente;
+	@FXML
+	private Label clienteViajeEstadoActual;
+	@FXML
+	private Label clienteViajeEstadoTitulo;
+
+	@FXML
+	private Button clienteCancelarViaje;
+	@FXML
+	private TextField clienteTextfieldCancelar;
+	@FXML
+	private Button clienteConfirmarCancelar;
+	@FXML
+	private Button clienteBotonCancelacionPagar;
+	@FXML
+	private Label clienteLabelCancelacion;
+	@FXML
+	private Label clienteCostoPagar;
+
+	private VisualizadorMapa visualizador;
+	private boolean cancelacionBoolean = false;
+
+	// gesto de viaje para delegar todo el procesamiento a la capa lógica.
+	private GestorViajes gestor;
+	private GestorViajes.Cotizacion cotizacion;
+	private GestorViajes.ResultadoSolicitud resultadoSolicitud;
+
+	// variables de ubicacion para cotizar/solicitar
+	private Ubicacion origenActual;
+	private Ubicacion destinoActual;
+
+	// variables de servicio, cliente y viaje
+	private Usuario cliente;
+	private Servicio servicio;
+	private Viaje viajeActual;
+
+	private List<Servicio> serviciosDisponibles;
+
+	// variable para que no deje solicitar un viaje si tiene una deuda
+	private boolean deuda;
+
+	/**
+	 * Inicializa el panel del cliente: carga el mapa, registra la selección de
+	 * puntos por clic, activa la espera del origen, carga los servicios en el combo
+	 * y crea el {@link GestorViajes}. Lo invoca JavaFX después de cargar el FXML.
+	 */
+	@FXML
+	public void initialize() {
+		resource = ContextoAplicacion.getMensajes();
+
+		// Instancia el adaptador pasando la referencia del WebView
+		visualizador = new VisualizadorRutasLeaflet(mapaView);
+
+		visualizador.configurarSeleccion(this::recibirPuntoMapa);
+
+		// Activa la espera del primer clic (Origen)
+		visualizador.activarSeleccion("origen");
+
+		serviciosDisponibles = (List<Servicio>) ContextoAplicacion.getDatosIniciales().getServicios();
+
+		// Carga las opciones de los tres ComboBox.
+		comboTipoServicio.getItems().setAll(TipoServicio.values());
+		comboTipoVehiculo.getItems().setAll(TipoVehiculo.values());
+		comboCategoriaVehiculo.getItems().setAll(CategoriaVehiculo.values());
+
+		// Invalida la cotización si el usuario cambia alguna selección.
+		comboTipoServicio.valueProperty().addListener((obs, anterior, nuevo) -> {
+			servicio = null;
+			invalidarCotizacion();
+		});
+
+		comboTipoVehiculo.valueProperty().addListener((obs, anterior, nuevo) -> {
+			servicio = null;
+			invalidarCotizacion();
+		});
+
+		comboCategoriaVehiculo.valueProperty().addListener((obs, anterior, nuevo) -> {
+			servicio = null;
+			invalidarCotizacion();
+		});
+
+		// se genera un nuevo gestor
+		gestor = new GestorViajes();
+
+		// al iniciar, se desactiva el boton de solicitar viaje
+		botonClienteSolicitar.setDisable(true);
+
+		// al iniciar, se ocultaran los labels de la info del conductor
+		mostrarOcultarInfoViaje(false);
+
+		// oculta el textfield y el boton de confirmar cancelar al inicio
+		clienteConfirmarCancelar.setVisible(false);
+		clienteTextfieldCancelar.setVisible(false);
+
+		// Oculta la interfaz de cancelación al iniciar
+		clienteLabelCancelacion.setVisible(false);
+		clienteCostoPagar.setVisible(false);
+		clienteBotonCancelacionPagar.setVisible(false);
+
+		// setea la deuda como false
+		deuda = false;
+
+		// Impide la modificación manual de las coordenadas.
+		txtLatOrigen.setEditable(false);
+		txtLonOrigen.setEditable(false);
+		txtLatDestino.setEditable(false);
+		txtLonDestino.setEditable(false);
+	}
+
+	private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
+		Ubicacion sobreCalle;
+		try {
+			sobreCalle = ValidacionUbicaciones.validarYAjustar(ubicacionClick, ContextoAplicacion.getMotorVial());
+
+		} catch (Exception e) {
+			AlertaUtil.mostrarAlerta(resource.getString("client.alert.invalidLocation"), e.getMessage());
+			visualizador.activarSeleccion(tipo);
+			return;
+		}
+		// Invalida la cotización anterior al modificar el origen o destino desde el
+		// mapa.
+		invalidarCotizacion();
+
+		if ("origen".equals(tipo)) {
+			txtLatOrigen.setText(String.valueOf(sobreCalle.getLatitud()));
+			txtLonOrigen.setText(String.valueOf(sobreCalle.getLongitud()));
+			visualizador.mostrarMarcadorSeleccion("origen", sobreCalle);
+
+			if (txtLatDestino.getText().isBlank()) {
+				visualizador.activarSeleccion("destino");
+			} else {
+				visualizador.cancelarSeleccion();
+			}
+		} else if ("destino".equals(tipo)) {
+			txtLatDestino.setText(String.valueOf(sobreCalle.getLatitud()));
+			txtLonDestino.setText(String.valueOf(sobreCalle.getLongitud()));
+			visualizador.mostrarMarcadorSeleccion("destino", sobreCalle);
+
+			if (txtLatOrigen.getText().isBlank()) {
+				visualizador.activarSeleccion("origen");
+			} else {
+				visualizador.cancelarSeleccion();
+			}
+		}
+	}
+
+	/**
+	 * Borra las coordenadas y el marcador del origen y espera un nuevo clic.
+	 *
+	 * @param event evento del botón.
+	 */
+	@FXML
+	void handleBorrarOrigen(ActionEvent event) {
+		borrarPunto("origen");
+	}
+
+	/**
+	 * Borra las coordenadas y el marcador del destino y espera un nuevo clic.
+	 *
+	 * @param event evento del botón.
+	 */
+	@FXML
+	void handleBorrarDestino(ActionEvent event) {
+		borrarPunto("destino");
+	}
+
+	/**
+	 * Borra los campos y el marcador del punto indicado y espera un nuevo clic de
+	 * ese tipo.
+	 */
+	private void borrarPunto(String tipo) {
+		if ("origen".equals(tipo)) {
+			txtLatOrigen.clear();
+			txtLonOrigen.clear();
+		} else {
+			txtLatDestino.clear();
+			txtLonDestino.clear();
+		}
+		visualizador.limpiarMarcador(tipo);
+		visualizador.activarSeleccion(tipo);
+
+		invalidarCotizacion();
+	}
+
+	// metodo auxiliar para no permitir cambiar de puntos una vez cotizado
+	private void invalidarCotizacion() {
+		cotizacion = null;
+		if (botonClienteSolicitar != null) {
+			botonClienteSolicitar.setDisable(true);
+		}
+	}
+
+	/**
+	 * Solicita el viaje cotizado. Exige que no haya deuda pendiente y que el viaje
+	 * haya sido cotizado. El cálculo de rutas y la asignación del conductor se
+	 * ejecutan en un hilo virtual para no congelar la ventana; al terminar, se
+	 * dibujan las rutas y se muestran los datos del conductor, o se informa el
+	 * error (sin conductor, sin ruta, etc.).
+	 *
+	 * @param event evento del botón.
+	 */
+	@FXML
+	void handleSolicitarViaje(ActionEvent event) {
+		if (deuda) {
+			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+					resource.getString("client.request.debt.text"));
+			return;
+		}
+		// chequea que se haya cotizado primero el viaje
+		if (cotizacion == null || origenActual == null || destinoActual == null || servicio == null) {
+			botonClienteSolicitar.setDisable(true);
+			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+					resource.getString("client.request.quote.required"));
+			return;
+		}
+		// Valores capturados en el hilo de JavaFX: el hilo de fondo no lee campos de la
+		// UI
+		Usuario clienteActual = cliente;
+		Servicio servicioActual = servicio;
+		Ubicacion origen = origenActual;
+		Ubicacion destino = destinoActual;
+
+		// evita pedir dos veces el mismo viaje mientras se calcula
+		botonClienteSolicitar.setDisable(true);
+
+		// El cálculo de rutas (GraphHopper) corre en un hilo de fondo para no congelar
+		// la ventana
+		Task<GestorViajes.ResultadoSolicitud> tarea = new Task<>() {
+			@Override
+			protected GestorViajes.ResultadoSolicitud call() throws Exception {
+				return gestor.procesarSolicitudViaje(clienteActual, servicioActual, origen, destino);
+			}
+		};
+
+		// Se ejecuta en el hilo de JavaFX: acá sí se puede tocar la interfaz
+		tarea.setOnSucceeded(e -> {
+			resultadoSolicitud = tarea.getValue();
+
+			// No se encontró ningún conductor compatible.
+			if (resultadoSolicitud == null) {
+				AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+						resource.getString("client.error.noDriver"));
+				botonClienteSolicitar.setDisable(false);
+				return;
+			}
+
+			// El vehículo es el que realmente quedó asignado al viaje.
+			Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
+			if (vehiculo == null || vehiculo.getUbicacion() == null) {
+				botonClienteSolicitar.setDisable(false);
+				AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+						resource.getString("client.request.vehicle.location.missing"));
+				return;
+			}
+
+			// Mostramos los recorridos reales calculados por GestorViajes.
+			visualizador.mostrar(resultadoSolicitud.rutas(), vehiculo.getUbicacion(), origen, destino);
+
+			AlertaUtil.mostrarAlerta(resource.getString("client.request.success.title"), MessageFormat.format(
+					resource.getString("client.request.success.message"), resultadoSolicitud.conductor().getNombre()));
+			asignarConductorInfo();
+			mostrarOcultarInfoViaje(true);
+		});
+
+		// Se ejecuta en el hilo de JavaFX si el cálculo lanzó una excepción
+		tarea.setOnFailed(e -> {
+			botonClienteSolicitar.setDisable(false);
+			Throwable error = tarea.getException();
+			String mensaje = (error instanceof RutaNoDisponibleException) ? resource.getString("client.error.noRoute")
+					: error.getMessage();
+			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), mensaje);
+		});
+
+		Thread.ofVirtual().name("solicitud-viaje").start(tarea);
+	}
+
+	/**
+	 * Cierra la sesión del usuario y vuelve a la pantalla de ingreso.
+	 *
+	 * @param event evento del botón.
+	 */
+	@FXML
+	void handleCerrarSesion(ActionEvent event) {
+
+		ContextoAplicacion.setUsuarioLogeado(null);
+
+		NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/login.fxml");
+	}
+
+	/**
+	 * Calcula y muestra la cotización del viaje (distancia, duración y costo
+	 * estimado) a partir de las coordenadas cargadas y del servicio elegido. Valida
+	 * que los datos estén completos y que el usuario tenga el rol de cliente; si
+	 * todo es correcto habilita el botón de solicitar.
+	 *
+	 * @param event evento del botón.
+	 */
+	@FXML
+	void handleCotizarViaje(ActionEvent event) {
+		// Descarta cualquier cotización anterior antes de intentar calcular una nueva.
+		invalidarCotizacion();
+		servicio = buscarServicioSeleccionado();
+
+		// Verificamos que estén completos todos los datos.
+		if (txtLatOrigen.getText().isBlank() || txtLonOrigen.getText().isBlank() || txtLatDestino.getText().isBlank()
+				|| txtLonDestino.getText().isBlank() || comboTipoServicio.getValue() == null
+				|| comboTipoVehiculo.getValue() == null || comboCategoriaVehiculo.getValue() == null) {
+
+			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+					resource.getString("client.error.missingData"));
+
+			return;
+		}
+
+		if (servicio == null) {
+			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+					resource.getString("client.error.noServiceCombination"));
+
+			return;
+		}
+
+		try {
+
+			origenActual = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),
+					Double.parseDouble(txtLonOrigen.getText()));
+
+			destinoActual = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),
+					Double.parseDouble(txtLonDestino.getText()));
+
+			cliente = ContextoAplicacion.getUsuarioLogeado();
+
+			if (cliente == null || cliente.getRolActivo() != RolUsuario.CLIENTE) {
+				throw new IllegalStateException("No hay un usuario logueado con el rol CLIENTE.");
+			}
+
+			cotizacion = gestor.calcularCotizacion(servicio, origenActual, destinoActual);
+
+			// muestra el detalle de la cotizacion
+			String detalle = String.format("%s: %.2f %s%n" + "%s: %.2f %s%n" + "%s: $%.2f",
+					resource.getString("viaje.cotizacion.distancia"), cotizacion.distanciaKm(),
+					resource.getString("viaje.unidad.km"), resource.getString("viaje.cotizacion.duracion"),
+					cotizacion.duracionMinutos(), resource.getString("viaje.unidad.min"),
+					resource.getString("viaje.costo_estimado"), cotizacion.costoTotal());
+			AlertaUtil.mostrarAlerta(resource.getString("viaje.cotizacion.titulo"), detalle);
+
+			botonClienteSolicitar.setDisable(false);
+		} catch (NumberFormatException e) {
+			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
+					resource.getString("client.invalid.coords"));
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
+		}
+	}
+
+	/**
+	 * Muestra u oculta el campo de motivo y el botón de confirmar cancelación
+	 * (alterna cada vez que se presiona).
+	 */
+	@FXML
+	void handleCancelarViaje() {
+		cancelacionBoolean = !cancelacionBoolean;
+
+		clienteTextfieldCancelar.setVisible(cancelacionBoolean);
+		clienteConfirmarCancelar.setVisible(cancelacionBoolean);
+	}
+
+	/**
+	 * Confirma la cancelación del viaje con el motivo ingresado. Si se pudo
+	 * cancelar, muestra el costo de cancelación a pagar y deja al cliente con
+	 * deuda, lo que le impide solicitar otro viaje hasta pagar. Si no se pudo,
+	 * informa el problema.
+	 */
+	@FXML
+	void handleConfirmarCancelar() {
+		try {
+			// Si devuelve false, no se pudo cancelar
+			if (!gestor.procesarCancelacionViaje(cliente, clienteTextfieldCancelar.getText())) {
+				AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"),
+						resource.getString("client.unable.cancel.text"));
+				return;
+			}
+
+			// Se obtiene el costo antes de limpiar el estado
+			double costoCancelacion = resultadoSolicitud.viaje().getCostoCancelacion();
+
+			clienteViajeEstadoActual.setText(obtenerTextoEstado(resultadoSolicitud.viaje().estadoActual()));
+
+			// Se muestra la información del importe pendiente
+			clienteLabelCancelacion.setVisible(true);
+			clienteCostoPagar.setText(String.format("$%.2f", costoCancelacion));
+			clienteCostoPagar.setVisible(true);
+			clienteBotonCancelacionPagar.setVisible(true);
+			clienteBotonCancelacionPagar.setDisable(false);
+
+			AlertaUtil.mostrarAlerta(resource.getString("client.cancel.success.title"),
+					resource.getString("client.cancel.success.text") + String.format("%.2f", costoCancelacion));
+
+			// setea con deuda
+			deuda = true;
+
+			// Se limpia el estado del viaje
+			limpiarEstadoViaje();
+			mostrarOcultarInfoViaje(false);
+
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"),
+					resource.getString("client.unable.cancel.text"));
+		}
+
+	}
+
+	/**
+	 * Registra el pago del costo de cancelación: oculta el importe y el botón de
+	 * pago y levanta la deuda del cliente.
+	 */
+	@FXML
+	void handleCancelarPagar() {
+		clienteLabelCancelacion.setVisible(false);
+		clienteCostoPagar.setText("");
+		clienteCostoPagar.setVisible(false);
+		clienteBotonCancelacionPagar.setVisible(false);
+		deuda = false;
+	}
+
+	// funcion auxiliar para mostrar los datos del conductor en pantalla
+	private void asignarConductorInfo() {
+		clienteConductorNom.setText(resultadoSolicitud.conductor().getNombre()); 
+		Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
+		clienteVehiculoModelo.setText(vehiculo.getModelo());
+		clienteConductorPatente.setText(vehiculo.getPatente());
+		clienteViajeEstadoActual.setText(obtenerTextoEstado(viajeActual.estadoActual()));
+	}
+
+	// funcion auxiliar para mostrar/ocultar los labels de los datos del viaje
+	private void mostrarOcultarInfoViaje(boolean mostrar) {
+		clienetDriver.setVisible(mostrar);
+		clienteConductorNom.setVisible(mostrar);
+		clienteConductorVehiculoTitulo.setVisible(mostrar);
+		clienteVehiculoModelo.setVisible(mostrar);
+		clienteConductorPatente.setVisible(mostrar);
+		clienteViajeEstadoActual.setVisible(mostrar);
+		clienteViajeEstadoTitulo.setVisible(mostrar);
+		clienteCancelarViaje.setVisible(mostrar);
+	}
+
+	// funcion auxiliar para limpiar todos los datos del mapa
+	private void limpiarEstadoViaje() {
+		borrarPunto("destino");
+		borrarPunto("origen");
+		visualizador.limpiarRutas();
+		resultadoSolicitud = null;
+		cancelacionBoolean = false;
+		cotizacion = null;
+		origenActual = null;
+		destinoActual = null;
+		clienteTextfieldCancelar.clear();
+		clienteTextfieldCancelar.setVisible(false);
+		clienteConfirmarCancelar.setVisible(false);
+	}
+
+	/**
+	 * Obtiene la traducción del estado actual del viaje según el idioma
+	 * seleccionado en la aplicación.
+	 *
+	 * @param estado estado del viaje que se desea mostrar.
+	 * @return texto traducido del estado o un guion si el estado es null.
+	 */
+	private String obtenerTextoEstado(EstadoViaje estado) {
+
+		if (estado == null) {
+			return "—";
+		}
+
+		String clave = switch (estado) {
+		case SOLICITADO -> "viaje.estado.solicitado";
+		case ACEPTADO -> "viaje.estado.aceptado";
+		case INICIADO -> "viaje.estado.iniciado";
+		case FINALIZADO -> "viaje.estado.finalizado";
+		case CANCELADO -> "viaje.estado.cancelado";
+		case RECHAZADO -> "viaje.estado.rechazado";
+		};
+
+		return resource.getString(clave);
+	}
+
+	/**
+	 * Busca el servicio que coincide con las opciones seleccionadas por el cliente
+	 * en los tres ComboBox: tipo de servicio, tipo de vehículo y categoría.
+	 *
+	 * Recorre la lista de servicios disponibles y devuelve el que coincide con los
+	 * tres valores seleccionados.
+	 *
+	 * @return el servicio correspondiente a la combinación seleccionada, o null si
+	 *         falta alguna selección o no existe esa combinación.
+	 */
+	private Servicio buscarServicioSeleccionado() {
+
+		TipoServicio tipoServicio = comboTipoServicio.getValue();
+		TipoVehiculo tipoVehiculo = comboTipoVehiculo.getValue();
+		CategoriaVehiculo categoria = comboCategoriaVehiculo.getValue();
+
+		if (tipoServicio == null || tipoVehiculo == null || categoria == null) {
+			return null;
+		}
+
+		for (Servicio servicioDisponible : serviciosDisponibles) {
+
+			if (servicioDisponible.getTipoServicio() == tipoServicio
+					&& servicioDisponible.getTipoVehiculo() == tipoVehiculo
+					&& servicioDisponible.getCategoriaVehiculo() == categoria) {
+
+				return servicioDisponible;
+			}
+		}
+
+		return null;
+	}
 }

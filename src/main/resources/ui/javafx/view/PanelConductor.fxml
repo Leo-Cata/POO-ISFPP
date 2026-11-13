@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="labelSubtitulo" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="750.0" prefHeight="827.0" prefWidth="999.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.PanelConductorController">
+<BorderPane fx:id="labelSubtitulo" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="750.0" prefHeight="888.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.PanelConductorController">
    <top>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
@@ -32,7 +32,7 @@
             </HBox>
             <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <VBox prefHeight="200.0" prefWidth="500.0">
+                  <VBox prefHeight="100.0" prefWidth="460.0">
                      <children>
                         <Label fx:id="labelSaludo" text="%driver.panel.greeting">
                            <font>
@@ -41,10 +41,10 @@
                         <Label fx:id="labelSubtitulo" prefHeight="20.0" prefWidth="191.0" text="%driver.panel.subtitle" textFill="#a4a1a1" />
                      </children>
                   </VBox>
-                  <VBox prefHeight="100.0" prefWidth="122.0">
+                  <VBox prefHeight="100.0" prefWidth="176.0">
                      <children>
                         <Label fx:id="labelEstadoConductor" text="%driver.status" />
-                        <Label fx:id="labelEstadoConductor" prefWidth="100.0" text="Label">
+                        <Label fx:id="labelEstadoConductor" prefHeight="17.0" prefWidth="172.0" text="Label">
                            <VBox.margin>
                               <Insets right="20.0" />
                            </VBox.margin></Label>
@@ -60,7 +60,7 @@
    <center>
       <ScrollPane fitToWidth="true" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <content>
-            <VBox prefHeight="492.0" prefWidth="998.0" spacing="20.0">
+            <VBox prefHeight="680.0" prefWidth="986.0" spacing="20.0">
                <padding>
                   <Insets top="20.0" />
                </padding>
@@ -284,20 +284,25 @@
                         <Label fx:id="labelHoraInicioViaje" text="Label" />
                         <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
                            <children>
-                              <Button fx:id="botonIniciarViaje" mnemonicParsing="false" onAction="#handleIniciarViaje" text="%menu.conductor.opcion.iniciar_viaje" />
-                              <Button fx:id="botonCalificarCliente" mnemonicParsing="false" onAction="#handleCalificarCliente" text="%menu.conductor.opcion.calificar_viaje" HBox.hgrow="ALWAYS">
+                              <Button fx:id="botonIniciarViaje" mnemonicParsing="false" onAction="#handleIniciarViaje" text="%driver.action.start" />
+                              <Button fx:id="botonCalificarCliente" mnemonicParsing="false" onAction="#handleCalificarCliente" text="%driver.action.rate" HBox.hgrow="ALWAYS">
                                  <HBox.margin>
-                                    <Insets left="130.0" />
+                                    <Insets left="100.0" />
                                  </HBox.margin></Button>
-                              <Button fx:id="botonFinalizarViaje" mnemonicParsing="false" onAction="#handleFinalizarViaje" text="%menu.conductor.opcion.finalizar_viaje" HBox.hgrow="ALWAYS">
+                              <Button fx:id="botonCancelarViaje" mnemonicParsing="false" onAction="#handleCancelarViaje" text="%driver.action.cancel">
                                  <HBox.margin>
-                                    <Insets left="150.0" />
+                                    <Insets left="100.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button fx:id="botonFinalizarViaje" mnemonicParsing="false" onAction="#handleFinalizarViaje" text="%driver.action.finish" HBox.hgrow="ALWAYS">
+                                 <HBox.margin>
+                                    <Insets left="100.0" />
                                  </HBox.margin></Button>
                            </children>
                         </HBox>
                      </children>
                   </VBox>
-                  <Label fx:id="labelSinViaje" text="%driver.trip.noActive" />
+                  <Label fx:id="labelSinViaje" alignment="CENTER" prefHeight="17.0" prefWidth="1001.0" text="%driver.trip.noActive" />
                </children>
             </VBox>
          </content>

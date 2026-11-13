@@ -9,6 +9,7 @@ import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextInputDialog;
 import javafx.util.StringConverter;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -64,7 +65,7 @@ public class PanelConductorController {
 
 	@FXML
 	private Label labelCategoriaVehiculo;
-	
+
 	@FXML
 	private Label labelServiciosVehiculo;
 
@@ -76,6 +77,9 @@ public class PanelConductorController {
 
 	@FXML
 	private Button botonFinalizarViaje;
+
+	@FXML
+	private Button botonCancelarViaje;
 
 	@FXML
 	private Button botonCalificarCliente;
@@ -101,7 +105,7 @@ public class PanelConductorController {
 
 	@FXML
 	private Label labelHoraInicioViaje;
-	
+
 	@FXML
 	private Label labelEstadoViaje;
 
@@ -166,15 +170,11 @@ public class PanelConductorController {
 
 			ContextoAplicacion.setUsuarioLogeado(usuario);
 
-			NavegadorVistas.cambiarEscena(
-					event,
-					"/ui/javafx/view/PanelCliente.fxml");
+			NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/PanelCliente.fxml");
 
 		} catch (IllegalStateException e) {
 
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.WARNING,
-					msj.getString("menu.error.cambio_rol"),
+			AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, msj.getString("menu.error.cambio_rol"),
 					msj.getString("menu.error.cambio_rol"));
 		}
 	}
@@ -196,10 +196,8 @@ public class PanelConductorController {
 
 		} else {
 
-			AlertaUtil.mostrarAlerta(
-					msj.getString("login.alert.attention"),
-					msj.getString(
-							"menu.conductor.panel.estado.error.cambio_no_permitido"));
+			AlertaUtil.mostrarAlerta(msj.getString("login.alert.attention"),
+					msj.getString("menu.conductor.panel.estado.error.cambio_no_permitido"));
 			return;
 		}
 
@@ -219,16 +217,12 @@ public class PanelConductorController {
 
 			if (exito) {
 
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.INFORMATION,
-						msj.getString("viaje.titulo.iniciar"),
+				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("viaje.titulo.iniciar"),
 						msj.getString("viaje.inicio.exitoso"));
 
 			} else {
 
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.WARNING,
-						msj.getString("login.alert.attention"),
+				AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, msj.getString("login.alert.attention"),
 						msj.getString("viaje.error.sin_viaje_aceptado"));
 			}
 
@@ -239,10 +233,7 @@ public class PanelConductorController {
 
 		} catch (Exception e) {
 
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.ERROR,
-					msj.getString("login.alert.attention"),
-					e.getMessage());
+			AlertaUtil.mostrarAlerta(Alert.AlertType.ERROR, msj.getString("login.alert.attention"), e.getMessage());
 		}
 	}
 
@@ -253,9 +244,7 @@ public class PanelConductorController {
 		Usuario usuario = ContextoAplicacion.getUsuarioLogeado();
 
 		if (usuario == null || usuario.getConductor() == null) {
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.WARNING,
-					msj.getString("login.alert.attention"),
+			AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, msj.getString("login.alert.attention"),
 					msj.getString("viaje.error.sin_viaje_iniciado"));
 		}
 
@@ -264,43 +253,33 @@ public class PanelConductorController {
 			Viaje viaje = gestorViajes.consultarViajeActivo(usuario);
 
 			if (viaje == null || viaje.estadoActual() != EstadoViaje.INICIADO) {
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.WARNING,
-						msj.getString("login.alert.attention"),
+				AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, msj.getString("login.alert.attention"),
 						msj.getString("viaje.error.sin_viaje_iniciado"));
 			}
 
 			// Comprobar que el conductor todavía no haya calificado.
 			if (viaje.getCalificacionConductor() != null) {
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.INFORMATION,
-						msj.getString("calificacion.titulo"),
+				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("calificacion.titulo"),
 						msj.getString("calificacion.error.ya_calificado"));
 			}
 
 			// Crear las opciones del cuadro de diálogo.
-			ButtonType botonMalo = new ButtonType(
-					msj.getString("calificacion.opcion.malo"),
+			ButtonType botonMalo = new ButtonType(msj.getString("calificacion.opcion.malo"),
 					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonRegular = new ButtonType(
-					msj.getString("calificacion.opcion.regular"),
+			ButtonType botonRegular = new ButtonType(msj.getString("calificacion.opcion.regular"),
 					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonBueno = new ButtonType(
-					msj.getString("calificacion.opcion.bueno"),
+			ButtonType botonBueno = new ButtonType(msj.getString("calificacion.opcion.bueno"),
 					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonMuyBueno = new ButtonType(
-					msj.getString("calificacion.opcion.muy_bueno"),
+			ButtonType botonMuyBueno = new ButtonType(msj.getString("calificacion.opcion.muy_bueno"),
 					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonExcelente = new ButtonType(
-					msj.getString("calificacion.opcion.excelente"),
+			ButtonType botonExcelente = new ButtonType(msj.getString("calificacion.opcion.excelente"),
 					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonNoCalificar = new ButtonType(
-					msj.getString("calificacion.opcion.no_calificar"),
+			ButtonType botonNoCalificar = new ButtonType(msj.getString("calificacion.opcion.no_calificar"),
 					ButtonBar.ButtonData.CANCEL_CLOSE);
 
 			// Mostrar el cuadro encima del panel actual.
@@ -310,14 +289,8 @@ public class PanelConductorController {
 			dialogo.setHeaderText(null);
 			dialogo.setContentText(msj.getString("calificacion.seleccione"));
 
-			ButtonType[] opciones = {
-					botonMalo,
-					botonRegular,
-					botonBueno,
-					botonMuyBueno,
-					botonExcelente,
-					botonNoCalificar
-			};
+			ButtonType[] opciones = { botonMalo, botonRegular, botonBueno, botonMuyBueno, botonExcelente,
+					botonNoCalificar };
 
 			dialogo.getButtonTypes().setAll(opciones);
 
@@ -339,9 +312,7 @@ public class PanelConductorController {
 
 			// El conductor decidió no calificar.
 			if (seleccion == botonNoCalificar) {
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.INFORMATION,
-						msj.getString("calificacion.titulo"),
+				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("calificacion.titulo"),
 						msj.getString("calificacion.mensaje.omitida"));
 			}
 
@@ -368,21 +339,81 @@ public class PanelConductorController {
 			}
 
 			// Registrar la calificación utilizando la lógica existente.
-			calificacionServicio.calificarComoConductor(
-					usuario, viaje, calificacion);
+			calificacionServicio.calificarComoConductor(usuario, viaje, calificacion);
 
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.INFORMATION,
-					msj.getString("calificacion.titulo"),
+			AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("calificacion.titulo"),
 					msj.getString("calificacion.mensaje.registrada"));
 
 		} catch (IllegalArgumentException | IllegalStateException e) {
 
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.ERROR,
-					msj.getString("login.alert.attention"),
+			AlertaUtil.mostrarAlerta(Alert.AlertType.ERROR, msj.getString("login.alert.attention"),
 					msj.getString("calificacion.error.registro"));
 		}
+	}
+
+	@FXML
+	private void handleCancelarViaje(ActionEvent event) {
+		ResourceBundle msj = ContextoAplicacion.getMensajes();
+		Usuario usuario = ContextoAplicacion.getUsuarioLogeado();
+
+		TextInputDialog dialog = new TextInputDialog();
+
+		dialog.setTitle(msj.getString("driver.cancel.trip"));
+
+		dialog.setHeaderText(null);
+
+		dialog.setContentText(msj.getString("driver.cancel.placeholder"));
+
+		Optional<String> resultado = dialog.showAndWait();
+
+		// Si el usuario cierra la ventana o presiona Cancelar.
+		if (resultado.isEmpty()) {
+			return;
+		}
+
+		String motivo = resultado.get().trim();
+
+	    // Validar que el motivo no esté vacío.
+	    if (motivo.isEmpty()) {
+	        AlertaUtil.mostrarAlerta(
+	                Alert.AlertType.WARNING,
+	                msj.getString("driver.cancel.reason.required.title"),
+	                msj.getString("driver.cancel.reason.required"));
+	        return;
+	    }
+	    
+	    boolean exito;
+
+	    try {
+	        exito = gestorViajes.procesarCancelacionViaje(usuario, motivo);
+
+				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("driver.cancel.success.title"),
+						msj.getString("driver.cancel.success.text"));
+	    } catch (Exception e) {
+	        AlertaUtil.mostrarAlerta(
+	                Alert.AlertType.ERROR,
+	                msj.getString("driver.cancel.error.title"),
+	                msj.getString("driver.cancel.error.text"));
+	        return;
+	    }
+
+	    if (!exito) {
+	        AlertaUtil.mostrarAlerta(
+	                Alert.AlertType.WARNING,
+	                msj.getString("driver.unable.cancel.title"),
+	                msj.getString("driver.unable.cancel.text"));
+	        return;
+	    }
+
+	    // Actualizar la interfaz después de cancelar correctamente.
+		actualizarEstadoConductor();
+		actualizarEstadoBotones();
+		actualizarPanelViaje();
+
+	    AlertaUtil.mostrarAlerta(
+	            Alert.AlertType.INFORMATION,
+	            msj.getString("driver.cancel.success.title"),
+	            msj.getString("driver.cancel.success.text"));
 	}
 
 	@FXML
@@ -397,16 +428,12 @@ public class PanelConductorController {
 
 			if (exito) {
 
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.INFORMATION,
-						msj.getString("viaje.titulo.finalizar"),
+				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("viaje.titulo.finalizar"),
 						msj.getString("viaje.fin.exitoso"));
 
 			} else {
 
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.WARNING,
-						msj.getString("login.alert.attention"),
+				AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, msj.getString("login.alert.attention"),
 						msj.getString("viaje.error.sin_viaje_iniciado"));
 			}
 
@@ -417,9 +444,7 @@ public class PanelConductorController {
 
 		} catch (Exception e) {
 
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.ERROR,
-					msj.getString("login.alert.attention"),
+			AlertaUtil.mostrarAlerta(Alert.AlertType.ERROR, msj.getString("login.alert.attention"),
 					msj.getString("viaje.error.finalizacion"));
 		}
 	}
@@ -496,7 +521,7 @@ public class PanelConductorController {
 		labelPatenteVehiculo.setText(vehiculo.getPatente());
 
 		labelCategoriaVehiculo.setText(vehiculo.getCategoriaVehiculo().toString());
-		
+
 		mostrarServicios(vehiculo);
 	}
 
@@ -506,41 +531,34 @@ public class PanelConductorController {
 
 		switch (conductorActual.getEstadoConductor()) {
 
-			case DISPONIBLE:
-				labelEstadoConductor.setText(
-						msj.getString("menu.conductor.panel.estado.disponible"));
+		case DISPONIBLE:
+			labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.disponible"));
 
-				botonCambiarDisponibilidad.setText(
-						msj.getString(
-								"menu.conductor.panel.estado.accion.pasar_fuera_servicio"));
+			botonCambiarDisponibilidad
+					.setText(msj.getString("menu.conductor.panel.estado.accion.pasar_fuera_servicio"));
 
-				botonCambiarDisponibilidad.setDisable(false);
-				break;
+			botonCambiarDisponibilidad.setDisable(false);
+			break;
 
-			case FUERA_DE_SERVICIO:
-				labelEstadoConductor.setText(
-						msj.getString("menu.conductor.panel.estado.fuera_de_servicio"));
+		case FUERA_DE_SERVICIO:
+			labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.fuera_de_servicio"));
 
-				botonCambiarDisponibilidad.setText(
-						msj.getString(
-								"menu.conductor.panel.estado.accion.volver_disponible"));
+			botonCambiarDisponibilidad.setText(msj.getString("menu.conductor.panel.estado.accion.volver_disponible"));
 
-				botonCambiarDisponibilidad.setDisable(false);
-				break;
+			botonCambiarDisponibilidad.setDisable(false);
+			break;
 
-			case VIAJE_A_ORIGEN:
-				labelEstadoConductor.setText(
-						msj.getString("menu.conductor.panel.estado.viaje_a_origen"));
+		case VIAJE_A_ORIGEN:
+			labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.viaje_a_origen"));
 
-				botonCambiarDisponibilidad.setDisable(true);
-				break;
+			botonCambiarDisponibilidad.setDisable(true);
+			break;
 
-			case VIAJE_A_DESTINO:
-				labelEstadoConductor.setText(
-						msj.getString("menu.conductor.panel.estado.viaje_a_destino"));
+		case VIAJE_A_DESTINO:
+			labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.viaje_a_destino"));
 
-				botonCambiarDisponibilidad.setDisable(true);
-				break;
+			botonCambiarDisponibilidad.setDisable(true);
+			break;
 		}
 	}
 
@@ -550,19 +568,17 @@ public class PanelConductorController {
 
 		Viaje viaje = gestorViajes.consultarViajeActivo(usuario);
 
-		boolean viajeAceptado = viaje != null
-				&& viaje.estadoActual() == EstadoViaje.ACEPTADO;
+		boolean viajeAceptado = viaje != null && viaje.estadoActual() == EstadoViaje.ACEPTADO;
 
-		boolean viajeIniciado = viaje != null
-				&& viaje.estadoActual() == EstadoViaje.INICIADO;
+		boolean viajeIniciado = viaje != null && viaje.estadoActual() == EstadoViaje.INICIADO;
 
 		botonIniciarViaje.setDisable(!viajeAceptado);
 
 		botonFinalizarViaje.setDisable(!viajeIniciado);
 
-		botonCalificarCliente.setDisable(
-				!viajeIniciado
-						|| viaje.getCalificacionConductor() != null);
+		botonCancelarViaje.setDisable(!viajeIniciado);
+
+		botonCalificarCliente.setDisable(!viajeIniciado || viaje.getCalificacionConductor() != null);
 	}
 
 	private void actualizarPanelViaje() {
@@ -589,60 +605,41 @@ public class PanelConductorController {
 		Locale locale = ContextoAplicacion.getLocale();
 
 		// Datos del cliente.
-		labelClienteViaje.setText(
-				viaje.getCliente().getNombre());
+		labelClienteViaje.setText(viaje.getCliente().getNombre());
 
 		// Origen y destino.
-		labelOrigenViaje.setText(
-				formatearUbicacion(viaje.getOrigen(), locale));
+		labelOrigenViaje.setText(formatearUbicacion(viaje.getOrigen(), locale));
 
-		labelDestinoViaje.setText(
-				formatearUbicacion(viaje.getDestino(), locale));
+		labelDestinoViaje.setText(formatearUbicacion(viaje.getDestino(), locale));
 
 		// Distancia.
-		labelDistanciaViaje.setText(
-				formatearNumero(viaje.getDistanciaTotal(), 2, locale)
-						+ " " + ContextoAplicacion.getMensajes()
-								.getString("viaje.unidad.km"));
+		labelDistanciaViaje.setText(formatearNumero(viaje.getDistanciaTotal(), 2, locale) + " "
+				+ ContextoAplicacion.getMensajes().getString("viaje.unidad.km"));
 
 		// Duración estimada.
-		labelDuracionViaje.setText(
-				formatearNumero(
-						Math.ceil(viaje.getDuracionEstimadaMinutos()),
-						0,
-						locale)
-						+ " " + ContextoAplicacion.getMensajes()
-								.getString("viaje.unidad.min"));
+		labelDuracionViaje.setText(formatearNumero(Math.ceil(viaje.getDuracionEstimadaMinutos()), 0, locale) + " "
+				+ ContextoAplicacion.getMensajes().getString("viaje.unidad.min"));
 
 		// Costo total.
-		labelCostoViaje.setText(
-				"$ " + formatearNumero(viaje.getCostoTotal(), 2, locale));
+		labelCostoViaje.setText("$ " + formatearNumero(viaje.getCostoTotal(), 2, locale));
 
 		// Hora de inicio.
-		labelHoraInicioViaje.setText(
-				obtenerHoraInicio(viaje, locale));
-		
+		labelHoraInicioViaje.setText(obtenerHoraInicio(viaje, locale));
+
 		// Estado actual del viaje.
-		labelEstadoViaje.setText(
-		        obtenerTextoEstadoViaje(viaje.estadoActual()));
+		labelEstadoViaje.setText(obtenerTextoEstadoViaje(viaje.estadoActual()));
 	}
 
-	private String formatearUbicacion(
-			Ubicacion ubicacion, Locale locale) {
+	private String formatearUbicacion(Ubicacion ubicacion, Locale locale) {
 
 		if (ubicacion == null) {
 			return "—";
 		}
 
-		return String.format(
-				locale,
-				"%.5f / %.5f",
-				ubicacion.getLatitud(),
-				ubicacion.getLongitud());
+		return String.format(locale, "%.5f / %.5f", ubicacion.getLatitud(), ubicacion.getLongitud());
 	}
 
-	private String formatearNumero(
-			double valor, int decimales, Locale locale) {
+	private String formatearNumero(double valor, int decimales, Locale locale) {
 
 		NumberFormat formato = NumberFormat.getNumberInstance(locale);
 
@@ -652,8 +649,7 @@ public class PanelConductorController {
 		return formato.format(valor);
 	}
 
-	private String obtenerHoraInicio(
-			Viaje viaje, Locale locale) {
+	private String obtenerHoraInicio(Viaje viaje, Locale locale) {
 
 		DateTimeFormatter formato = DateTimeFormatter.ofPattern("HH:mm", locale);
 
@@ -668,38 +664,37 @@ public class PanelConductorController {
 		// El viaje fue aceptado, pero todavía no comenzó.
 		return "—";
 	}
-	
-	private String obtenerClaveServicio(TipoServicio tipoServicio) {
-	    return switch (tipoServicio) {
-	        case PASAJEROS -> "servicio.pasajeros";
-	        case ENVIOS -> "servicio.envios";
-	    };
-	}
-	private void mostrarServicios(Vehiculo vehiculo) {
-	    String servicios = vehiculo.getTipoServicios()
-	            .stream()
-	            .map(tipo -> ContextoAplicacion.getMensajes()
-	                    .getString(obtenerClaveServicio(tipo)))
-	            .collect(Collectors.joining(" · "));
 
-	    labelServiciosVehiculo.setText(servicios.isEmpty() ? "—" : servicios);
+	private String obtenerClaveServicio(TipoServicio tipoServicio) {
+		return switch (tipoServicio) {
+		case PASAJEROS -> "servicio.pasajeros";
+		case ENVIOS -> "servicio.envios";
+		};
 	}
-	
+
+	private void mostrarServicios(Vehiculo vehiculo) {
+		String servicios = vehiculo.getTipoServicios().stream()
+				.map(tipo -> ContextoAplicacion.getMensajes().getString(obtenerClaveServicio(tipo)))
+				.collect(Collectors.joining(" · "));
+
+		labelServiciosVehiculo.setText(servicios.isEmpty() ? "—" : servicios);
+	}
+
 	private String obtenerTextoEstadoViaje(EstadoViaje estado) {
 
-	    if (estado == null) {
-	        return "—";
-	    }
+		if (estado == null) {
+			return "—";
+		}
 
-	    String clave = switch (estado) {
-	        case SOLICITADO -> "viaje.estado.solicitado";
-	        case ACEPTADO -> "viaje.estado.aceptado";
-	        case INICIADO -> "viaje.estado.iniciado";
-	        case FINALIZADO -> "viaje.estado.finalizado";
-	        case CANCELADO -> "viaje.estado.cancelado";
-	        case RECHAZADO -> "viaje.estado.rechazado";
-	    };
+		String clave = switch (estado) {
+		case SOLICITADO -> "viaje.estado.solicitado";
+		case ACEPTADO -> "viaje.estado.aceptado";
+		case INICIADO -> "viaje.estado.iniciado";
+		case FINALIZADO -> "viaje.estado.finalizado";
+		case CANCELADO -> "viaje.estado.cancelado";
+		case RECHAZADO -> "viaje.estado.rechazado";
+		};
 
-	    return ContextoAplicacion.getMensajes().getString(clave);
+		return ContextoAplicacion.getMensajes().getString(clave);
 	}
 }
