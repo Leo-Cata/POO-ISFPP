@@ -1,121 +1,33 @@
 package md.modelo;
 
 import java.util.ArrayList;
-import java.util.UUID;
-
-import net.datastructures.Entry;
-import net.datastructures.ProbeHashMap;
+import java.util.List;
 
 public class Conductor {
 
-	private static final int MAX_CALIFICACIONES = 200;
-
-	private ArrayList<CalificacionViaje> calificaciones = new ArrayList<CalificacionViaje>();
 	private String licenciaConducir;
-	private CategoriaVehiculo categoriaVehiculoActivo;
-	private ProbeHashMap<String, Vehiculo> vehiculos;// alamcenar los autos en un mapa y como clave la patente
-	private ProbeHashMap<UUID, Viaje> viajes; // almacenar los vaijes en un mapa y como clave el UUID
-	private EstadoConductor estado;
+	private EstadoConductor estadoConductor;
 	private Vehiculo vehiculoActivo;
+	private CategoriaVehiculo categoriaVehiculoActivo;
+	private List<Viaje> viajes;
+	private List<Vehiculo> vehiculos;
 
-	public Conductor(String licenciaConducir, CategoriaVehiculo categoriaVehiculoActivo, Vehiculo vehiculo,
-			EstadoConductor estado) {
-		super();
+	public Conductor(String licenciaConducir, Vehiculo vehiculo) {
+		this.estadoConductor = EstadoConductor.FUERA_DE_SERVICIO;
 		this.licenciaConducir = licenciaConducir;
-		this.categoriaVehiculoActivo = categoriaVehiculoActivo;
-		this.estado = estado;
-		this.viajes = new ProbeHashMap<>();
-		this.vehiculos = new ProbeHashMap<>();
 		this.vehiculoActivo = vehiculo;
+		this.categoriaVehiculoActivo = vehiculo.getCategoriaVehiculo();
+		vehiculos = new ArrayList<Vehiculo>();
+		viajes = new ArrayList<Viaje>();
 		agregarVehiculo(vehiculo);
 	}
 
-	/**
-	 * agrega un vehiculo al usuario de tipo conductor
-	 * 
-	 * @param vehiculo el cual sera agregado, obteniendo la patente del mismo que se
-	 *                 usara como llave del mapa
-	 */
-	public void agregarVehiculo(Vehiculo vehiculo) {
-		if (vehiculo == null)
-			throw new IllegalArgumentException("El vehiculo no puede ser null");
-
-		if (vehiculos.get(vehiculo.getPatente()) != null)
-			throw new IllegalArgumentException("El vehiculo ya esta registrado.");
-
-		this.vehiculos.put(vehiculo.getPatente(), vehiculo);
-	}
-
-	/**
-	 * agrega un viaje al mapa de viajes
-	 * 
-	 * @param viaje del cual se obtiene us UUID como llave
-	 */
 	public void agregarViaje(Viaje viaje) {
-
-		if (viaje == null) {
-			throw new IllegalArgumentException("El viaje no puede ser null");
-		}
-
-		if (viajes.get(viaje.getId()) != null)
-			throw new IllegalArgumentException("El viaje ya esta registrado.");
-
-		this.viajes.put(viaje.getId(), viaje);
+		viajes.add(viaje);
 	}
 
-	/**
-	 * chequea el estado actual del conductor
-	 * 
-	 * @return true el conductor se encuentra conduciendo al origen/destino
-	 */
-	public boolean enViaje() {
-		return this.estado == EstadoConductor.VIAJE_A_ORIGEN || this.estado == EstadoConductor.VIAJE_A_DESTINO;
-	}
-
-	/**
-	 * Agrega una calificación recibida por el conductor. Se conservan como máximo
-	 * 200; al superarse ese límite se descarta la más antigua.
-	 *
-	 * @param calificacion calificación a registrar.
-	 * @throws IllegalArgumentException si la calificación es {@code null}.
-	 */
-	public void agregarCalificacion(CalificacionViaje calificacion) {
-		if (calificacion == null) {
-			throw new IllegalArgumentException("La calificación no puede ser null.");
-		}
-
-		if (calificaciones.size() == MAX_CALIFICACIONES) {
-			calificaciones.remove(0);
-		}
-
-		calificaciones.addLast(calificacion);
-		;
-	}
-
-	public ArrayList<CalificacionViaje> getCalificaciones() {
-		ArrayList<CalificacionViaje> copiaCalificaciones = new ArrayList<CalificacionViaje>();
-
-		copiaCalificaciones.addAll(calificaciones);
-
-		return copiaCalificaciones;
-	}
-	// setters y getters de conductor
-
-	public Vehiculo getVehiculoActivo() {
-		return vehiculoActivo;
-	}
-
-	public void setVehiculoActivo(Vehiculo vehiculoActivo) {
-		if (vehiculoActivo == null) {
-			throw new IllegalArgumentException("El vehículo no puede ser null.");
-		}
-
-		if (this.vehiculos.get(vehiculoActivo.getPatente()) == null) {
-			throw new IllegalArgumentException(
-					"El vehículo no está registrado para este conductor.");
-		}
-
-		this.vehiculoActivo = vehiculoActivo;
+	public void agregarVehiculo(Vehiculo vehiculo) {
+		vehiculos.add(vehiculo);
 	}
 
 	public String getLicenciaConducir() {
@@ -126,47 +38,36 @@ public class Conductor {
 		this.licenciaConducir = licenciaConducir;
 	}
 
+	public EstadoConductor getEstadoConductor() {
+		return estadoConductor;
+	}
+
+	public void setEstado(EstadoConductor estadoConductor) {
+		this.estadoConductor = estadoConductor;
+	}
+
+	public Vehiculo getVehiculoActivo() {
+		return vehiculoActivo;
+	}
+
+	public void setVehiculoActivo(Vehiculo vehiculoActivo) {
+		this.vehiculoActivo = vehiculoActivo;
+	}
+
+	public List<Vehiculo> getVehiculos() {
+		return new ArrayList<Vehiculo>(vehiculos);
+	}
+
+	public List<Viaje> getViajes() {
+		return new ArrayList<Viaje>(viajes);
+	}
+
 	public CategoriaVehiculo getCategoriaVehiculoActivo() {
 		return categoriaVehiculoActivo;
 	}
 
 	public void setCategoriaVehiculoActivo(CategoriaVehiculo categoriaVehiculoActivo) {
 		this.categoriaVehiculoActivo = categoriaVehiculoActivo;
-	}
-
-	public EstadoConductor getEstadoConductor() {
-		return estado;
-	}
-
-	public void setEstado(EstadoConductor estado) {
-		this.estado = estado;
-	}
-
-	public ProbeHashMap<String, Vehiculo> getVehiculos() {
-
-		ProbeHashMap<String, Vehiculo> vehiculosCopia = new ProbeHashMap<String, Vehiculo>();
-
-		for (Entry<String, Vehiculo> vehic : vehiculos.entrySet())
-			vehiculosCopia.put(vehic.getKey(), vehic.getValue());
-		// se devuelve una copia de vehiculos
-		return vehiculosCopia;
-	}
-
-	public ProbeHashMap<UUID, Viaje> getViajes() {
-
-		ProbeHashMap<UUID, Viaje> viajesCopia = new ProbeHashMap<UUID, Viaje>();
-
-		for (Entry<UUID, Viaje> viaj : viajes.entrySet())
-			viajesCopia.put(viaj.getKey(), viaj.getValue());
-		// se devuelve una copia de viajes
-		return viajesCopia;
-	}
-
-	@Override
-	public String toString() {
-		return "Conductor [licenciaConducir=" + licenciaConducir + ", categoriaVehiculoActivo="
-				+ categoriaVehiculoActivo + ", vehiculos=" + vehiculos + ", viajes=" + viajes + ", estado=" + estado
-				+ "]";
 	}
 
 }

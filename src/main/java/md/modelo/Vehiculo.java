@@ -1,149 +1,81 @@
 package md.modelo;
 
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 public class Vehiculo {
-    private String patente;
-    private String modelo;
-    private Ubicacion ubicacion;
-    private TipoVehiculo tipoVehiculo;
-    private CategoriaVehiculo categoriaVehiculo;
-    // Set (conjunto) garantiza la propiedad 'unique' por definicion
-    private Set<TipoServicio> tipoServicios;
-    private int capacidadPasajeros;
+	private String patente;
+	private String modelo;
+	private int capacidadPasajeros;
+	private Ubicacion ubicacion;
+	private TipoVehiculo tipoVehiculo;
+	private CategoriaVehiculo categoriaVehiculo;
+	private Set<TipoServicio> tipoServicios;
+	
+	public Vehiculo(String patente, String modelo, int capacidadPasajeros, TipoVehiculo tipoVehiculo, CategoriaVehiculo categoriaVehiculo, TipoServicio tipoServicio) {
+		this.patente = patente;
+		this.modelo = modelo;
+		this.capacidadPasajeros = capacidadPasajeros;
+		this.tipoVehiculo = tipoVehiculo;
+		this.categoriaVehiculo = categoriaVehiculo;
+		tipoServicios = new HashSet<TipoServicio>();
+		tipoServicios.add(tipoServicio);
+	}
+	
+	public void agregarTipoServicio(TipoServicio tipoServicio) {
+		tipoServicios.add(tipoServicio);
+	}
+	
+	public String getPatente() {
+		return patente;
+	}
 
-    // constructor de la clase vehiculo
-    /**
-     * 
-     * @param patente
-     * @param modelo
-     * @param ubicacion
-     * @param tipoVehiculo
-     * @param categoriaVehiculo
-     * @param tipoServicio
-     */
-    public Vehiculo(String patente, String modelo, int capacidadPasajeros, TipoVehiculo tipoVehiculo,
-            CategoriaVehiculo categoriaVehiculo, TipoServicio tipoServicio) {
-        this.patente = patente;
-        this.modelo = modelo;
-        this.tipoVehiculo = tipoVehiculo;
-        this.categoriaVehiculo = categoriaVehiculo;
-        this.capacidadPasajeros = capacidadPasajeros;
-        // es un conjunto que contiene solo valores de TipoServicio y no permite
-        // repetidos (empieza vacio)
-        this.tipoServicios = EnumSet.noneOf(TipoServicio.class);
-        agregarTipoServicio(tipoServicio);
-    }
+	public void setPatente(String patente) {
+		this.patente = patente;
+	}
 
-    /**
-     * agrega un tipo de servicio a un vehiculo.
-     * 
-     * @param tipoServicio
-     * @throws IllegalArgumentException si el tipo de servicio es repetido o
-     *                                  invalido
-     */
-    public void agregarTipoServicio(TipoServicio tipoServicio) {
+	public String getModelo() {
+		return modelo;
+	}
 
-        if (tipoServicio == null) {
-            throw new IllegalArgumentException("El tipo de servicio no puede ser null.");
-        }
+	public void setModelo(String modelo) {
+		this.modelo = modelo;
+	}
 
-        if (tipoServicios.contains(tipoServicio)) {
-            throw new IllegalArgumentException("El vehiculo ya posee el servicio: " + tipoServicio);
-        }
+	public int getCapacidadPasajeros() {
+		return capacidadPasajeros;
+	}
 
-        this.tipoServicios.add(tipoServicio);
-    }
+	public void setCapacidadPasajeros(int capacidadPasajeros) {
+		this.capacidadPasajeros = capacidadPasajeros;
+	}
 
-    public Set<TipoServicio> getTipoServicios() {
+	public TipoVehiculo getTipoVehiculo() {
+		return tipoVehiculo;
+	}
 
-        Set<TipoServicio> copiaTipoServicio = EnumSet.noneOf(TipoServicio.class);
-        copiaTipoServicio.addAll(tipoServicios);
+	public void setTipoVehiculo(TipoVehiculo tipoVehiculo) {
+		this.tipoVehiculo = tipoVehiculo;
+	}
 
-        return copiaTipoServicio;
-    }
+	public CategoriaVehiculo getCategoriaVehiculo() {
+		return categoriaVehiculo;
+	}
 
-    public TipoVehiculo getTipoVehiculo() {
-        return tipoVehiculo;
-    }
+	public void setCategoriaVehiculo(CategoriaVehiculo categoriaVehiculo) {
+		this.categoriaVehiculo = categoriaVehiculo;
+	}
 
-    public void setTipoVehiculo(TipoVehiculo tipoVehiculo) {
-        this.tipoVehiculo = tipoVehiculo;
-    }
+	public Set<TipoServicio> getTipoServicios() {
+		return new HashSet<TipoServicio>(tipoServicios);
+	}
+	
+	public Ubicacion getUbicacion() {
+		return ubicacion;
+	}
 
-    public CategoriaVehiculo getCategoriaVehiculo() {
-        return categoriaVehiculo;
-    }
-
-    public void setCategoriaVehiculo(CategoriaVehiculo categoriaVehiculo) {
-        this.categoriaVehiculo = categoriaVehiculo;
-    }
-
-    // getters y setters del objeto vehiculo
-    public Ubicacion getUbicacion() {
-        return ubicacion;
-    }
-
-    public void setUbicacion(Ubicacion ubicacion) {
-        this.ubicacion = ubicacion;
-    }
-
-    public String getPatente() {
-        return patente;
-    }
-
-    public void setPatente(String patente) {
-        this.patente = patente;
-    }
-
-    public String getModelo() {
-        return modelo;
-    }
-
-    public void setModelo(String modelo) {
-        this.modelo = modelo;
-    }
-
-    public int getCapacidadPasajeros() {
-        return capacidadPasajeros;
-    }
-
-    public void setCapacidadPasajeros(int capacidadPasajeros) {
-        this.capacidadPasajeros = capacidadPasajeros;
-    }
-
-    // hash y equals del objeto vehiculo
-    // dos vehiculos son iguales si tienen la misma patente
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((patente == null) ? 0 : patente.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Vehiculo other = (Vehiculo) obj;
-        if (patente == null) {
-            if (other.patente != null)
-                return false;
-        } else if (!patente.equals(other.patente))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "Vehiculo [patente=" + patente + ", modelo=" + modelo + ", ubicacion=" + ubicacion + ", tipoVehiculo="
-                + tipoVehiculo + ", categoriaVehiculo=" + categoriaVehiculo + ", tipoServicios=" + tipoServicios + "]";
-    }
-
+	public void setUbicacion(Ubicacion ubicacion) {
+		this.ubicacion = ubicacion;
+	}
+	
 }

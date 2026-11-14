@@ -1,7 +1,6 @@
 package md.modelo;
 
 public enum CalificacionViaje {
-    // valores posibles del enum
 	NO_CALIFICADO(0),
     MALO(1),
     REGULAR(2),
@@ -9,15 +8,13 @@ public enum CalificacionViaje {
     MUY_BUENO(4),
     EXCELENTE(5);
 
-    private final int puntaje;
+    private final int valorNumerico;
 
-    // constructor, por defecto es privado
-    CalificacionViaje(int puntaje) {
-        this.puntaje = puntaje;
+    CalificacionViaje(int valorNumerico) {
+        this.valorNumerico = valorNumerico;
     }
 
-    // getter del puntaje
-    public int getPuntaje() {
-        return puntaje;
+    public int getValorNumerico() {
+        return this.valorNumerico;
     }
 }
