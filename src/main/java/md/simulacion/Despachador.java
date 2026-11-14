@@ -28,11 +28,15 @@ import md.rutas.api.RutaNoDisponibleException;
 import md.rutas.api.RutasViaje;
 import net.datastructures.ProbeHashMap;
 
+import java.util.UUID;
+import md.logica.GestorViajes;
+
 /**
  * Buffer de viajes pendientes y asignación de conductores.
  *
  * Es el punto de encuentro entre los hilos de pasajeros (que publican viajes) y
- * los hilos de conductores (que esperan asignaciones). Todo lo que cambia estado
+ * los hilos de conductores (que esperan asignaciones). Todo lo que cambia
+ * estado
  * se hace bajo BloqueoViajes.LOCK, y los hilos que no tienen nada que hacer
  * esperan en BloqueoViajes.CAMBIO sin consumir CPU.
  */
@@ -68,33 +72,41 @@ public class Despachador {
     /** Cantidad de viajes finalizados por conductor, para la política ROTACION. */
     private final Map<Usuario, Integer> viajesPorConductor = new HashMap<>();
 
+    /** Cotización comercial asociada a cada viaje. */
+    private final Map<UUID, GestorViajes.Cotizacion> cotizaciones = new HashMap<>();
+
+    /** Rutas viales calculadas para cada viaje. */
+    private final Map<UUID, RutasViaje> rutasPorViaje = new HashMap<>();
     private boolean cerrado;
     private int totalCancelaciones;
 
     /**
-     * @param usuarios        todos los usuarios de la simulación (conductores y pasajeros).
-     * @param motorVial       motor de rutas para calcular los recorridos de cada asignación.
-     * @param politica        cómo elegir entre varios conductores compatibles.
-     * @param esperaMaximaMs  tiempo real que un viaje puede esperar conductor antes de rechazarse.
-     * @param estadisticas    dónde se acumulan los resultados.
+     * @param usuarios       todos los usuarios de la simulación (conductores y
+     *                       pasajeros).
+     * @param motorVial      motor de rutas para calcular los recorridos de cada
+     *                       asignación.
+     * @param politica       cómo elegir entre varios conductores compatibles.
+     * @param esperaMaximaMs tiempo real que un viaje puede esperar conductor antes
+     *                       de rechazarse.
+     * @param estadisticas   dónde se acumulan los resultados.
      */
-    public Despachador(ProbeHashMap<String, Usuario> usuarios,PlanificadorRutas motorVial,PoliticaAsignacion politica,
-            long esperaMaximaMs,Estadisticas estadisticas) {
-    	if (usuarios == null || motorVial == null || politica == null || estadisticas == null) {
-    		throw new IllegalArgumentException("Los parámetros del despachador no pueden ser null.");
-    	}
-    	if (esperaMaximaMs <= 0) {
-    		throw new IllegalArgumentException("El tiempo máximo de espera debe ser mayor que cero.");
-    	}
+    public Despachador(ProbeHashMap<String, Usuario> usuarios, PlanificadorRutas motorVial, PoliticaAsignacion politica,
+            long esperaMaximaMs, Estadisticas estadisticas) {
+        if (usuarios == null || motorVial == null || politica == null || estadisticas == null) {
+            throw new IllegalArgumentException("Los parámetros del despachador no pueden ser null.");
+        }
+        if (esperaMaximaMs <= 0) {
+            throw new IllegalArgumentException("El tiempo máximo de espera debe ser mayor que cero.");
+        }
 
-    	this.usuarios = usuarios;
-    	this.movilidad = new Movilidad(usuarios);
-    	this.motorVial = motorVial;
-    	this.politica = politica;
-    	this.esperaMaximaMs = esperaMaximaMs;
-    	this.estadisticas = estadisticas;
+        this.usuarios = usuarios;
+        this.movilidad = new Movilidad(usuarios);
+        this.motorVial = motorVial;
+        this.politica = politica;
+        this.esperaMaximaMs = esperaMaximaMs;
+        this.estadisticas = estadisticas;
     }
-    
+
     /** Muestra el estado inicial y los conductores que están libres. */
     public void mostrarEstadoInicial() {
         lock.lock();
@@ -135,9 +147,11 @@ public class Despachador {
      * Si no encuentra uno compatible, lo deja en el buffer hasta que se libere
      * un conductor o venza el tiempo máximo de espera.
      */
-    public boolean solicitar(Viaje viaje) {
-        if (viaje == null || viaje.getCliente() == null || viaje.getCliente().getCliente() == null) {
-            throw new IllegalArgumentException("El viaje y su cliente son obligatorios.");
+    public boolean solicitar(Viaje viaje, GestorViajes.Cotizacion cotizacion) {
+        if (viaje == null || cotizacion == null
+                || viaje.getCliente() == null
+                || viaje.getCliente().getCliente() == null) {
+            throw new IllegalArgumentException("El viaje, su cotización y su cliente son obligatorios.");
         }
 
         lock.lock();
@@ -146,17 +160,19 @@ public class Despachador {
                 return false;
             }
             if (viaje.getCliente().getCliente().enViaje()) {
-                evento("SOLICITUD", nombre(viaje.getCliente()) + " no puede solicitar otro viaje: ya tiene uno activo.");
+                evento("SOLICITUD",
+                        nombre(viaje.getCliente()) + " no puede solicitar otro viaje: ya tiene uno activo.");
                 return false;
             }
 
             viaje.solicitar(LocalDateTime.now());
             pendientes.addLast(viaje);
             instanteSolicitud.put(viaje, System.currentTimeMillis());
+            cotizaciones.put(viaje.getId(), cotizacion);
 
             evento("SOLICITUD", nombre(viaje.getCliente()) + " solicita " + servicio(viaje)
                     + " desde " + ubicacion(viaje.getOrigen()) + " hasta " + ubicacion(viaje.getDestino())
-                    + ". Costo estimado: $" + formato(viaje.getCostoTotal()) + ".");
+                    + ". Costo estimado: $" + formato(cotizacion.costoTotal()) + ".");
 
             asignarPendientes();
 
@@ -207,7 +223,7 @@ public class Despachador {
             lock.unlock();
         }
     }
-    
+
     /** Comprueba de forma segura si un viaje sigue activo y no fue cancelado. */
     public boolean sigueActivo(Viaje viaje) {
         if (viaje == null) {
@@ -217,6 +233,20 @@ public class Despachador {
         try {
             EstadoViaje estado = viaje.estadoActual();
             return estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Obtiene las rutas asociadas a un viaje de forma segura. */
+    public RutasViaje obtenerRutas(Viaje viaje) {
+        if (viaje == null) {
+            return null;
+        }
+
+        lock.lock();
+        try {
+            return rutasPorViaje.get(viaje.getId());
         } finally {
             lock.unlock();
         }
@@ -257,6 +287,14 @@ public class Despachador {
                 return false;
             }
 
+            GestorViajes.Cotizacion cotizacion = cotizaciones.get(viaje.getId());
+
+            if (cotizacion == null) {
+                throw new IllegalStateException("No se encontró la cotización del viaje finalizado.");
+            }
+
+            double km = kilometrosRecorridos(viaje);
+
             viaje.finalizar(LocalDateTime.now(), calificacionAleatoria(), calificacionAleatoria());
             Usuario conductor = viaje.getConductor();
             if (conductor != null) {
@@ -264,12 +302,14 @@ public class Despachador {
                 enAtencion.remove(conductor, viaje);
             }
 
-            double km = kilometrosRecorridos(viaje);
-            estadisticas.registrarViajeFinalizado(km, viaje.getCostoTotal());
+            estadisticas.registrarViajeFinalizado(km, cotizacion.costoTotal());
 
             evento("FINALIZADO", "Viaje de " + nombre(viaje.getCliente()) + " completado por "
                     + nombre(conductor) + ". Distancia vial: " + formato(km) + " km; costo: $"
-                    + formato(viaje.getCostoTotal()) + ".");
+                    + formato(cotizacion.costoTotal()) + ".");
+
+            cotizaciones.remove(viaje.getId());
+            rutasPorViaje.remove(viaje.getId());
 
             asignarPendientes();
             cambio.signalAll();
@@ -286,9 +326,9 @@ public class Despachador {
      * que el conductor no puede continuar actualizando el vehículo después de
      * observar que el viaje fue cancelado.
      *
-     * @param viaje viaje que se cancela.
+     * @param viaje        viaje que se cancela.
      * @param quienCancela debe ser el cliente o el conductor asignado.
-     * @param motivo explicación de la cancelación.
+     * @param motivo       explicación de la cancelación.
      * @return true si se canceló; false si ya no era posible cancelarlo.
      */
     public boolean cancelarViaje(Viaje viaje, Usuario quienCancela, String motivo) {
@@ -316,6 +356,9 @@ public class Despachador {
                 asignados.remove(conductor, viaje);
                 enAtencion.remove(conductor, viaje);
             }
+
+            cotizaciones.remove(viaje.getId());
+            rutasPorViaje.remove(viaje.getId());
 
             totalCancelaciones++;
             String actor = quienCancela.equals(viaje.getCliente()) ? "cliente" : "conductor";
@@ -378,6 +421,8 @@ public class Despachador {
                     evento("RECHAZADO", "La solicitud de " + nombre(viaje.getCliente())
                             + " quedó sin asignación al finalizar el tiempo de simulación.");
                 }
+                cotizaciones.remove(viaje.getId());
+                rutasPorViaje.remove(viaje.getId());
             }
             pendientes.clear();
             instanteSolicitud.clear();
@@ -427,8 +472,8 @@ public class Despachador {
                 RutasViaje rutas = new PlanificacionViajeService(motorVial).planificar(
                         conductor.getConductor().getVehiculoActivo(), viaje.getOrigen(), viaje.getDestino());
 
-                viaje.setRutas(rutas);
                 viaje.aceptar(LocalDateTime.now(), conductor);
+                rutasPorViaje.put(viaje.getId(), rutas);
                 asignados.put(conductor, viaje);
 
                 evento("ACEPTADO", nombre(conductor) + " acepta el viaje solicitado por "
@@ -465,7 +510,7 @@ public class Despachador {
             if (posicion == null) {
                 continue;
             }
-            double distancia = posicion.calcularDistanciaA(origen);
+            double distancia = posicion.calcularDistancia(origen);
             if (distancia < menorDistancia) {
                 menorDistancia = distancia;
                 mejor = candidato;
@@ -489,11 +534,15 @@ public class Despachador {
                 // Limpia viajes que hayan sido cancelados desde otro componente.
                 it.remove();
                 instanteSolicitud.remove(viaje);
+                cotizaciones.remove(viaje.getId());
+                rutasPorViaje.remove(viaje.getId());
                 huboVencimientos = true;
             } else if (inicio != null && ahora - inicio >= esperaMaximaMs) {
                 it.remove();
                 instanteSolicitud.remove(viaje);
                 viaje.rechazar(LocalDateTime.now());
+                cotizaciones.remove(viaje.getId());
+                rutasPorViaje.remove(viaje.getId());
                 estadisticas.registrarRechazo();
                 evento("RECHAZADO", "La solicitud de " + nombre(viaje.getCliente())
                         + " venció: no se encontró un conductor compatible a tiempo.");
@@ -507,16 +556,18 @@ public class Despachador {
     }
 
     private double kilometrosRecorridos(Viaje viaje) {
-        RutasViaje rutas = viaje.getRutas();
+        RutasViaje rutas = rutasPorViaje.get(viaje.getId());
+
         if (rutas == null) {
-            return 0.0;
+            throw new IllegalStateException("No se encontraron las rutas del viaje.");
         }
+
         return rutas.acercamiento().distanciaKm() + rutas.traslado().distanciaKm();
     }
 
     private CalificacionViaje calificacionAleatoria() {
         CalificacionViaje[] valores = CalificacionViaje.values();
-        return valores[random.nextInt(valores.length)];
+        return valores[1 + random.nextInt(valores.length - 1)];
     }
 
     private void imprimirEstadoBloqueado() {

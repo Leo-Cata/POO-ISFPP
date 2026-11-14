@@ -5,13 +5,14 @@ import md.modelo.Viaje;
 import md.rutas.api.RutasViaje;
 
 /**
- * Hilo de un conductor. Espera a que el Despachador le asigne un viaje y para cada
+ * Hilo de un conductor. Espera a que el Despachador le asigne un viaje y para
+ * cada
  * uno:
  * 
- *   recorre el acercamiento: desde donde está hasta el pasajero;
- *   inicia el viaje (el pasajero sube);
- *   recorre el traslado: desde el origen hasta el destino;
- *   finaliza el viaje y vuelve a quedar disponible.
+ * recorre el acercamiento: desde donde está hasta el pasajero;
+ * inicia el viaje (el pasajero sube);
+ * recorre el traslado: desde el origen hasta el destino;
+ * finaliza el viaje y vuelve a quedar disponible.
  * 
  */
 public class ConductorSimulado implements Runnable {
@@ -42,8 +43,8 @@ public class ConductorSimulado implements Runnable {
     }
 
     private void atender(Viaje viaje) throws InterruptedException {
-    	try {
-            RutasViaje rutas = viaje.getRutas();
+        try {
+            RutasViaje rutas = despachador.obtenerRutas(viaje);
             if (rutas == null || viaje.getVehiculo() == null) {
                 // No debería suceder: el despachador prepara la ruta antes de aceptar.
                 despachador.cancelarViaje(viaje, conductor, "No se pudo obtener la ruta del viaje.");

@@ -1,7 +1,7 @@
 
 package md.simulacion;
 
-import md.modelo.Conductor;  
+import md.modelo.Conductor;
 import md.modelo.RolUsuario;
 import md.modelo.Ubicacion;
 import md.modelo.Usuario;
@@ -52,7 +52,7 @@ public class InicializadorEscenario {
             }
 
             // Inicializamos la ubicación de todos los vehículos del conductor.
-            for (Vehiculo vehiculo : conductor.getVehiculos().values()) {
+            for (Vehiculo vehiculo : conductor.getVehiculos()) {
 
                 if (vehiculo == null) {
                     throw new IllegalStateException("El conductor " + usuario.getEmail()

@@ -1,13 +1,12 @@
 package md.ui.impl.cli;
 
-import java.util.ArrayList; 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 
 import md.aplicacion.CargadorModelo.DatosIniciales;
 import md.aplicacion.ContextoAplicacion;
-import md.logica.CalificacionServicio;
 import md.logica.GestorViajes;
 import md.modelo.RolUsuario;
 import md.modelo.Usuario;
@@ -24,9 +23,7 @@ import md.modelo.EstadoViaje;
 public class CommandLineInterface implements UIEngine {
 
     private final Scanner scanner = new Scanner(System.in);
-    private final GestorViajes gestorViajes = new GestorViajes();
-    private final CalificacionServicio calificacionServicio =
-            new CalificacionServicio();
+    private final GestorViajes gestorViajes = ContextoAplicacion.getGestorViajes();
 
     @Override
     public void start() {
@@ -87,8 +84,8 @@ public class CommandLineInterface implements UIEngine {
             Usuario usuario = entrada.getValue();
             usuarios.add(usuario);
 
-            String perfil = (usuario.getConductor() != null) ? msj.getString("login.profile.driver") 
-                            : msj.getString("login.profile.client");
+            String perfil = (usuario.getConductor() != null) ? msj.getString("login.profile.driver")
+                    : msj.getString("login.profile.client");
 
             System.out.println(numero + ". " + usuario.getNombre() + " - " + usuario.getEmail() + " " + perfil);
             numero++;
@@ -105,18 +102,19 @@ public class CommandLineInterface implements UIEngine {
 
             if (opcion >= 1 && opcion <= usuarios.size()) {
                 Usuario seleccionado = usuarios.get(opcion - 1);
-                
+
                 if (seleccionado.getRolActivo() == RolUsuario.CONDUCTOR && seleccionado.getConductor() == null) {
                     System.out.println("\n[" + msj.getString("login.alert.attention") + "]");
                     System.out.println(msj.getString("login.error.notRegisteredDriver"));
-                    continue; 
+                    continue;
                 }
-                
+
                 return seleccionado;
             }
 
             System.out.println("\n[" + msj.getString("login.alert.signInError") + "]");
-            System.out.println(msj.getString("login.error.noUserSelected") + ". " + msj.getString("menu.error.intente_nuevamente"));
+            System.out.println(msj.getString("login.error.noUserSelected") + ". "
+                    + msj.getString("menu.error.intente_nuevamente"));
         }
     }
 
@@ -144,17 +142,17 @@ public class CommandLineInterface implements UIEngine {
         switch (opcion) {
 
             case 1:
-            	solicitarViaje(usuario, msj);
+                solicitarViaje(usuario, msj);
                 break;
 
             case 2:
-            	cancelarViaje(usuario, msj);
+                cancelarViaje(usuario, msj);
                 break;
-                
+
             case 3:
                 calificarViaje(usuario, msj);
                 break;
-                
+
             case 4:
                 if (tienePerfilConductor) {
                     cambiarRol(usuario, RolUsuario.CONDUCTOR, msj);
@@ -176,8 +174,8 @@ public class CommandLineInterface implements UIEngine {
     /**
      * Muestra las opciones disponibles para un conductor.
      */
-private boolean mostrarMenuConductor(Usuario usuario, ResourceBundle msj) {
-        
+    private boolean mostrarMenuConductor(Usuario usuario, ResourceBundle msj) {
+
         System.out.println("\n===== " + msj.getString("menu.conductor.titulo") + " =====");
         System.out.println(msj.getString("menu.usuario") + ": " + usuario.getNombre());
         System.out.println("1. " + msj.getString("menu.conductor.opcion.iniciar_viaje"));
@@ -196,7 +194,7 @@ private boolean mostrarMenuConductor(Usuario usuario, ResourceBundle msj) {
             case 2:
                 finalizarViajeConductor(usuario, msj);
                 break;
-                
+
             case 3:
                 calificarViaje(usuario, msj);
                 break;
@@ -214,6 +212,7 @@ private boolean mostrarMenuConductor(Usuario usuario, ResourceBundle msj) {
 
         return false;
     }
+
     /**
      * Solicita el cambio de rol al objeto Usuario.
      */
@@ -241,194 +240,197 @@ private boolean mostrarMenuConductor(Usuario usuario, ResourceBundle msj) {
             }
         }
     }
-    
 
-/**
- * Coordina la interacción de consola para solicitar un viaje.
- *
- * La interfaz obtiene los datos y presenta los resultados.
- * Las reglas del caso de uso quedan delegadas en GestorViajes.
- */
-private void solicitarViaje(Usuario usuario, ResourceBundle msj) {
+    /**
+     * Coordina la interacción de consola para solicitar un viaje.
+     *
+     * La interfaz obtiene los datos y presenta los resultados.
+     * Las reglas del caso de uso quedan delegadas en GestorViajes.
+     */
+    private void solicitarViaje(Usuario usuario, ResourceBundle msj) {
 
-    if (usuario.getCliente().enViaje()) {
-        System.out.println("\n[" + msj.getString("login.alert.attention")
-                + "] " + msj.getString("viaje.error.ya_en_viaje"));
-        return;
+        if (usuario.getCliente().enViaje()) {
+            System.out.println("\n[" + msj.getString("login.alert.attention")
+                    + "] " + msj.getString("viaje.error.ya_en_viaje"));
+            return;
+        }
+
+        System.out.println("\n--- " + msj.getString("viaje.titulo.solicitar").toUpperCase() + " ---");
+
+        try {
+            // Generar y validar las ubicaciones de esta primera versión.
+            System.out.println(msj.getString("viaje.simulando_ubicaciones") + "...");
+
+            Ubicacion origen = ValidacionUbicaciones.validarYAjustar(
+                    ContextoAplicacion.getGeneradorUbicaciones().generar(),
+                    ContextoAplicacion.getMotorVial());
+
+            Ubicacion destino = ValidacionUbicaciones.validarYAjustar(
+                    ContextoAplicacion.getGeneradorUbicaciones().generar(),
+                    ContextoAplicacion.getMotorVial());
+
+            // Obtener los servicios disponibles.
+            List<Servicio> servicios = ContextoAplicacion.getDatosIniciales().getServicios();
+
+            if (servicios == null || servicios.isEmpty()) {
+                System.out.println(msj.getString("app.error.inesperado")
+                        + ": No hay servicios configurados.");
+                return;
+            }
+
+            System.out.println("\n" + msj.getString("viaje.seleccione_servicio") + ":");
+
+            for (int i = 0; i < servicios.size(); i++) {
+                Servicio servicio = servicios.get(i);
+
+                String claveServicio = "servicio." + servicio.getNombre().toLowerCase()
+                        .replace("á", "a")
+                        .replace("é", "e")
+                        .replace("í", "i")
+                        .replace("ó", "o")
+                        .replace("ú", "u");
+
+                String nombre = msj.containsKey(claveServicio)
+                        ? msj.getString(claveServicio)
+                        : servicio.getNombre();
+
+                System.out.println((i + 1) + ". " + nombre
+                        + " (" + msj.getString("viaje.servicio.base")
+                        + " $" + servicio.getTarifaBase() + ")");
+            }
+
+            int opcionServicio = leerOpcionRango(
+                    msj.getString("menu.seleccione_opcion") + ": ",
+                    1,
+                    servicios.size(),
+                    msj);
+
+            Servicio servicioSeleccionado = servicios.get(opcionServicio - 1);
+
+            // Calcular la cotización comercial.
+            GestorViajes.Cotizacion cotizacion = gestorViajes.calcularCotizacion(servicioSeleccionado, origen, destino);
+
+            // Presentar el resumen antes de confirmar.
+            System.out.println("\n--- "
+                    + msj.getString("viaje.confirmacion.resumen") + " ---");
+
+            System.out.printf("%s: %.5f, %.5f%n",
+                    msj.getString("viaje.resumen.origen"),
+                    origen.getLatitud(),
+                    origen.getLongitud());
+
+            System.out.printf("%s: %.5f, %.5f%n",
+                    msj.getString("viaje.resumen.destino"),
+                    destino.getLatitud(),
+                    destino.getLongitud());
+
+            System.out.println(msj.getString("viaje.resumen.servicio")
+                    + ": " + servicioSeleccionado.getNombre());
+
+            System.out.printf("%s: %.2f %s%n",
+                    msj.getString("viaje.costo_estimado"),
+                    cotizacion.costoTotal(),
+                    "");
+
+            System.out.printf("%s: %.2f %s%n",
+                    msj.getString("viaje.cotizacion.distancia"),
+                    cotizacion.distanciaKm(),
+                    msj.getString("viaje.unidad.km"));
+
+            System.out.printf("%s: %.0f %s%n",
+                    msj.getString("viaje.cotizacion.duracion"),
+                    cotizacion.duracionMinutos(),
+                    msj.getString("viaje.unidad.min"));
+
+            int confirmar = leerOpcionRango(
+                    msj.getString("viaje.confirmar_solicitud") + " "
+                            + msj.getString("viaje.confirmar.opciones") + ": ",
+                    1,
+                    2,
+                    msj);
+
+            if (confirmar == 2) {
+                System.out.println("\n" + msj.getString("viaje.cancelado"));
+                return;
+            }
+
+            // 5. Confirmada la solicitud: buscar conductor y calcular rutas.
+            System.out.println("\n" + msj.getString("viaje.buscando_conductor") + "...");
+
+            GestorViajes.ResultadoSolicitud resultado = gestorViajes.procesarSolicitudViaje(usuario,
+                    servicioSeleccionado, origen, destino);
+
+            if (resultado == null) {
+                System.out.println(msj.getString("viaje.error.sin_conductores"));
+                return;
+            }
+
+            // 6. Mostrar la asignación y los dos tramos viales.
+            System.out.println("\n" + msj.getString("viaje.conductor_encontrado")
+                    + ": " + resultado.conductor().getNombre());
+
+            String km = msj.getString("viaje.unidad.km");
+            String min = msj.getString("viaje.unidad.min");
+
+            System.out.println("\n--- "
+                    + msj.getString("viaje.resultados_ruta") + " ---");
+
+            System.out.printf("%s: %.2f %s (%.0f %s)%n",
+                    msj.getString("viaje.ruta.acercamiento"),
+                    resultado.rutas().acercamiento().distanciaKm(),
+                    km,
+                    Math.ceil(resultado.rutas().acercamiento().duracionMinutos()),
+                    min);
+
+            System.out.printf("%s: %.2f %s (%.0f %s)%n",
+                    msj.getString("viaje.ruta.traslado"),
+                    resultado.rutas().traslado().distanciaKm(),
+                    km,
+                    Math.ceil(resultado.rutas().traslado().duracionMinutos()),
+                    min);
+
+            System.out.printf("%s: $%.2f%n",
+                    msj.getString("viaje.costo_estimado"),
+                    resultado.cotizacion().costoTotal());
+
+            System.out.println(msj.getString("viaje.estado") + ": " + resultado.viaje().estadoActual());
+
+        } catch (RutaNoDisponibleException e) {
+            System.out.println("\n" + msj.getString("viaje.error.ruta_no_disponible"));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println("\n[" + msj.getString("login.alert.attention")
+                    + "] " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("\n" + msj.getString("app.error.inesperado")
+                    + ": " + e.getMessage());
+        }
     }
 
-    System.out.println("\n--- " + msj.getString("viaje.titulo.solicitar").toUpperCase()+ " ---");
-
-    try {
-        //Generar y validar las ubicaciones de esta primera versión.
-        System.out.println(msj.getString("viaje.simulando_ubicaciones") + "...");
-
-        Ubicacion origen = ValidacionUbicaciones.validarYAjustar(
-                ContextoAplicacion.getGeneradorUbicaciones().generar(),
-                ContextoAplicacion.getMotorVial());
-
-        Ubicacion destino = ValidacionUbicaciones.validarYAjustar(
-                ContextoAplicacion.getGeneradorUbicaciones().generar(),
-                ContextoAplicacion.getMotorVial());
-
-        //Obtener los servicios disponibles.
-        List<Servicio> servicios = ContextoAplicacion.getDatosIniciales().getServicios();
-
-        if (servicios == null || servicios.isEmpty()) {
-            System.out.println(msj.getString("app.error.inesperado")
-                    + ": No hay servicios configurados.");
-            return;
-        }
-
-        System.out.println("\n" + msj.getString("viaje.seleccione_servicio") + ":");
-
-        for (int i = 0; i < servicios.size(); i++) {
-            Servicio servicio = servicios.get(i);
-
-            String claveServicio = "servicio." + servicio.getNombre().toLowerCase()
-                            					.replace("á", "a")
-                            					.replace("é", "e")
-                            					.replace("í", "i")
-                            					.replace("ó", "o")
-                            					.replace("ú", "u");
-
-            String nombre = msj.containsKey(claveServicio)
-                    ? msj.getString(claveServicio)
-                    : servicio.getNombre();
-
-            System.out.println((i + 1) + ". " + nombre
-                    + " (" + msj.getString("viaje.servicio.base")
-                    + " $" + servicio.getTarifaBase() + ")");
-        }
-
-        int opcionServicio = leerOpcionRango(
-                msj.getString("menu.seleccione_opcion") + ": ",
-                1,
-                servicios.size(),
-                msj);
-
-        Servicio servicioSeleccionado = servicios.get(opcionServicio - 1);
-
-        //Calcular la cotización comercial.
-        GestorViajes.Cotizacion cotizacion = gestorViajes.calcularCotizacion(servicioSeleccionado,origen,destino);
-
-        //Presentar el resumen antes de confirmar.
-        System.out.println("\n--- "
-                + msj.getString("viaje.confirmacion.resumen") + " ---");
-
-        System.out.printf("%s: %.5f, %.5f%n",
-                msj.getString("viaje.resumen.origen"),
-                origen.getLatitud(),
-                origen.getLongitud());
-
-        System.out.printf("%s: %.5f, %.5f%n",
-                msj.getString("viaje.resumen.destino"),
-                destino.getLatitud(),
-                destino.getLongitud());
-
-        System.out.println(msj.getString("viaje.resumen.servicio")
-                + ": " + servicioSeleccionado.getNombre());
-
-        System.out.printf("%s: %.2f %s%n",
-                msj.getString("viaje.costo_estimado"),
-                cotizacion.costoTotal(),
-                "");
-
-        System.out.printf("%s: %.2f %s%n",
-                msj.getString("viaje.cotizacion.distancia"),
-                cotizacion.distanciaKm(),
-                msj.getString("viaje.unidad.km"));
-
-        System.out.printf("%s: %.0f %s%n",
-                msj.getString("viaje.cotizacion.duracion"),
-                cotizacion.duracionMinutos(),
-                msj.getString("viaje.unidad.min"));
-
-        int confirmar = leerOpcionRango(
-                msj.getString("viaje.confirmar_solicitud") + " "
-                        + msj.getString("viaje.confirmar.opciones") + ": ",
-                1,
-                2,
-                msj);
-
-        if (confirmar == 2) {
-            System.out.println("\n" + msj.getString("viaje.cancelado"));
-            return;
-        }
-
-        // 5. Confirmada la solicitud: buscar conductor y calcular rutas.
-        System.out.println("\n" + msj.getString("viaje.buscando_conductor") + "...");
-
-        GestorViajes.ResultadoSolicitud resultado =
-                gestorViajes.procesarSolicitudViaje(usuario,servicioSeleccionado,origen,destino);
-
-        if (resultado == null) {
-            System.out.println(msj.getString("viaje.error.sin_conductores"));
-            return;
-        }
-
-        // 6. Mostrar la asignación y los dos tramos viales.
-        System.out.println("\n" + msj.getString("viaje.conductor_encontrado")
-                + ": " + resultado.conductor().getNombre());
-
-        String km = msj.getString("viaje.unidad.km");
-        String min = msj.getString("viaje.unidad.min");
-
-        System.out.println("\n--- "
-                + msj.getString("viaje.resultados_ruta") + " ---");
-
-        System.out.printf("%s: %.2f %s (%.0f %s)%n",
-                msj.getString("viaje.ruta.acercamiento"),
-                resultado.rutas().acercamiento().distanciaKm(),
-                km,
-                Math.ceil(resultado.rutas().acercamiento().duracionMinutos()),
-                min);
-
-        System.out.printf("%s: %.2f %s (%.0f %s)%n",
-                msj.getString("viaje.ruta.traslado"),
-                resultado.rutas().traslado().distanciaKm(),
-                km,
-                Math.ceil(resultado.rutas().traslado().duracionMinutos()),
-                min);
-
-        System.out.printf("%s: $%.2f%n",
-                msj.getString("viaje.costo_estimado"),
-                resultado.cotizacion().costoTotal());
-
-        System.out.println(msj.getString("viaje.estado") + ": " + resultado.viaje().estadoActual());
-
-    } catch (RutaNoDisponibleException e) {
-        System.out.println("\n" + msj.getString("viaje.error.ruta_no_disponible"));
-    } catch (IllegalArgumentException | IllegalStateException e) {
-        System.out.println("\n[" + msj.getString("login.alert.attention")
-                + "] " + e.getMessage());
-    } catch (Exception e) {
-        System.out.println("\n" + msj.getString("app.error.inesperado")
-                + ": " + e.getMessage());
-    }
-}
-
-
-    /*permite al cliente cancelar su viaje actual*/
+    /* permite al cliente cancelar su viaje actual */
     private void cancelarViaje(Usuario usuario, ResourceBundle msj) {
         System.out.println("\n--- " + msj.getString("viaje.titulo.cancelar") + " ---");
 
         if (!usuario.getCliente().enViaje()) {
-            System.out.println("[" + msj.getString("login.alert.attention") + "] " + msj.getString("viaje.error.sin_viaje_activo"));
+            System.out.println("[" + msj.getString("login.alert.attention") + "] "
+                    + msj.getString("viaje.error.sin_viaje_activo"));
             return;
         }
 
-        int confirmar = leerOpcionRango(msj.getString("viaje.confirmar_cancelacion") + " " + msj.getString("viaje.confirmar.opciones") + ": ", 1, 2, msj);
+        int confirmar = leerOpcionRango(
+                msj.getString("viaje.confirmar_cancelacion") + " " + msj.getString("viaje.confirmar.opciones") + ": ",
+                1, 2, msj);
 
         if (confirmar == 1) {
             try {
-                String motivo = msj.containsKey("viaje.motivo.default") ? msj.getString("viaje.motivo.default") : "Cancelado por el cliente";
+                String motivo = msj.containsKey("viaje.motivo.default") ? msj.getString("viaje.motivo.default")
+                        : "Cancelado por el cliente";
                 boolean exito = gestorViajes.procesarCancelacionViaje(usuario, motivo);
 
                 if (exito) {
                     System.out.println("\n" + msj.getString("viaje.cancelacion.exitoso"));
                 } else {
-                    System.out.println("\n[" + msj.getString("login.alert.attention") + "] " + msj.getString("viaje.error.sin_viaje_activo"));
+                    System.out.println("\n[" + msj.getString("login.alert.attention") + "] "
+                            + msj.getString("viaje.error.sin_viaje_activo"));
                 }
             } catch (Exception e) {
                 System.out.println("\n[" + msj.getString("login.alert.attention") + "] " + e.getMessage());
@@ -450,6 +452,7 @@ private void solicitarViaje(Usuario usuario, ResourceBundle msj) {
             System.out.println(msj.getString("menu.error.opcion_invalida"));
         }
     }
+
     private void iniciarViajeConductor(Usuario usuario, ResourceBundle msj) {
         System.out.println("\n--- " + msj.getString("viaje.titulo.iniciar") + " ---");
         try {
@@ -457,104 +460,101 @@ private void solicitarViaje(Usuario usuario, ResourceBundle msj) {
             if (exito) {
                 System.out.println(msj.getString("viaje.inicio.exitoso"));
             } else {
-                System.out.println("[" + msj.getString("login.alert.attention") + "] " + msj.getString("viaje.error.sin_viaje_aceptado"));
+                System.out.println("[" + msj.getString("login.alert.attention") + "] "
+                        + msj.getString("viaje.error.sin_viaje_aceptado"));
             }
         } catch (Exception e) {
             System.out.println("[" + msj.getString("login.alert.attention") + "] " + e.getMessage());
         }
     }
 
+    private void finalizarViajeConductor(Usuario usuario, ResourceBundle msj) {
 
-private void finalizarViajeConductor(Usuario usuario, ResourceBundle msj) {
+        System.out.println("\n--- " + msj.getString("viaje.titulo.finalizar") + " ---");
 
-    System.out.println("\n--- " + msj.getString("viaje.titulo.finalizar") + " ---");
+        try {
+            boolean exito = gestorViajes.procesarFinalizacionViaje(usuario);
 
-    try {
-    	boolean exito = gestorViajes.procesarFinalizacionViaje(usuario);
+            if (exito) {
+                System.out.println(msj.getString("viaje.fin.exitoso"));
+            } else {
+                System.out.println("[" + msj.getString("login.alert.attention")
+                        + "] " + msj.getString("viaje.error.sin_viaje_iniciado"));
+            }
 
-        if (exito) {
-            System.out.println(msj.getString("viaje.fin.exitoso"));
-        } else {
+        } catch (Exception e) {
             System.out.println("[" + msj.getString("login.alert.attention")
-                    + "] " + msj.getString("viaje.error.sin_viaje_iniciado"));
+                    + "] " + msj.getString("viaje.error.finalizacion"));
+        }
+    }
+
+    private void calificarViaje(Usuario usuario, ResourceBundle msj) {
+
+        Viaje viaje = gestorViajes.consultarViajeActivo(usuario);
+
+        if (viaje == null || viaje.estadoActual() != EstadoViaje.INICIADO) {
+            System.out.println(msj.getString("viaje.error.sin_viaje_iniciado"));
+            return;
         }
 
-    } catch (Exception e) {
-        System.out.println("[" + msj.getString("login.alert.attention")
-                + "] " + msj.getString("viaje.error.finalizacion"));
-    }
-}
-
-private void calificarViaje(Usuario usuario, ResourceBundle msj) {
-
-    Viaje viaje = gestorViajes.consultarViajeActivo(usuario);
-
-    if (viaje == null || viaje.estadoActual() != EstadoViaje.INICIADO) {
-        System.out.println(msj.getString("viaje.error.sin_viaje_iniciado"));
-        return;
-    }
-
-    // Comprobar si el usuario ya calificó este viaje.
-    CalificacionViaje calificacionExistente;
-
-    if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
-        calificacionExistente = viaje.getCalificacionCliente();
-    } else {
-        calificacionExistente = viaje.getCalificacionConductor();
-    }
-
-    if (calificacionExistente != null) {
-        System.out.println(msj.getString("calificacion.error.ya_calificado"));
-        return;
-    }
-
-    System.out.println("\n--- " + msj.getString("calificacion.titulo") + " ---");
-
-    System.out.println("1. " + msj.getString("calificacion.opcion.malo"));
-    System.out.println("2. " + msj.getString("calificacion.opcion.regular"));
-    System.out.println("3. " + msj.getString("calificacion.opcion.bueno"));
-    System.out.println("4. " + msj.getString("calificacion.opcion.muy_bueno"));
-    System.out.println("5. " + msj.getString("calificacion.opcion.excelente"));
-    System.out.println("0. " + msj.getString("calificacion.opcion.no_calificar"));
-
-    int opcion = leerOpcionRango(
-            msj.getString("calificacion.seleccione") + ": ",
-            0,
-            5,
-            msj);
-
-    if (opcion == 0) {
-        System.out.println(msj.getString("calificacion.mensaje.omitida"));
-        return;
-    }
-
-    CalificacionViaje calificacion = switch (opcion) {
-        case 1 -> CalificacionViaje.MALO;
-        case 2 -> CalificacionViaje.REGULAR;
-        case 3 -> CalificacionViaje.BUENO;
-        case 4 -> CalificacionViaje.MUY_BUENO;
-        case 5 -> CalificacionViaje.EXCELENTE;
-        default -> throw new IllegalStateException();
-    };
-
-    try {
+        // Comprobar si el usuario ya calificó este viaje.
+        CalificacionViaje calificacionExistente;
 
         if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
-
-            calificacionServicio.calificarComoCliente(
-                    usuario, viaje, calificacion);
-
+            calificacionExistente = viaje.getCalificacionCliente();
         } else {
-
-            calificacionServicio.calificarComoConductor(
-                    usuario, viaje, calificacion);
+            calificacionExistente = viaje.getCalificacionConductor();
         }
 
-        System.out.println(msj.getString("calificacion.mensaje.registrada"));
+        if (calificacionExistente != CalificacionViaje.NO_CALIFICADO) {
+            System.out.println(msj.getString("calificacion.error.ya_calificado"));
+            return;
+        }
 
-    } catch (IllegalArgumentException | IllegalStateException e) {
-        System.out.println(msj.getString("calificacion.error.registro"));
+        System.out.println("\n--- " + msj.getString("calificacion.titulo") + " ---");
+
+        System.out.println("1. " + msj.getString("calificacion.opcion.malo"));
+        System.out.println("2. " + msj.getString("calificacion.opcion.regular"));
+        System.out.println("3. " + msj.getString("calificacion.opcion.bueno"));
+        System.out.println("4. " + msj.getString("calificacion.opcion.muy_bueno"));
+        System.out.println("5. " + msj.getString("calificacion.opcion.excelente"));
+        System.out.println("0. " + msj.getString("calificacion.opcion.no_calificar"));
+
+        int opcion = leerOpcionRango(
+                msj.getString("calificacion.seleccione") + ": ",
+                0,
+                5,
+                msj);
+
+        if (opcion == 0) {
+            System.out.println(msj.getString("calificacion.mensaje.omitida"));
+            return;
+        }
+
+        CalificacionViaje calificacion = switch (opcion) {
+            case 1 -> CalificacionViaje.MALO;
+            case 2 -> CalificacionViaje.REGULAR;
+            case 3 -> CalificacionViaje.BUENO;
+            case 4 -> CalificacionViaje.MUY_BUENO;
+            case 5 -> CalificacionViaje.EXCELENTE;
+            default -> throw new IllegalStateException();
+        };
+
+        try {
+
+            if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
+
+                gestorViajes.calificarComoCliente(usuario, viaje, calificacion);
+            } else {
+
+                gestorViajes.calificarComoCliente(usuario, viaje, calificacion);
+            }
+
+            System.out.println(msj.getString("calificacion.mensaje.registrada"));
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println(msj.getString("calificacion.error.registro"));
+        }
     }
-}
 
 }

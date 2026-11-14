@@ -9,10 +9,13 @@ import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Viaje;
 
+import md.aplicacion.ContextoAplicacion;
+
 /**
  * Hilo productor. Toma un pasajero libre, arma un viaje con un servicio y un
  * recorrido al azar, y se lo entrega al Despachador. Entre pedido y pedido hace
- * una pausa. Cuando todos los pasajeros están en viaje, espera sin consumir CPU.
+ * una pausa. Cuando todos los pasajeros están en viaje, espera sin consumir
+ * CPU.
  */
 public class GeneradorPasajeros implements Runnable {
 
@@ -21,7 +24,7 @@ public class GeneradorPasajeros implements Runnable {
     private final Despachador despachador;
     private final GeneradorUbicacionesViales generadorUbicaciones;
     private final long intervaloMs;
-    private final GestorViajes cotizador = new GestorViajes();
+    private final GestorViajes cotizador = ContextoAplicacion.getGestorViajes();
     private final Random random = new Random();
 
     /**
@@ -32,7 +35,7 @@ public class GeneradorPasajeros implements Runnable {
      * @param intervaloMs          pausa entre dos pedidos.
      */
     public GeneradorPasajeros(List<Usuario> pasajeros, List<Servicio> servicios, Despachador despachador,
-                              GeneradorUbicacionesViales generadorUbicaciones, long intervaloMs) {
+            GeneradorUbicacionesViales generadorUbicaciones, long intervaloMs) {
         if (pasajeros == null || pasajeros.isEmpty() || servicios == null || servicios.isEmpty()
                 || despachador == null || generadorUbicaciones == null) {
             throw new IllegalArgumentException("Faltan pasajeros, servicios o dependencias.");
@@ -49,10 +52,7 @@ public class GeneradorPasajeros implements Runnable {
         try {
             Usuario pasajero;
             while ((pasajero = despachador.esperarPasajeroLibre(pasajeros)) != null) {
-                Viaje viaje = crearViaje(pasajero);
-                if (viaje != null) {
-                    despachador.solicitar(viaje);
-                }
+                crearViaje(pasajero);
                 Thread.sleep(intervaloMs);
             }
         } catch (InterruptedException e) {
@@ -60,8 +60,10 @@ public class GeneradorPasajeros implements Runnable {
         }
     }
 
-    /** Arma el viaje sin tocar estado compartido. Devuelve null si no encuentra un punto vial válido. */
-    private Viaje crearViaje(Usuario pasajero) {
+    /**
+     * Arma el viaje y lo entrega al Despachador junto con su cotización.
+     */
+    private void crearViaje(Usuario pasajero) {
         try {
             Servicio servicio = servicios.get(random.nextInt(servicios.size()));
             Ubicacion origen = generadorUbicaciones.generar();
@@ -70,13 +72,9 @@ public class GeneradorPasajeros implements Runnable {
             GestorViajes.Cotizacion cotizacion = cotizador.calcularCotizacion(servicio, origen, destino);
 
             Viaje viaje = new Viaje(pasajero, origen, destino, servicio);
-            viaje.setCostoTotal(cotizacion.costoTotal());
-            viaje.setDuracionEstimadaMinutos(cotizacion.duracionMinutos());
-            viaje.setDistanciaTotal(cotizacion.distanciaKm());
-            return viaje;
+            despachador.solicitar(viaje, cotizacion);
         } catch (IllegalStateException e) {
             // No se encontró un punto vial válido: se descarta este pedido
-            return null;
         }
     }
 }
