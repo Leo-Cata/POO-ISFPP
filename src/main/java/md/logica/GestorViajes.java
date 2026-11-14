@@ -1,6 +1,9 @@
 package md.logica;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import md.aplicacion.ContextoAplicacion;
 import md.config.CargarParametros;
@@ -20,6 +23,8 @@ import md.rutas.api.RutasViaje;
  * responsabilidad corresponde a las interfaces de usuario.
  */
 public class GestorViajes {
+	private final Map<UUID, Cotizacion> cotizacionesPorViaje = new HashMap<>();
+	private final Map<UUID, Double> costosCancelacionPorViaje = new HashMap<>();
 
 	private final CalificacionServicio calificacionServicio = new CalificacionServicio();
 
@@ -54,7 +59,7 @@ public class GestorViajes {
 			throw new IllegalStateException("La velocidad media configurada no es válida.");
 		}
 
-		double distanciaKm = origen.calcularDistanciaA(destino);
+		double distanciaKm = origen.calcularDistancia(destino);
 		double duracionMinutos = (distanciaKm / velocidadMedia) * 60.0;
 
 		double costoTotal = servicio.calcularCosto(distanciaKm, duracionMinutos);
@@ -127,16 +132,13 @@ public class GestorViajes {
 			// Crear y registrar el viaje.
 			Viaje nuevoViaje = new Viaje(clienteUsuario, origen, destino, servicio);
 
-			nuevoViaje.setCostoTotal(cotizacion.costoTotal());
-			nuevoViaje.setDuracionEstimadaMinutos(cotizacion.duracionMinutos());
-			nuevoViaje.setDistanciaTotal(cotizacion.distanciaKm());
-			nuevoViaje.setRutas(rutas);
-
 			nuevoViaje.solicitar(LocalDateTime.now());
 
 			try {
+
 				nuevoViaje.aceptar(LocalDateTime.now(), conductorSeleccionado);
 
+				cotizacionesPorViaje.put(nuevoViaje.getId(), cotizacion);
 			} catch (RuntimeException e) {
 
 				// Si no pudo aceptarse, no dejamos la solicitud pendiente.
@@ -182,8 +184,7 @@ public class GestorViajes {
 					EstadoViaje estadoAnterior = viaje.estadoActual();
 
 					double costo = calcularCostoCancelacion(viaje, usuario, estadoAnterior);
-
-					viaje.setCostoCancelacion(costo);
+					costosCancelacionPorViaje.put(viaje.getId(), costo);
 
 					viaje.cancelar(LocalDateTime.now(), usuario, motivo);
 
@@ -318,7 +319,7 @@ public class GestorViajes {
 			return null;
 		}
 
-		for (Viaje viaje : conductorUsuario.getConductor().getViajes().values()) {
+		for (Viaje viaje : conductorUsuario.getConductor().getViajes()) {
 
 			EstadoViaje estado = viaje.estadoActual();
 
@@ -328,6 +329,19 @@ public class GestorViajes {
 		}
 
 		return null;
+	}
+
+	public double obtenerCostoCancelacion(Viaje viaje) {
+		if (viaje == null) {
+			throw new IllegalArgumentException("El viaje no puede ser null.");
+		}
+
+		BloqueoViajes.LOCK.lock();
+		try {
+			return costosCancelacionPorViaje.getOrDefault(viaje.getId(), 0.0);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
 	}
 
 	/**
@@ -350,10 +364,17 @@ public class GestorViajes {
 			return 0.0;
 		}
 
+		Cotizacion cotizacion = cotizacionesPorViaje.get(viaje.getId());
+
+		if (cotizacion == null) {
+			throw new IllegalStateException("No se encontró la cotización del viaje.");
+		}
+
 		double costoCancelacionCliente = CargarParametros.getCostoCancelacionViajeAceptado();
+
 		if (estadoAnterior == EstadoViaje.ACEPTADO) {
 			if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
-				return viaje.getCostoTotal() * costoCancelacionCliente;
+				return cotizacion.costoTotal() * costoCancelacionCliente;
 			}
 
 			return 0.0;
@@ -369,10 +390,10 @@ public class GestorViajes {
 
 			double minutosTranscurridos = java.time.Duration.between(fechaInicio, fechaCancelacion).toSeconds() / 60.0;
 
-			double duracionEstimada = viaje.getDuracionEstimadaMinutos();
+			double duracionEstimada = cotizacion.duracionMinutos();
 
 			if (duracionEstimada <= 0) {
-				return viaje.getCostoTotal();
+				return cotizacion.costoTotal();
 			}
 
 			// Calcular costo proporcional a la distancia recorrida.
@@ -380,7 +401,7 @@ public class GestorViajes {
 
 			proporcion = Math.max(0.0, Math.min(proporcion, 1.0));
 
-			return viaje.getCostoTotal() * proporcion;
+			return cotizacion.costoTotal() * proporcion;
 		}
 
 		return 0.0;
@@ -396,7 +417,7 @@ public class GestorViajes {
 	private LocalDateTime obtenerFechaInicio(Viaje viaje) {
 
 		for (var registro : viaje.getRegistroViaje()) {
-			if (registro.getEstado() == EstadoViaje.INICIADO) {
+			if (registro.getEstadoViaje() == EstadoViaje.INICIADO) {
 				return registro.getFechaHora();
 			}
 		}
@@ -422,7 +443,7 @@ public class GestorViajes {
 				throw new IllegalArgumentException("El usuario no tiene un perfil de cliente.");
 			}
 
-			return usuario.getCliente().getViajes().values();
+			return usuario.getCliente().getViajes();
 		}
 
 		if (usuario.getRolActivo() == RolUsuario.CONDUCTOR) {
@@ -431,7 +452,7 @@ public class GestorViajes {
 				throw new IllegalArgumentException("El usuario no tiene un perfil de conductor.");
 			}
 
-			return usuario.getConductor().getViajes().values();
+			return usuario.getConductor().getViajes();
 		}
 
 		throw new IllegalStateException("El usuario no tiene un rol activo válido.");
