@@ -1,5 +1,6 @@
 package md.config;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -8,8 +9,7 @@ import java.util.Properties;
 
 public class CargarParametros {
 
-	private static final String ARCHIVO_CONFIG = "application.properties";
-
+	private static final String ARCHIVO_CONFIG = "config.properties";
 	// los nombres de las claves se escriben UNA sola vez.
 	private static final String CLAVE_ORIGEN = "origen.datos";
 	private static final String CLAVE_UI_TYPE = "app.ui.type";
@@ -27,14 +27,14 @@ public class CargarParametros {
 	private static final String CLAVE_MOTOR_RUTAS = "rutas.motor";
 	private static final String CLAVE_ARCHIVO_OSM = "rutas.osm";
 	private static final String CLAVE_CACHE_RUTAS = "rutas.cache";
-	private static final String CLAVE_VELOCIDAD_MEDIA ="viaje.velocidad.media.kmh";
-	private static final String CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO ="costo.cancelacion.aceptado";
+	private static final String CLAVE_VELOCIDAD_MEDIA = "viaje.velocidad.media.kmh";
+	private static final String CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO = "costo.cancelacion.aceptado";
 	private static final String CLAVE_SIMULACION_DURACION = "simulacion.duracion.segundos";
 	private static final String CLAVE_SIMULACION_FACTOR = "simulacion.factor.aceleracion";
 	private static final String CLAVE_SIMULACION_POLITICA = "simulacion.politica";
 	private static final String CLAVE_SIMULACION_ESPERA = "simulacion.espera.maxima.segundos";
 	private static final String CLAVE_SIMULACION_INTERVALO = "simulacion.intervalo.solicitudes.ms";
-	
+
 	// la tabla clave->valor queda guardada para que los getters la consulten
 	// despues.
 	private static final Properties properties = new Properties();
@@ -96,19 +96,20 @@ public class CargarParametros {
 		longitudMin = Math.min(longitud1, longitud2);
 		longitudMax = Math.max(longitud1, longitud2);
 
-		costoCancelacionViajeAceptado = Double.parseDouble(leerClave(properties, CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO));
-		
+		costoCancelacionViajeAceptado = Double
+				.parseDouble(leerClave(properties, CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO));
+
 		toleranciaAjusteMetros = Double.parseDouble(leerClave(properties, CLAVE_TOLERANCIA_AJUSTE));
 
 		if (!Double.isFinite(toleranciaAjusteMetros) || toleranciaAjusteMetros <= 0) {
 			throw new IllegalStateException("La tolerancia de ajuste debe ser un número positivo.");
 		}
-		
+
 		velocidadMediaKmH = Double.parseDouble(leerClave(properties, CLAVE_VELOCIDAD_MEDIA));
 
 		if (!Double.isFinite(velocidadMediaKmH) || velocidadMediaKmH <= 0) {
-		    throw new IllegalStateException(
-		            "La velocidad media debe ser un número positivo.");
+			throw new IllegalStateException(
+					"La velocidad media debe ser un número positivo.");
 		}
 	}
 
@@ -193,11 +194,11 @@ public class CargarParametros {
 	public static String getDirectorioCacheRutas() {
 		return leerClave(properties, CLAVE_CACHE_RUTAS).trim();
 	}
-	
+
 	public static double getVelocidadMediaKmH() {
-	    return velocidadMediaKmH;
+		return velocidadMediaKmH;
 	}
-	
+
 	/** Duración total de la simulación, en segundos reales. */
 	public static long getSimulacionDuracionSegundos() {
 		return leerEntero(CLAVE_SIMULACION_DURACION);
@@ -247,8 +248,8 @@ public class CargarParametros {
 			throw new IllegalStateException("La clave '" + clave + "' debe ser un número.");
 		}
 	}
-	
+
 	public static double getCostoCancelacionViajeAceptado() {
-	    return costoCancelacionViajeAceptado;
+		return costoCancelacionViajeAceptado;
 	}
 }

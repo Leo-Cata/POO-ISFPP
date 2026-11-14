@@ -103,13 +103,17 @@ public class LoginController {
 			}
 		} else if (radioCliente.isSelected()) {
 
-			if (gestorViajes.consultarViajeActivoConductor(usuarioSeleccionado) != null) {
+			if (usuarioSeleccionado.getRolActivo() != RolUsuario.CLIENTE
+					&& gestorViajes.consultarViajeActivoConductor(usuarioSeleccionado) != null) {
 				AlertaUtil.mostrarAlerta(resources.getString("login.alert.attention"),
 						resources.getString("menu.error.cambio_rol"));
 				return;
 			}
 
-			usuarioSeleccionado.cambiarRolActivo(RolUsuario.CLIENTE);
+			// Cambia el rol solamente si todavía no está activo.
+			if (usuarioSeleccionado.getRolActivo() != RolUsuario.CLIENTE) {
+				usuarioSeleccionado.cambiarRolActivo(RolUsuario.CLIENTE);
+			}
 
 			ContextoAplicacion.setUsuarioLogeado(usuarioSeleccionado);
 			NavegadorVistas.cambiarEscena(event, "/ui/javafx/view/PanelCliente.fxml");

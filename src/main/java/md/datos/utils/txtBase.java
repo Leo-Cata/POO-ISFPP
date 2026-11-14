@@ -1,7 +1,8 @@
 package md.datos.utils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public abstract class txtBase {
@@ -9,10 +10,17 @@ public abstract class txtBase {
     protected static final String SEPARADOR = ";";
 
     /** Abre el archivo */
-    protected Scanner abrir(String fileName) throws FileNotFoundException {
-        if (fileName == null || fileName.trim().isEmpty())
-            throw new IllegalArgumentException("El nombre del archivo no puede ser null ni vacio");
-        return new Scanner(new File(fileName));
+    protected Scanner abrir(String archivo) throws FileNotFoundException {
+        InputStream recurso = getClass()
+                .getClassLoader()
+                .getResourceAsStream(archivo.replace("\\", "/"));
+
+        if (recurso == null) {
+            throw new FileNotFoundException(
+                    "No se encontro el archivo de datos: " + archivo);
+        }
+
+        return new Scanner(recurso, StandardCharsets.UTF_8);
     }
 
     /**
