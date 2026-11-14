@@ -142,8 +142,8 @@ public class PanelClienteController {
 			invalidarCotizacion();
 		});
 
-		// se genera un nuevo gestor
-		gestor = new GestorViajes();
+		// Obtiene el gestor de viajes compartido por la aplicación.
+		gestor = ContextoAplicacion.getGestorViajes();
 
 		// al iniciar, se desactiva el boton de solicitar viaje
 		botonClienteSolicitar.setDisable(true);
@@ -491,7 +491,7 @@ public class PanelClienteController {
 		Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
 		clienteVehiculoModelo.setText(vehiculo.getModelo());
 		clienteConductorPatente.setText(vehiculo.getPatente());
-		clienteViajeEstadoActual.setText(obtenerTextoEstado(viajeActual.estadoActual()));
+		clienteViajeEstadoActual.setText(obtenerTextoEstado(resultadoSolicitud.viaje().estadoActual()));
 	}
 
 	// funcion auxiliar para mostrar/ocultar los labels de los datos del viaje

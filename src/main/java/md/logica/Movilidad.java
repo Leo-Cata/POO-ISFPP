@@ -89,9 +89,9 @@ public class Movilidad {
 
         boolean tipoServicioCoincide = vehiculo.getTipoServicios().contains(servicioSolicitado.getTipoServicio());
 
-        int categoriaSolicitada = servicioSolicitado.getCategoriaVehiculo().getValor();
-        int categoriaMinima = conductor.getCategoriaVehiculoActivo().getValor();
-        int categoriaMaxima = vehiculo.getCategoriaVehiculo().getValor();
+        int categoriaSolicitada = servicioSolicitado.getCategoriaVehiculo().getValorNumerico();
+        int categoriaMinima = conductor.getCategoriaVehiculoActivo().getValorNumerico();
+        int categoriaMaxima = vehiculo.getCategoriaVehiculo().getValorNumerico();
 
         boolean categoriaCompatible = categoriaSolicitada >= categoriaMinima && categoriaSolicitada <= categoriaMaxima;
 
@@ -100,14 +100,16 @@ public class Movilidad {
 
     /**
      * Selecciona el conductor compatible más cercano al origen solicitado.
-     * Si dos conductores están exactamente a la misma distancia gana el de email menor,
-     * para que el resultado no dependa del orden en que el mapa recorre los usuarios.
+     * Si dos conductores están exactamente a la misma distancia gana el de email
+     * menor,
+     * para que el resultado no dependa del orden en que el mapa recorre los
+     * usuarios.
      *
      * @param servicioSolicitado servicio requerido.
-     * @param origen ubicación de recogida del cliente.
+     * @param origen             ubicación de recogida del cliente.
      * @return usuario del conductor seleccionado, o null si no hay candidatos.
      * @throws IllegalArgumentException si algún parámetro es null.
-     * @throws IllegalStateException si un vehículo candidato no tiene ubicación.
+     * @throws IllegalStateException    si un vehículo candidato no tiene ubicación.
      */
     public Usuario seleccionarConductor(Servicio servicioSolicitado, Ubicacion origen) {
 
@@ -135,7 +137,7 @@ public class Movilidad {
                         + " no tiene una ubicación inicial asignada.");
             }
 
-            double distancia = ubicacionConductor.calcularDistanciaA(origen);
+            double distancia = ubicacionConductor.calcularDistancia(origen);
 
             if (conductorSeleccionado == null || distancia < menorDistancia
                     || (distancia == menorDistancia && u.getEmail().compareTo(conductorSeleccionado.getEmail()) < 0)) {

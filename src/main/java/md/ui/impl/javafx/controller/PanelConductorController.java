@@ -18,7 +18,6 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import md.aplicacion.ContextoAplicacion;
-import md.logica.CalificacionServicio;
 import md.logica.GestorViajes;
 import md.modelo.CalificacionViaje;
 import md.modelo.Conductor;
@@ -118,9 +117,7 @@ public class PanelConductorController {
 	// Conductor que inició sesión
 	private Conductor conductorActual;
 
-	private final GestorViajes gestorViajes = new GestorViajes();
-
-	private final CalificacionServicio calificacionServicio = new CalificacionServicio();
+	private final GestorViajes gestorViajes = ContextoAplicacion.getGestorViajes();
 
 	@FXML
 	private void initialize() {
@@ -246,21 +243,23 @@ public class PanelConductorController {
 		if (usuario == null || usuario.getConductor() == null) {
 			AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, msj.getString("login.alert.attention"),
 					msj.getString("viaje.error.sin_viaje_iniciado"));
+			return;
 		}
 
 		try {
 			// Consultar el viaje actual del conductor.
-			Viaje viaje = gestorViajes.consultarViajeActivo(usuario);
-
+			Viaje viaje = gestorViajes.consultarViajeActivoConductor(usuario);
 			if (viaje == null || viaje.estadoActual() != EstadoViaje.INICIADO) {
 				AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, msj.getString("login.alert.attention"),
 						msj.getString("viaje.error.sin_viaje_iniciado"));
+				return;
 			}
 
 			// Comprobar que el conductor todavía no haya calificado.
-			if (viaje.getCalificacionConductor() != null) {
+			if (viaje.getCalificacionConductor() != CalificacionViaje.NO_CALIFICADO) {
 				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("calificacion.titulo"),
 						msj.getString("calificacion.error.ya_calificado"));
+				return;
 			}
 
 			// Crear las opciones del cuadro de diálogo.
@@ -314,6 +313,7 @@ public class PanelConductorController {
 			if (seleccion == botonNoCalificar) {
 				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("calificacion.titulo"),
 						msj.getString("calificacion.mensaje.omitida"));
+				return;
 			}
 
 			// Convertir el botón seleccionado al valor del modelo.
@@ -339,8 +339,7 @@ public class PanelConductorController {
 			}
 
 			// Registrar la calificación utilizando la lógica existente.
-			calificacionServicio.calificarComoConductor(usuario, viaje, calificacion);
-
+			gestorViajes.calificarComoConductor(usuario, viaje, calificacion);
 			AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("calificacion.titulo"),
 					msj.getString("calificacion.mensaje.registrada"));
 
@@ -373,47 +372,45 @@ public class PanelConductorController {
 
 		String motivo = resultado.get().trim();
 
-	    // Validar que el motivo no esté vacío.
-	    if (motivo.isEmpty()) {
-	        AlertaUtil.mostrarAlerta(
-	                Alert.AlertType.WARNING,
-	                msj.getString("driver.cancel.reason.required.title"),
-	                msj.getString("driver.cancel.reason.required"));
-	        return;
-	    }
-	    
-	    boolean exito;
+		// Validar que el motivo no esté vacío.
+		if (motivo.isEmpty()) {
+			AlertaUtil.mostrarAlerta(
+					Alert.AlertType.WARNING,
+					msj.getString("driver.cancel.reason.required.title"),
+					msj.getString("driver.cancel.reason.required"));
+			return;
+		}
 
-	    try {
-	        exito = gestorViajes.procesarCancelacionViaje(usuario, motivo);
+		boolean exito;
 
-				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, msj.getString("driver.cancel.success.title"),
-						msj.getString("driver.cancel.success.text"));
-	    } catch (Exception e) {
-	        AlertaUtil.mostrarAlerta(
-	                Alert.AlertType.ERROR,
-	                msj.getString("driver.cancel.error.title"),
-	                msj.getString("driver.cancel.error.text"));
-	        return;
-	    }
+		try {
+			exito = gestorViajes.procesarCancelacionViaje(usuario, motivo);
 
-	    if (!exito) {
-	        AlertaUtil.mostrarAlerta(
-	                Alert.AlertType.WARNING,
-	                msj.getString("driver.unable.cancel.title"),
-	                msj.getString("driver.unable.cancel.text"));
-	        return;
-	    }
+		} catch (Exception e) {
+			AlertaUtil.mostrarAlerta(
+					Alert.AlertType.ERROR,
+					msj.getString("driver.cancel.error.title"),
+					msj.getString("driver.cancel.error.text"));
+			return;
+		}
 
-	    // Actualizar la interfaz después de cancelar correctamente.
+		if (!exito) {
+			AlertaUtil.mostrarAlerta(
+					Alert.AlertType.WARNING,
+					msj.getString("driver.unable.cancel.title"),
+					msj.getString("driver.unable.cancel.text"));
+			return;
+		}
+
+		// Actualizar la interfaz después de cancelar correctamente.
 		actualizarEstadoConductor();
 		actualizarEstadoBotones();
 		actualizarPanelViaje();
 
-	    AlertaUtil.mostrarAlerta(
-	            Alert.AlertType.INFORMATION,
-	            msj.getString("driver.cancel.success.title"),
-	            msj.getString("driver.cancel.success.text"));
+		AlertaUtil.mostrarAlerta(
+				Alert.AlertType.INFORMATION,
+				msj.getString("driver.cancel.success.title"),
+				msj.getString("driver.cancel.success.text"));
 	}
 
 	@FXML
@@ -464,7 +461,7 @@ public class PanelConductorController {
 
 		comboVehiculos.getItems().clear();
 
-		for (Vehiculo vehiculo : conductor.getVehiculos().values()) {
+		for (Vehiculo vehiculo : conductor.getVehiculos()) {
 			comboVehiculos.getItems().add(vehiculo);
 		}
 
@@ -531,34 +528,35 @@ public class PanelConductorController {
 
 		switch (conductorActual.getEstadoConductor()) {
 
-		case DISPONIBLE:
-			labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.disponible"));
+			case DISPONIBLE:
+				labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.disponible"));
 
-			botonCambiarDisponibilidad
-					.setText(msj.getString("menu.conductor.panel.estado.accion.pasar_fuera_servicio"));
+				botonCambiarDisponibilidad
+						.setText(msj.getString("menu.conductor.panel.estado.accion.pasar_fuera_servicio"));
 
-			botonCambiarDisponibilidad.setDisable(false);
-			break;
+				botonCambiarDisponibilidad.setDisable(false);
+				break;
 
-		case FUERA_DE_SERVICIO:
-			labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.fuera_de_servicio"));
+			case FUERA_DE_SERVICIO:
+				labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.fuera_de_servicio"));
 
-			botonCambiarDisponibilidad.setText(msj.getString("menu.conductor.panel.estado.accion.volver_disponible"));
+				botonCambiarDisponibilidad
+						.setText(msj.getString("menu.conductor.panel.estado.accion.volver_disponible"));
 
-			botonCambiarDisponibilidad.setDisable(false);
-			break;
+				botonCambiarDisponibilidad.setDisable(false);
+				break;
 
-		case VIAJE_A_ORIGEN:
-			labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.viaje_a_origen"));
+			case VIAJE_A_ORIGEN:
+				labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.viaje_a_origen"));
 
-			botonCambiarDisponibilidad.setDisable(true);
-			break;
+				botonCambiarDisponibilidad.setDisable(true);
+				break;
 
-		case VIAJE_A_DESTINO:
-			labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.viaje_a_destino"));
+			case VIAJE_A_DESTINO:
+				labelEstadoConductor.setText(msj.getString("menu.conductor.panel.estado.viaje_a_destino"));
 
-			botonCambiarDisponibilidad.setDisable(true);
-			break;
+				botonCambiarDisponibilidad.setDisable(true);
+				break;
 		}
 	}
 
@@ -566,26 +564,31 @@ public class PanelConductorController {
 
 		Usuario usuario = ContextoAplicacion.getUsuarioLogeado();
 
-		Viaje viaje = gestorViajes.consultarViajeActivo(usuario);
+		Viaje viaje = gestorViajes.consultarViajeActivoConductor(usuario);
 
 		boolean viajeAceptado = viaje != null && viaje.estadoActual() == EstadoViaje.ACEPTADO;
 
 		boolean viajeIniciado = viaje != null && viaje.estadoActual() == EstadoViaje.INICIADO;
 
+		boolean viajeCancelable = viajeAceptado || viajeIniciado;
+
+		boolean conductorYaCalifico = viaje != null
+				&& viaje.getCalificacionConductor() != CalificacionViaje.NO_CALIFICADO;
+
 		botonIniciarViaje.setDisable(!viajeAceptado);
 
 		botonFinalizarViaje.setDisable(!viajeIniciado);
 
-		botonCancelarViaje.setDisable(!viajeIniciado);
+		botonCancelarViaje.setDisable(!viajeCancelable);
 
-		botonCalificarCliente.setDisable(!viajeIniciado || viaje.getCalificacionConductor() != null);
+		botonCalificarCliente.setDisable(!viajeIniciado || conductorYaCalifico);
 	}
 
 	private void actualizarPanelViaje() {
 
 		Usuario usuario = ContextoAplicacion.getUsuarioLogeado();
 
-		Viaje viaje = gestorViajes.consultarViajeActivo(usuario);
+		Viaje viaje = gestorViajes.consultarViajeActivoConductor(usuario);
 
 		boolean tieneViaje = viaje != null;
 
@@ -603,7 +606,8 @@ public class PanelConductorController {
 	private void cargarDatosViaje(Viaje viaje) {
 
 		Locale locale = ContextoAplicacion.getLocale();
-
+		// Datos de la cotización asociada al viaje.
+		GestorViajes.Cotizacion cotizacion = gestorViajes.obtenerCotizacion(viaje);
 		// Datos del cliente.
 		labelClienteViaje.setText(viaje.getCliente().getNombre());
 
@@ -613,16 +617,15 @@ public class PanelConductorController {
 		labelDestinoViaje.setText(formatearUbicacion(viaje.getDestino(), locale));
 
 		// Distancia.
-		labelDistanciaViaje.setText(formatearNumero(viaje.getDistanciaTotal(), 2, locale) + " "
+		labelDistanciaViaje.setText(formatearNumero(cotizacion.distanciaKm(), 2, locale) + " "
 				+ ContextoAplicacion.getMensajes().getString("viaje.unidad.km"));
 
 		// Duración estimada.
-		labelDuracionViaje.setText(formatearNumero(Math.ceil(viaje.getDuracionEstimadaMinutos()), 0, locale) + " "
+		labelDuracionViaje.setText(formatearNumero(Math.ceil(cotizacion.duracionMinutos()), 0, locale) + " "
 				+ ContextoAplicacion.getMensajes().getString("viaje.unidad.min"));
 
 		// Costo total.
-		labelCostoViaje.setText("$ " + formatearNumero(viaje.getCostoTotal(), 2, locale));
-
+		labelCostoViaje.setText("$ " + formatearNumero(cotizacion.costoTotal(), 2, locale));
 		// Hora de inicio.
 		labelHoraInicioViaje.setText(obtenerHoraInicio(viaje, locale));
 
@@ -655,7 +658,7 @@ public class PanelConductorController {
 
 		for (RegistroViaje registro : viaje.getRegistroViaje()) {
 
-			if (registro.getEstado() == EstadoViaje.INICIADO) {
+			if (registro.getEstadoViaje() == EstadoViaje.INICIADO) {
 
 				return registro.getFechaHora().format(formato);
 			}
@@ -667,8 +670,8 @@ public class PanelConductorController {
 
 	private String obtenerClaveServicio(TipoServicio tipoServicio) {
 		return switch (tipoServicio) {
-		case PASAJEROS -> "servicio.pasajeros";
-		case ENVIOS -> "servicio.envios";
+			case PASAJEROS -> "servicio.pasajeros";
+			case ENVIOS -> "servicio.envios";
 		};
 	}
 
@@ -687,12 +690,12 @@ public class PanelConductorController {
 		}
 
 		String clave = switch (estado) {
-		case SOLICITADO -> "viaje.estado.solicitado";
-		case ACEPTADO -> "viaje.estado.aceptado";
-		case INICIADO -> "viaje.estado.iniciado";
-		case FINALIZADO -> "viaje.estado.finalizado";
-		case CANCELADO -> "viaje.estado.cancelado";
-		case RECHAZADO -> "viaje.estado.rechazado";
+			case SOLICITADO -> "viaje.estado.solicitado";
+			case ACEPTADO -> "viaje.estado.aceptado";
+			case INICIADO -> "viaje.estado.iniciado";
+			case FINALIZADO -> "viaje.estado.finalizado";
+			case CANCELADO -> "viaje.estado.cancelado";
+			case RECHAZADO -> "viaje.estado.rechazado";
 		};
 
 		return ContextoAplicacion.getMensajes().getString(clave);

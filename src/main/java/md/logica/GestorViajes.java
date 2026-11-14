@@ -461,4 +461,41 @@ public class GestorViajes {
 		throw new IllegalStateException("El usuario no tiene un rol activo válido.");
 	}
 
+	public Cotizacion obtenerCotizacion(Viaje viaje) {
+
+		if (viaje == null) {
+			throw new IllegalArgumentException("El viaje no puede ser null.");
+		}
+
+		BloqueoViajes.LOCK.lock();
+		try {
+			return cotizacionesPorViaje.get(viaje.getId());
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
+
+	/**
+	 * Registra la calificación que el cliente otorga al conductor.
+	 */
+	public void calificarComoCliente(Usuario cliente, Viaje viaje, CalificacionViaje calificacion) {
+		BloqueoViajes.LOCK.lock();
+		try {
+			calificacionServicio.calificarComoCliente(cliente, viaje, calificacion);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
+
+	/**
+	 * Registra la calificación que el conductor otorga al cliente.
+	 */
+	public void calificarComoConductor(Usuario conductor, Viaje viaje, CalificacionViaje calificacion) {
+		BloqueoViajes.LOCK.lock();
+		try {
+			calificacionServicio.calificarComoConductor(conductor, viaje, calificacion);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
 }

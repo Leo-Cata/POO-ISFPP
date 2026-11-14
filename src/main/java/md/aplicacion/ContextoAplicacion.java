@@ -6,6 +6,7 @@ import java.util.ResourceBundle;
 
 import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
+import md.logica.GestorViajes;
 import md.modelo.Usuario;
 import md.rutas.api.PlanificadorRutas;
 import md.rutas.impl.PlanificadorRutasFactory;
@@ -21,6 +22,7 @@ public class ContextoAplicacion {
 	private static Locale locale;
 	private static ResourceBundle mensajes;
 	private static Usuario usuarioLogeado; // mantiene el usuario logeado
+	private static final GestorViajes gestorViajes = new GestorViajes(); // gestorViajes unificado
 	private static PlanificadorRutas motorVial; // conserva la instancia del motor de rutas que creamos mediante
 												// PlanificadorRutasFactory
 	private static GeneradorUbicacionesViales generadorUbicaciones; // conserva el generador que utiliza ese motor para
@@ -119,6 +121,10 @@ public class ContextoAplicacion {
 		}
 
 		return motorVial;
+	}
+
+	public static GestorViajes getGestorViajes() {
+		return gestorViajes;
 	}
 
 	public static GeneradorUbicacionesViales getGeneradorUbicaciones() {
