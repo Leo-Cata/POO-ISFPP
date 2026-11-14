@@ -10,6 +10,7 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.util.StringConverter;
 import md.aplicacion.ContextoAplicacion;
+import md.logica.GestorViajes;
 import md.modelo.RolUsuario;
 import md.modelo.Usuario;
 import md.ui.impl.javafx.util.NavegadorVistas;
@@ -28,6 +29,8 @@ public class LoginController {
 	private RadioButton radioConductor, radioCliente;
 
 	private ProbeHashMap<String, Usuario> usuarios = new ProbeHashMap<>();
+
+	private final GestorViajes gestorViajes = ContextoAplicacion.getGestorViajes();
 
 	/**
 	 * Inicializa la pantalla de ingreso: carga los usuarios disponibles en el
@@ -85,9 +88,12 @@ public class LoginController {
 				return;
 			}
 
-			// intenta setearlo como conductor activo y guardar el usuario seleccionado
+			// Intenta activar el rol de conductor solamente si todavía no está activo.
 			try {
-				usuarioSeleccionado.cambiarRolActivo(RolUsuario.CONDUCTOR);
+				if (usuarioSeleccionado.getRolActivo() != RolUsuario.CONDUCTOR) {
+					usuarioSeleccionado.cambiarRolActivo(RolUsuario.CONDUCTOR);
+				}
+
 				ContextoAplicacion.setUsuarioLogeado(usuarioSeleccionado);
 
 				// abre la otra pantalla
@@ -96,6 +102,13 @@ public class LoginController {
 				AlertaUtil.mostrarAlerta(resources.getString("login.error.unableToSignIn"), e.getMessage());
 			}
 		} else if (radioCliente.isSelected()) {
+
+			if (gestorViajes.consultarViajeActivoConductor(usuarioSeleccionado) != null) {
+				AlertaUtil.mostrarAlerta(resources.getString("login.alert.attention"),
+						resources.getString("menu.error.cambio_rol"));
+				return;
+			}
+
 			usuarioSeleccionado.cambiarRolActivo(RolUsuario.CLIENTE);
 
 			ContextoAplicacion.setUsuarioLogeado(usuarioSeleccionado);

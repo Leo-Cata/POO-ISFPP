@@ -345,9 +345,24 @@ public class Despachador {
                 return false;
             }
 
-            // Viaje.cancelar valida que sea el cliente o el conductor del viaje.
-            viaje.cancelar(LocalDateTime.now(), quienCancela, motivo);
+            // Solo pueden cancelar el cliente o el conductor asignado,
+            // siempre que tengan activo el rol correspondiente.
+            boolean esCliente = quienCancela == viaje.getCliente()
+                    && quienCancela.getRolActivo() == md.modelo.RolUsuario.CLIENTE;
 
+            boolean esConductor = quienCancela == viaje.getConductor()
+                    && quienCancela.getRolActivo() == md.modelo.RolUsuario.CONDUCTOR;
+
+            if (!esCliente && !esConductor) {
+                return false;
+            }
+
+            // Una solicitud todavía no asignada solo puede cancelarla el cliente.
+            if (estadoAnterior == EstadoViaje.SOLICITADO && !esCliente) {
+                return false;
+            }
+
+            viaje.cancelar(LocalDateTime.now(), quienCancela, motivo);
             pendientes.remove(viaje);
             instanteSolicitud.remove(viaje);
 

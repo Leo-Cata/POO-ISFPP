@@ -161,8 +161,14 @@ public class PanelConductorController {
 
 		Usuario usuario = ContextoAplicacion.getUsuarioLogeado();
 
-		try {
+		if (gestorViajes.consultarViajeActivoConductor(usuario) != null) {
+			AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING,
+					msj.getString("menu.error.cambio_rol"),
+					msj.getString("menu.error.cambio_rol"));
+			return;
+		}
 
+		try {
 			usuario.cambiarRolActivo(RolUsuario.CLIENTE);
 
 			ContextoAplicacion.setUsuarioLogeado(usuario);

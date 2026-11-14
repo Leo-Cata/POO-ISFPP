@@ -26,6 +26,7 @@ import md.rutas.api.RutasViaje;
 public class GestorViajes {
 	private final Map<UUID, Cotizacion> cotizacionesPorViaje = new HashMap<>();
 	private final Map<UUID, Double> costosCancelacionPorViaje = new HashMap<>();
+	private final Map<Usuario, Double> deudasPendientes = new HashMap<>();
 
 	private final CalificacionServicio calificacionServicio = new CalificacionServicio();
 
@@ -111,6 +112,11 @@ public class GestorViajes {
 		// Todo bajo el mismo lock que usa la simulación.
 		BloqueoViajes.LOCK.lock();
 		try {
+			// No permite solicitar viajes mientras exista una deuda pendiente.
+			if (deudasPendientes.containsKey(clienteUsuario)) {
+				throw new IllegalStateException("El cliente tiene una deuda pendiente.");
+			}
+
 			// Se vuelve a chequear dentro del lock: otro hilo pudo crear un viaje mientras
 			// tanto.
 			if (clienteUsuario.getCliente().enViaje()) {
@@ -188,6 +194,11 @@ public class GestorViajes {
 					costosCancelacionPorViaje.put(viaje.getId(), costo);
 
 					viaje.cancelar(LocalDateTime.now(), usuario, motivo);
+
+					// La deuda se registra únicamente cuando cancela el cliente.
+					if (usuario.getRolActivo() == RolUsuario.CLIENTE) {
+						deudasPendientes.put(usuario, costo);
+					}
 
 					return true;
 				}
@@ -342,6 +353,53 @@ public class GestorViajes {
 		BloqueoViajes.LOCK.lock();
 		try {
 			return costosCancelacionPorViaje.getOrDefault(viaje.getId(), 0.0);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
+
+	public boolean tieneDeudaPendiente(Usuario cliente) {
+		if (cliente == null) {
+			throw new IllegalArgumentException("El cliente es obligatorio.");
+		}
+
+		BloqueoViajes.LOCK.lock();
+		try {
+			return deudasPendientes.containsKey(cliente);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
+
+	public double obtenerDeudaPendiente(Usuario cliente) {
+		if (cliente == null) {
+			throw new IllegalArgumentException("El cliente es obligatorio.");
+		}
+
+		BloqueoViajes.LOCK.lock();
+		try {
+			if (!deudasPendientes.containsKey(cliente)) {
+				throw new IllegalStateException("El cliente no tiene una deuda pendiente.");
+			}
+
+			return deudasPendientes.get(cliente);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
+
+	public void registrarPagoCancelacion(Usuario cliente) {
+		if (cliente == null) {
+			throw new IllegalArgumentException("El cliente es obligatorio.");
+		}
+
+		BloqueoViajes.LOCK.lock();
+		try {
+			if (!deudasPendientes.containsKey(cliente)) {
+				throw new IllegalStateException("El cliente no tiene una deuda pendiente.");
+			}
+
+			deudasPendientes.remove(cliente);
 		} finally {
 			BloqueoViajes.LOCK.unlock();
 		}

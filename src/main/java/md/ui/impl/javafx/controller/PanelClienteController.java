@@ -145,11 +145,20 @@ public class PanelClienteController {
 		// Obtiene el gestor de viajes compartido por la aplicación.
 		gestor = ContextoAplicacion.getGestorViajes();
 
+		// Recupera el usuario logueado y su posible viaje activo.
+		cliente = ContextoAplicacion.getUsuarioLogeado();
+		viajeActual = cliente != null ? gestor.consultarViajeActivo(cliente) : null;
+
 		// al iniciar, se desactiva el boton de solicitar viaje
 		botonClienteSolicitar.setDisable(true);
 
-		// al iniciar, se ocultaran los labels de la info del conductor
-		mostrarOcultarInfoViaje(false);
+		// Muestra la información si el cliente tiene un viaje activo.
+		if (viajeActual != null) {
+			asignarConductorInfo();
+			mostrarOcultarInfoViaje(true);
+		} else {
+			mostrarOcultarInfoViaje(false);
+		}
 
 		// oculta el textfield y el boton de confirmar cancelar al inicio
 		clienteConfirmarCancelar.setVisible(false);
@@ -160,8 +169,17 @@ public class PanelClienteController {
 		clienteCostoPagar.setVisible(false);
 		clienteBotonCancelacionPagar.setVisible(false);
 
-		// setea la deuda como false
-		deuda = false;
+		// Recupera la deuda pendiente del cliente.
+		deuda = cliente != null && gestor.tieneDeudaPendiente(cliente);
+
+		if (deuda) {
+			clienteLabelCancelacion.setVisible(true);
+			clienteCostoPagar.setText(
+					String.format("$%.2f", gestor.obtenerDeudaPendiente(cliente)));
+			clienteCostoPagar.setVisible(true);
+			clienteBotonCancelacionPagar.setVisible(true);
+			clienteBotonCancelacionPagar.setDisable(false);
+		}
 
 		// Impide la modificación manual de las coordenadas.
 		txtLatOrigen.setEditable(false);
@@ -306,6 +324,7 @@ public class PanelClienteController {
 				botonClienteSolicitar.setDisable(false);
 				return;
 			}
+			viajeActual = resultadoSolicitud.viaje();
 
 			// El vehículo es el que realmente quedó asignado al viaje.
 			Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
@@ -436,17 +455,20 @@ public class PanelClienteController {
 	@FXML
 	void handleConfirmarCancelar() {
 		try {
-			// Si devuelve false, no se pudo cancelar
-			if (!gestor.procesarCancelacionViaje(cliente, clienteTextfieldCancelar.getText())) {
+			// Se conserva la referencia al viaje antes de cancelarlo.
+			Viaje viaje = gestor.consultarViajeActivo(cliente);
+
+			if (viaje == null || !gestor.procesarCancelacionViaje(
+					cliente, clienteTextfieldCancelar.getText())) {
 				AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"),
 						resource.getString("client.unable.cancel.text"));
 				return;
 			}
 
-			// Se obtiene el costo antes de limpiar el estado
-			double costoCancelacion = gestor.obtenerCostoCancelacion(resultadoSolicitud.viaje());
+			// Se obtiene el costo antes de limpiar el estado.
+			double costoCancelacion = gestor.obtenerCostoCancelacion(viaje);
 
-			clienteViajeEstadoActual.setText(obtenerTextoEstado(resultadoSolicitud.viaje().estadoActual()));
+			clienteViajeEstadoActual.setText(obtenerTextoEstado(viaje.estadoActual()));
 
 			// Se muestra la información del importe pendiente
 			clienteLabelCancelacion.setVisible(true);
@@ -478,6 +500,8 @@ public class PanelClienteController {
 	 */
 	@FXML
 	void handleCancelarPagar() {
+		gestor.registrarPagoCancelacion(cliente);
+
 		clienteLabelCancelacion.setVisible(false);
 		clienteCostoPagar.setText("");
 		clienteCostoPagar.setVisible(false);
@@ -485,13 +509,21 @@ public class PanelClienteController {
 		deuda = false;
 	}
 
-	// funcion auxiliar para mostrar los datos del conductor en pantalla
 	private void asignarConductorInfo() {
-		clienteConductorNom.setText(resultadoSolicitud.conductor().getNombre());
-		Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
-		clienteVehiculoModelo.setText(vehiculo.getModelo());
-		clienteConductorPatente.setText(vehiculo.getPatente());
-		clienteViajeEstadoActual.setText(obtenerTextoEstado(resultadoSolicitud.viaje().estadoActual()));
+		if (viajeActual == null || viajeActual.getConductor() == null) {
+			return;
+		}
+
+		clienteConductorNom.setText(viajeActual.getConductor().getNombre());
+
+		Vehiculo vehiculo = viajeActual.getVehiculo();
+
+		if (vehiculo != null) {
+			clienteVehiculoModelo.setText(vehiculo.getModelo());
+			clienteConductorPatente.setText(vehiculo.getPatente());
+		}
+
+		clienteViajeEstadoActual.setText(obtenerTextoEstado(viajeActual.estadoActual()));
 	}
 
 	// funcion auxiliar para mostrar/ocultar los labels de los datos del viaje
@@ -512,6 +544,7 @@ public class PanelClienteController {
 		borrarPunto("origen");
 		visualizador.limpiarRutas();
 		resultadoSolicitud = null;
+		viajeActual = null;
 		cancelacionBoolean = false;
 		cotizacion = null;
 		origenActual = null;
