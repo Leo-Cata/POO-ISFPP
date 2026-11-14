@@ -22,7 +22,7 @@ public class ContextoAplicacion {
 	private static Locale locale;
 	private static ResourceBundle mensajes;
 	private static Usuario usuarioLogeado; // mantiene el usuario logeado
-	private static final GestorViajes gestorViajes = new GestorViajes(); // gestorViajes unificado
+	private static GestorViajes gestorViajes;
 	private static PlanificadorRutas motorVial; // conserva la instancia del motor de rutas que creamos mediante
 												// PlanificadorRutasFactory
 	private static GeneradorUbicacionesViales generadorUbicaciones; // conserva el generador que utiliza ese motor para
@@ -58,10 +58,16 @@ public class ContextoAplicacion {
 
 			inicializador.inicializar(nuevosDatos.getUsuarios());
 
+			// Creamos el gestor con los usuarios y el motor vial compartidos.
+			GestorViajes nuevoGestor = new GestorViajes(
+					nuevosDatos.getUsuarios(),
+					nuevoMotor);
+
 			// Conservamos los recursos para el resto de la aplicación.
 			datos = nuevosDatos;
 			motorVial = nuevoMotor;
 			generadorUbicaciones = nuevoGenerador;
+			gestorViajes = nuevoGestor;
 
 		} catch (RuntimeException e) {
 
@@ -124,6 +130,10 @@ public class ContextoAplicacion {
 	}
 
 	public static GestorViajes getGestorViajes() {
+		if (gestorViajes == null) {
+			throw new IllegalStateException("El gestor de viajes todavía no fue inicializado.");
+		}
+
 		return gestorViajes;
 	}
 
@@ -147,6 +157,8 @@ public class ContextoAplicacion {
 			} finally {
 				motorVial = null;
 				generadorUbicaciones = null;
+				gestorViajes = null;
+				datos = null;
 			}
 		}
 	}

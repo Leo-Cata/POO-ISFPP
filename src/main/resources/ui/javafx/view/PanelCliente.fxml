@@ -15,14 +15,10 @@
         <WebView fx:id="mapaView" layoutX="313.0" layoutY="7.0" maxHeight="400.0" maxWidth="600.0" prefHeight="368.0" prefWidth="486.0" style="-fx-max-height: 400;" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
 
         <Label fx:id="labelClienteOrigen" layoutX="14.0" layoutY="4.0" prefHeight="19.0" prefWidth="76.0" text="%client.label.origin" />
-        <TextField fx:id="txtLatOrigen" layoutX="14.0" layoutY="27.0" />
-        <TextField fx:id="txtLonOrigen" layoutX="14.0" layoutY="62.0" />
-        <Button fx:id="botonClienteBorrarOrigen" layoutX="186.0" layoutY="27.0" mnemonicParsing="false" onAction="#handleBorrarOrigen" style="-fx-max-width: 100px;" text="%client.delete.origin" />
+        <Button fx:id="botonClienteBorrarOrigen" layoutX="12.0" layoutY="23.0" mnemonicParsing="false" onAction="#handleBorrarOrigen" style="-fx-max-width: 100px;" text="%client.delete.origin" />
         <Button layoutX="15.0" layoutY="616.0" onAction="#handleCerrarSesion" style="-fx-max-width: 125px;" text="%client.change.user" />
         <Label fx:id="labelClienteDestino" layoutX="14.0" layoutY="102.0" prefHeight="19.0" prefWidth="76.0" text="%client.label.destination" />
-        <TextField fx:id="txtLatDestino" layoutX="14.0" layoutY="122.0" />
-        <TextField fx:id="txtLonDestino" layoutX="14.0" layoutY="157.0" />
-        <Button fx:id="botonClienteBorrarDestino" layoutX="186.0" layoutY="122.0" mnemonicParsing="false" onAction="#handleBorrarDestino" style="-fx-max-width: 100px;" text="%client.delete.destination" />
+        <Button fx:id="botonClienteBorrarDestino" layoutX="12.0" layoutY="121.0" mnemonicParsing="false" onAction="#handleBorrarDestino" style="-fx-max-width: 100px;" text="%client.delete.destination" />
         <Label layoutX="15.0" layoutY="197.0" text="%client.label.service" />
         <ComboBox fx:id="comboTipoServicio" layoutX="15.0" layoutY="223.0" prefWidth="150.0" />
             <Label layoutX="186.0" layoutY="197.0" text="%client.label.category" />

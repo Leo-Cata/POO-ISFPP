@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import md.aplicacion.ContextoAplicacion;
+import md.rutas.api.PlanificadorRutas;
 import md.config.CargarParametros;
 import md.modelo.CalificacionViaje;
 import md.modelo.EstadoViaje;
@@ -16,6 +16,7 @@ import md.modelo.Usuario;
 import md.modelo.Viaje;
 import md.rutas.api.RutaNoDisponibleException;
 import md.rutas.api.RutasViaje;
+import net.datastructures.ProbeHashMap;
 
 /**
  * Coordina los casos de uso relacionados con los viajes.
@@ -29,6 +30,26 @@ public class GestorViajes {
 	private final Map<Usuario, Double> deudasPendientes = new HashMap<>();
 
 	private final CalificacionServicio calificacionServicio = new CalificacionServicio();
+
+	private final ProbeHashMap<String, Usuario> usuariosRegistrados;
+	private final PlanificadorRutas motorVial;
+
+	/**
+	 * Construye el gestor con los usuarios registrados y el planificador de rutas.
+	 *
+	 * @param usuariosRegistrados usuarios disponibles en la aplicación.
+	 * @param motorVial           planificador utilizado para calcular los
+	 *                            recorridos.
+	 * @throws IllegalArgumentException si alguno de los parámetros es null.
+	 */
+	public GestorViajes(ProbeHashMap<String, Usuario> usuariosRegistrados, PlanificadorRutas motorVial) {
+		if (usuariosRegistrados == null || motorVial == null) {
+			throw new IllegalArgumentException("Los usuarios y el motor vial son obligatorios.");
+		}
+
+		this.usuariosRegistrados = usuariosRegistrados;
+		this.motorVial = motorVial;
+	}
 
 	/**
 	 * Resultado de la cotización comercial.
@@ -101,13 +122,6 @@ public class GestorViajes {
 		// Calcular la cotización definitiva (no toca estado compartido).
 		Cotizacion cotizacion = calcularCotizacion(servicio, origen, destino);
 
-		// Obtener los datos de la aplicación.
-		var datos = ContextoAplicacion.getDatosIniciales();
-
-		if (datos == null) {
-			throw new IllegalStateException("Los datos iniciales no están disponibles.");
-		}
-
 		// Desde acá hasta el final se decide la asignación y se cambian estados.
 		// Todo bajo el mismo lock que usa la simulación.
 		BloqueoViajes.LOCK.lock();
@@ -124,7 +138,7 @@ public class GestorViajes {
 			}
 
 			// Seleccionar el conductor compatible más cercano.
-			Movilidad movilidad = new Movilidad(datos.getUsuarios());
+			Movilidad movilidad = new Movilidad(usuariosRegistrados);
 
 			Usuario conductorSeleccionado = movilidad.seleccionarConductor(servicio, origen);
 
@@ -133,7 +147,7 @@ public class GestorViajes {
 			}
 
 			// Calcular los dos recorridos viales.
-			RutasViaje rutas = new PlanificacionViajeService(ContextoAplicacion.getMotorVial())
+			RutasViaje rutas = new PlanificacionViajeService(motorVial)
 					.planificar(conductorSeleccionado.getConductor().getVehiculoActivo(), origen, destino);
 
 			// Crear y registrar el viaje.
