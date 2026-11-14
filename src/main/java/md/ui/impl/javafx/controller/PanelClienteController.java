@@ -1,6 +1,7 @@
 package md.ui.impl.javafx.controller;
 
 import java.text.MessageFormat;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javafx.concurrent.Task;
@@ -12,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.web.WebView;
 import md.aplicacion.ContextoAplicacion;
+import md.logica.GestorViajes;
 import md.logica.ValidacionUbicaciones;
 import md.modelo.CategoriaVehiculo;
 import md.modelo.EstadoViaje;
@@ -28,8 +30,6 @@ import md.ui.api.VisualizadorMapa;
 import md.ui.impl.javafx.controller.util.AlertaUtil;
 import md.ui.impl.javafx.map.VisualizadorRutasLeaflet;
 import md.ui.impl.javafx.util.NavegadorVistas;
-import java.util.List;
-import md.logica.GestorViajes;
 
 public class PanelClienteController {
 	@FXML
@@ -444,7 +444,7 @@ public class PanelClienteController {
 			}
 
 			// Se obtiene el costo antes de limpiar el estado
-			double costoCancelacion = resultadoSolicitud.viaje().getCostoCancelacion();
+			double costoCancelacion = gestor.obtenerCostoCancelacion(resultadoSolicitud.viaje());
 
 			clienteViajeEstadoActual.setText(obtenerTextoEstado(resultadoSolicitud.viaje().estadoActual()));
 
@@ -487,7 +487,7 @@ public class PanelClienteController {
 
 	// funcion auxiliar para mostrar los datos del conductor en pantalla
 	private void asignarConductorInfo() {
-		clienteConductorNom.setText(resultadoSolicitud.conductor().getNombre()); 
+		clienteConductorNom.setText(resultadoSolicitud.conductor().getNombre());
 		Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
 		clienteVehiculoModelo.setText(vehiculo.getModelo());
 		clienteConductorPatente.setText(vehiculo.getPatente());
@@ -535,12 +535,12 @@ public class PanelClienteController {
 		}
 
 		String clave = switch (estado) {
-		case SOLICITADO -> "viaje.estado.solicitado";
-		case ACEPTADO -> "viaje.estado.aceptado";
-		case INICIADO -> "viaje.estado.iniciado";
-		case FINALIZADO -> "viaje.estado.finalizado";
-		case CANCELADO -> "viaje.estado.cancelado";
-		case RECHAZADO -> "viaje.estado.rechazado";
+			case SOLICITADO -> "viaje.estado.solicitado";
+			case ACEPTADO -> "viaje.estado.aceptado";
+			case INICIADO -> "viaje.estado.iniciado";
+			case FINALIZADO -> "viaje.estado.finalizado";
+			case CANCELADO -> "viaje.estado.cancelado";
+			case RECHAZADO -> "viaje.estado.rechazado";
 		};
 
 		return resource.getString(clave);
