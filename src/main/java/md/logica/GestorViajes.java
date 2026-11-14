@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import md.aplicacion.ContextoAplicacion;
 import md.config.CargarParametros;
+import md.modelo.CalificacionViaje;
 import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
 import md.modelo.Servicio;
@@ -246,11 +247,13 @@ public class GestorViajes {
 				return false;
 			}
 
-			calificacionServicio.completarCalificacionesPendientes(viajeActivo);
+			// Obtener las calificaciones pendientes.
+			CalificacionViaje calificacionCliente = calificacionServicio.obtenerCalificacionCliente(viajeActivo);
+
+			CalificacionViaje calificacionConductor = calificacionServicio.obtenerCalificacionConductor(viajeActivo);
 
 			// Finalizar el viaje y registrar las calificaciones.
-			viajeActivo.finalizar(LocalDateTime.now(), viajeActivo.getCalificacionCliente(),
-					viajeActivo.getCalificacionConductor());
+			viajeActivo.finalizar(LocalDateTime.now(), calificacionCliente, calificacionConductor);
 
 			calificacionServicio.registrarCalificacionesEnHistorial(viajeActivo);
 

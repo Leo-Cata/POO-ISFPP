@@ -1,6 +1,10 @@
 package md.logica;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import md.modelo.CalificacionViaje;
 import md.modelo.Cliente;
@@ -14,6 +18,10 @@ import md.modelo.Viaje;
  * calificación de clientes y conductores.
  */
 public class CalificacionServicio {
+    private final Map<Cliente, List<CalificacionViaje>> calificacionesClientes = new HashMap<>();
+    private final Map<Conductor, List<CalificacionViaje>> calificacionesConductores = new HashMap<>();
+    private final Map<UUID, CalificacionViaje> calificacionesPendientesCliente = new HashMap<>();
+    private final Map<UUID, CalificacionViaje> calificacionesPendientesConductor = new HashMap<>();
 
     /**
      * Registra la calificación que el cliente otorga al conductor.
@@ -32,12 +40,13 @@ public class CalificacionServicio {
                     "El usuario no es el cliente de este viaje.");
         }
 
-        if (viaje.getCalificacionCliente() != null) {
+        if (calificacionesPendientesCliente.containsKey(viaje.getId())
+                || viaje.getCalificacionCliente() != CalificacionViaje.NO_CALIFICADO) {
             throw new IllegalStateException(
                     "El cliente ya calificó este viaje.");
         }
 
-        viaje.setCalificacionCliente(calificacion);
+        calificacionesPendientesCliente.put(viaje.getId(), calificacion);
     }
 
     /**
@@ -57,12 +66,13 @@ public class CalificacionServicio {
                     "El usuario no es el conductor de este viaje.");
         }
 
-        if (viaje.getCalificacionConductor() != null) {
+        if (calificacionesPendientesConductor.containsKey(viaje.getId())
+                || viaje.getCalificacionConductor() != CalificacionViaje.NO_CALIFICADO) {
             throw new IllegalStateException(
                     "El conductor ya calificó este viaje.");
         }
 
-        viaje.setCalificacionConductor(calificacion);
+        calificacionesPendientesConductor.put(viaje.getId(), calificacion);
     }
 
     /**
@@ -105,10 +115,16 @@ public class CalificacionServicio {
         }
 
         // El cliente califica al conductor.
-        conductor.getConductor().agregarCalificacion(calificacionCliente);
+        if (calificacionCliente != CalificacionViaje.NO_CALIFICADO) {
+            calificacionesConductores.computeIfAbsent(
+                    conductor.getConductor(), k -> new ArrayList<>()).add(calificacionCliente);
+        }
 
         // El conductor califica al cliente.
-        cliente.getCliente().agregarCalificacion(calificacionConductor);
+        if (calificacionConductor != CalificacionViaje.NO_CALIFICADO) {
+            calificacionesClientes.computeIfAbsent(
+                    cliente.getCliente(), k -> new ArrayList<>()).add(calificacionConductor);
+        }
     }
 
     /**
@@ -124,7 +140,8 @@ public class CalificacionServicio {
                     "El cliente no puede ser null.");
         }
 
-        return calcularPromedio(cliente.getCalificaciones());
+        return calcularPromedio(
+                calificacionesClientes.getOrDefault(cliente, new ArrayList<>()));
     }
 
     /**
@@ -140,7 +157,8 @@ public class CalificacionServicio {
                     "El conductor no puede ser null.");
         }
 
-        return calcularPromedio(conductor.getCalificaciones());
+        return calcularPromedio(
+                calificacionesConductores.getOrDefault(conductor, new ArrayList<>()));
     }
 
     /**
@@ -153,24 +171,22 @@ public class CalificacionServicio {
      * @throws IllegalStateException    si el viaje no está en estado
      *                                  {@code INICIADO}.
      */
-    public void completarCalificacionesPendientes(Viaje viaje) {
+    public CalificacionViaje obtenerCalificacionCliente(Viaje viaje) {
 
         if (viaje == null) {
-            throw new IllegalArgumentException("El viaje es obligatorio.");
+            throw new IllegalArgumentException("El viaje no puede ser null.");
         }
 
-        if (viaje.estadoActual() != EstadoViaje.INICIADO) {
-            throw new IllegalStateException(
-                    "El viaje debe estar iniciado para completar las calificaciones.");
-        }
+        return calificacionesPendientesCliente.getOrDefault(
+                viaje.getId(), CalificacionViaje.NO_CALIFICADO);
+    }
 
-        if (viaje.getCalificacionCliente() == null) {
-            viaje.setCalificacionCliente(CalificacionViaje.NO_CALIFICADO);
+    public CalificacionViaje obtenerCalificacionConductor(Viaje viaje) {
+        if (viaje == null) {
+            throw new IllegalArgumentException("El viaje no puede ser null.");
         }
-
-        if (viaje.getCalificacionConductor() == null) {
-            viaje.setCalificacionConductor(CalificacionViaje.NO_CALIFICADO);
-        }
+        return calificacionesPendientesConductor.getOrDefault(
+                viaje.getId(), CalificacionViaje.NO_CALIFICADO);
     }
 
     /**
@@ -200,7 +216,7 @@ public class CalificacionServicio {
      * Calcula el promedio de una colección de calificaciones.
      */
     private double calcularPromedio(
-            ArrayList<CalificacionViaje> calificaciones) {
+            List<CalificacionViaje> calificaciones) {
 
         if (calificaciones.isEmpty()) {
             return 0.0;
@@ -213,7 +229,7 @@ public class CalificacionServicio {
 
             if (calificacion != CalificacionViaje.NO_CALIFICADO) {
 
-                sumaPuntajes += calificacion.getPuntaje();
+                sumaPuntajes += calificacion.getValorNumerico();
                 cantidadCalificaciones++;
             }
         }
