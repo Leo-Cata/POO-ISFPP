@@ -8,7 +8,7 @@ import java.util.Scanner;
 import md.datos.dao.DAOException;
 import md.datos.dao.ServicioDAO;
 import md.datos.dto.ServicioDTO;
-import md.datos.utils.txtBase;
+import md.datos.utils.TxtBase;
 import md.modelo.CategoriaVehiculo;
 import md.modelo.TipoServicio;
 import md.modelo.TipoVehiculo;
@@ -17,7 +17,7 @@ import md.modelo.TipoVehiculo;
  * Implementación de ServicioDAO que obtiene los datos de servicios
  * desde un archivo de texto plano con campos delimitados.
  */
-public class ServicioDaoTxt extends txtBase implements ServicioDAO {
+public class ServicioDaoTxt extends TxtBase implements ServicioDAO {
 	// Ruta del archivo de texto que contiene los datos de los servicios.
 	private String rutaArchivo;
 
@@ -35,7 +35,7 @@ public class ServicioDaoTxt extends txtBase implements ServicioDAO {
 	 * precioPorKm, precioPorMinuto, tipoVehiculo, categoriaVehiculo y tipoServicio.
 	 *
 	 * @return Lista de ServicioDTO con todos los servicios leídos del archivo.
-	 * @throws DAOException 			Si el archivo no existe en la ruta
+	 * @throws DAOException             Si el archivo no existe en la ruta
 	 *                                  especificada.
 	 * @throws IllegalArgumentException Si una línea del archivo contiene menos de
 	 *                                  siete campos o tiene un formato incorrecto.

@@ -8,7 +8,7 @@ import java.util.Set;
 import md.datos.dao.DAOException;
 import md.datos.dao.VehiculoDAO;
 import md.datos.dto.VehiculoDTO;
-import md.datos.utils.txtBase;
+import md.datos.utils.TxtBase;
 import md.modelo.CategoriaVehiculo;
 import md.modelo.TipoServicio;
 import md.modelo.TipoVehiculo;
@@ -19,7 +19,7 @@ import net.datastructures.ProbeHashMap;
  * partir de un archivo de texto plano, parseando cada línea y construyendo los
  * objetos VehiculoDTO correspondientes.
  */
-public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
+public class VehiculoDaoTxt extends TxtBase implements VehiculoDAO {
 	// Ruta al archivo de texto que contiene los datos de los vehículos.
 	private String rutaParametro;
 
@@ -32,8 +32,8 @@ public class VehiculoDaoTxt extends txtBase implements VehiculoDAO {
 	 * en un mapa indexado por patente. Omite líneas en blanco y comentarios, y
 	 * verifica que no existan registros con patente duplicada.
 	 *
-	 * @return 							Un ProbeHashMap donde la clave es la patente del vehículo
-	 *   
+	 * @return Un ProbeHashMap donde la clave es la patente del vehículo
+	 * 
 	 * @throws IllegalArgumentException Si una línea del archivo tiene menos de seis
 	 *                                  campos, o si se detecta una patente
 	 *                                  duplicada en el archivo.

@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-public abstract class txtBase {
+public abstract class TxtBase {
     protected static final String COMENTARIO = "#";
     protected static final String SEPARADOR = ";";
 

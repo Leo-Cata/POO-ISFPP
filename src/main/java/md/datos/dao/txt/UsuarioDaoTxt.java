@@ -8,7 +8,7 @@ import java.util.Set;
 import md.datos.dao.DAOException;
 import md.datos.dao.UsuarioDAO;
 import md.datos.dto.UsuarioDTO;
-import md.datos.utils.txtBase;
+import md.datos.utils.TxtBase;
 import net.datastructures.ProbeHashMap;
 
 /**
@@ -16,7 +16,7 @@ import net.datastructures.ProbeHashMap;
  * partir de un archivo de texto plano, construyendo un mapa indexado por correo
  * electrónico.
  */
-public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
+public class UsuarioDaoTxt extends TxtBase implements UsuarioDAO {
 	// Ruta al archivo de texto que contiene los datos de los usuarios.
 	private String rutaArchivo;
 
@@ -31,7 +31,7 @@ public class UsuarioDaoTxt extends txtBase implements UsuarioDAO {
 	 *
 	 * @return Un ProbeHashMap donde la clave es el email del usuario y el
 	 *         valor es el UsuarioDTO correspondiente.
-	 * @throws DAOException 			Si no se encuentra el archivo en la ruta
+	 * @throws DAOException             Si no se encuentra el archivo en la ruta
 	 *                                  especificada.
 	 * @throws IllegalArgumentException Si faltan datos básicos en alguna línea, si
 	 *                                  se detectan correos electrónicos duplicados,

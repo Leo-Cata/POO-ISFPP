@@ -7,8 +7,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import md.config.CargarParametros;
 import md.config.DAOLoader;
+import md.simulacion.ConfiguracionSimulacion;
 import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
 import md.modelo.Usuario;
@@ -64,12 +64,19 @@ public class AplicacionSimulacion {
             if (conductores.isEmpty() || pasajeros.isEmpty() || datos.getServicios().isEmpty()) {
                 throw new IllegalStateException("Hacen falta conductores, pasajeros y servicios para simular.");
             }
+            /**
+             * Obtiene los parámetros necesarios para ejecutar la simulación.
+             */
+            long duracionMs = ConfiguracionSimulacion.getDuracionSegundos() * 1000L;
 
-            long duracionMs = CargarParametros.getSimulacionDuracionSegundos() * 1000L;
-            double factor = CargarParametros.getSimulacionFactorAceleracion();
-            PoliticaAsignacion politica = PoliticaAsignacion.valueOf(CargarParametros.getSimulacionPolitica());
-            long esperaMaximaMs = CargarParametros.getSimulacionEsperaMaximaSegundos() * 1000L;
-            long intervaloMs = CargarParametros.getSimulacionIntervaloSolicitudesMs();
+            double factor = ConfiguracionSimulacion.getFactorAceleracion();
+
+            PoliticaAsignacion politica = PoliticaAsignacion.valueOf(
+                    ConfiguracionSimulacion.getPolitica());
+
+            long esperaMaximaMs = ConfiguracionSimulacion.getEsperaMaximaSegundos() * 1000L;
+
+            long intervaloMs = ConfiguracionSimulacion.getIntervaloSolicitudesMs();
 
             Estadisticas estadisticas = new Estadisticas();
             Despachador despachador = new Despachador(datos.getUsuarios(), ContextoAplicacion.getMotorVial(),
