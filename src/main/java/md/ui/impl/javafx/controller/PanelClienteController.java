@@ -12,6 +12,8 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.web.WebView;
+
+import javafx.util.StringConverter;
 import md.aplicacion.ContextoAplicacion;
 import md.logica.GestorViajes;
 import md.logica.ValidacionUbicaciones;
@@ -35,21 +37,9 @@ public class PanelClienteController {
 	@FXML
 	private WebView mapaView;
 	@FXML
-	private TextField txtLatOrigen;
-	@FXML
-	private TextField txtLonOrigen;
-	@FXML
-	private TextField txtLatDestino;
-	@FXML
-	private TextField txtLonDestino;
-	@FXML
 	private ResourceBundle resource;
-	@FXML
-	private ComboBox<CategoriaVehiculo> comboCategoriaVehiculo;
-	@FXML
-	private ComboBox<TipoVehiculo> comboTipoVehiculo;
-	@FXML
-	private ComboBox<TipoServicio> comboTipoServicio;
+    @FXML
+    private ComboBox<Servicio> comboServicios;
 	@FXML
 	private Button botonClienteSolicitar;
 	@FXML
@@ -97,8 +87,6 @@ public class PanelClienteController {
 	private Servicio servicio;
 	private Viaje viajeActual;
 
-	private List<Servicio> serviciosDisponibles;
-
 	// variable para que no deje solicitar un viaje si tiene una deuda
 	private boolean deuda;
 
@@ -119,28 +107,25 @@ public class PanelClienteController {
 		// Activa la espera del primer clic (Origen)
 		visualizador.activarSeleccion("origen");
 
-		serviciosDisponibles = (List<Servicio>) ContextoAplicacion.getDatosIniciales().getServicios();
+        // setea todos los servicios en el comboBox
+        comboServicios.getItems().setAll(ContextoAplicacion.getDatosIniciales().getServicios());
 
-		// Carga las opciones de los tres ComboBox.
-		comboTipoServicio.getItems().setAll(TipoServicio.values());
-		comboTipoVehiculo.getItems().setAll(TipoVehiculo.values());
-		comboCategoriaVehiculo.getItems().setAll(CategoriaVehiculo.values());
+        comboServicios.setConverter(new StringConverter<Servicio>() {
+            public String toString(Servicio servicio) {
+                return servicio != null ? servicio.getNombre() : "";
+            }
 
-		// Invalida la cotización si el usuario cambia alguna selección.
-		comboTipoServicio.valueProperty().addListener((obs, anterior, nuevo) -> {
-			servicio = null;
-			invalidarCotizacion();
-		});
+            public Servicio fromString(String texxt) {
+                return null;
+            }
+        });
 
-		comboTipoVehiculo.valueProperty().addListener((obs, anterior, nuevo) -> {
-			servicio = null;
-			invalidarCotizacion();
-		});
-
-		comboCategoriaVehiculo.valueProperty().addListener((obs, anterior, nuevo) -> {
-			servicio = null;
-			invalidarCotizacion();
-		});
+        // Invalida la cotización si el cliente modifica el servicio seleccionado.
+        comboServicios.valueProperty().addListener((obs, servicioAnterior, servicioNuevo) -> {
+            if (servicioAnterior != servicioNuevo) {
+                invalidarCotizacion();
+            }
+        });
 
 		// Obtiene el gestor de viajes compartido por la aplicación.
 		gestor = ContextoAplicacion.getGestorViajes();
@@ -180,12 +165,6 @@ public class PanelClienteController {
 			clienteBotonCancelacionPagar.setVisible(true);
 			clienteBotonCancelacionPagar.setDisable(false);
 		}
-
-		// Impide la modificación manual de las coordenadas.
-		txtLatOrigen.setEditable(false);
-		txtLonOrigen.setEditable(false);
-		txtLatDestino.setEditable(false);
-		txtLonDestino.setEditable(false);
 	}
 
 	private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
@@ -203,26 +182,27 @@ public class PanelClienteController {
 		invalidarCotizacion();
 
 		if ("origen".equals(tipo)) {
-			txtLatOrigen.setText(String.valueOf(sobreCalle.getLatitud()));
-			txtLonOrigen.setText(String.valueOf(sobreCalle.getLongitud()));
-			visualizador.mostrarMarcadorSeleccion("origen", sobreCalle);
+	        origenActual = sobreCalle;
 
-			if (txtLatDestino.getText().isBlank()) {
-				visualizador.activarSeleccion("destino");
-			} else {
-				visualizador.cancelarSeleccion();
-			}
-		} else if ("destino".equals(tipo)) {
-			txtLatDestino.setText(String.valueOf(sobreCalle.getLatitud()));
-			txtLonDestino.setText(String.valueOf(sobreCalle.getLongitud()));
-			visualizador.mostrarMarcadorSeleccion("destino", sobreCalle);
+	        visualizador.mostrarMarcadorSeleccion("origen", sobreCalle);
 
-			if (txtLatOrigen.getText().isBlank()) {
-				visualizador.activarSeleccion("origen");
-			} else {
-				visualizador.cancelarSeleccion();
-			}
-		}
+	        if (destinoActual == null) {
+	            visualizador.activarSeleccion("destino");
+	        } else {
+	            visualizador.cancelarSeleccion();
+	        }
+
+	    } else if ("destino".equals(tipo)) {
+	        destinoActual = sobreCalle;
+
+	        visualizador.mostrarMarcadorSeleccion("destino", sobreCalle);
+
+	        if (origenActual == null) {
+	            visualizador.activarSeleccion("origen");
+	        } else {
+	            visualizador.cancelarSeleccion();
+	        }
+	    }
 	}
 
 	/**
@@ -251,11 +231,9 @@ public class PanelClienteController {
 	 */
 	private void borrarPunto(String tipo) {
 		if ("origen".equals(tipo)) {
-			txtLatOrigen.clear();
-			txtLonOrigen.clear();
-		} else {
-			txtLatDestino.clear();
-			txtLonDestino.clear();
+	        origenActual = null;
+	    } else {
+	        destinoActual = null;
 		}
 		visualizador.limpiarMarcador(tipo);
 		visualizador.activarSeleccion(tipo);
@@ -381,12 +359,11 @@ public class PanelClienteController {
 	void handleCotizarViaje(ActionEvent event) {
 		// Descarta cualquier cotización anterior antes de intentar calcular una nueva.
 		invalidarCotizacion();
-		servicio = buscarServicioSeleccionado();
+        servicio = comboServicios.getValue();
 
-		// Verificamos que estén completos todos los datos.
-		if (txtLatOrigen.getText().isBlank() || txtLonOrigen.getText().isBlank() || txtLatDestino.getText().isBlank()
-				|| txtLonDestino.getText().isBlank() || comboTipoServicio.getValue() == null
-				|| comboTipoVehiculo.getValue() == null || comboCategoriaVehiculo.getValue() == null) {
+        // Verificamos que estén completos todos los datos.
+        if (origenActual == null || destinoActual == null
+                || servicio == null) {
 
 			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
 					resource.getString("client.error.missingData"));
@@ -394,20 +371,7 @@ public class PanelClienteController {
 			return;
 		}
 
-		if (servicio == null) {
-			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-					resource.getString("client.error.noServiceCombination"));
-
-			return;
-		}
-
 		try {
-
-			origenActual = new Ubicacion(Double.parseDouble(txtLatOrigen.getText()),
-					Double.parseDouble(txtLonOrigen.getText()));
-
-			destinoActual = new Ubicacion(Double.parseDouble(txtLatDestino.getText()),
-					Double.parseDouble(txtLonDestino.getText()));
 
 			cliente = ContextoAplicacion.getUsuarioLogeado();
 
@@ -426,9 +390,6 @@ public class PanelClienteController {
 			AlertaUtil.mostrarAlerta(resource.getString("viaje.cotizacion.titulo"), detalle);
 
 			botonClienteSolicitar.setDisable(false);
-		} catch (NumberFormatException e) {
-			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-					resource.getString("client.invalid.coords"));
 		} catch (IllegalArgumentException | IllegalStateException e) {
 			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
 		}
@@ -577,38 +538,5 @@ public class PanelClienteController {
 		};
 
 		return resource.getString(clave);
-	}
-
-	/**
-	 * Busca el servicio que coincide con las opciones seleccionadas por el cliente
-	 * en los tres ComboBox: tipo de servicio, tipo de vehículo y categoría.
-	 *
-	 * Recorre la lista de servicios disponibles y devuelve el que coincide con los
-	 * tres valores seleccionados.
-	 *
-	 * @return el servicio correspondiente a la combinación seleccionada, o null si
-	 *         falta alguna selección o no existe esa combinación.
-	 */
-	private Servicio buscarServicioSeleccionado() {
-
-		TipoServicio tipoServicio = comboTipoServicio.getValue();
-		TipoVehiculo tipoVehiculo = comboTipoVehiculo.getValue();
-		CategoriaVehiculo categoria = comboCategoriaVehiculo.getValue();
-
-		if (tipoServicio == null || tipoVehiculo == null || categoria == null) {
-			return null;
-		}
-
-		for (Servicio servicioDisponible : serviciosDisponibles) {
-
-			if (servicioDisponible.getTipoServicio() == tipoServicio
-					&& servicioDisponible.getTipoVehiculo() == tipoVehiculo
-					&& servicioDisponible.getCategoriaVehiculo() == categoria) {
-
-				return servicioDisponible;
-			}
-		}
-
-		return null;
 	}
 }

@@ -33,7 +33,7 @@ public abstract class TxtBase {
 
     /** Parte la linea por ';' y recorta los espacios de cada campo. */
     protected String[] partir(String linea) {
-        String[] partes = linea.split(SEPARADOR);
+        String[] partes = linea.split(SEPARADOR, - 1);		// El -1 conserva los campos vacíos finales
         for (int i = 0; i < partes.length; i++)
             partes[i] = partes[i].trim();
         return partes;

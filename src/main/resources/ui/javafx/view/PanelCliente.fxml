@@ -20,11 +20,7 @@
         <Label fx:id="labelClienteDestino" layoutX="14.0" layoutY="102.0" prefHeight="19.0" prefWidth="76.0" text="%client.label.destination" />
         <Button fx:id="botonClienteBorrarDestino" layoutX="12.0" layoutY="121.0" mnemonicParsing="false" onAction="#handleBorrarDestino" style="-fx-max-width: 100px;" text="%client.delete.destination" />
         <Label layoutX="15.0" layoutY="197.0" text="%client.label.service" />
-        <ComboBox fx:id="comboTipoServicio" layoutX="15.0" layoutY="223.0" prefWidth="150.0" />
-            <Label layoutX="186.0" layoutY="197.0" text="%client.label.category" />
-            <ComboBox fx:id="comboCategoriaVehiculo" layoutX="186.0" layoutY="223.0" prefWidth="150.0" />
-            <Label layoutX="15.0" layoutY="259.0" text="%client.label.type.vehicle" />
-            <ComboBox fx:id="comboTipoVehiculo" layoutX="15.0" layoutY="283.0" prefWidth="150.0" />
+        <ComboBox fx:id="comboServicios" layoutX="15.0" layoutY="223.0" prefWidth="150.0" />
         <Button fx:id="botonClienteSolicitar" layoutX="154.0" layoutY="363.0" mnemonicParsing="false" onAction="#handleSolicitarViaje" prefHeight="27.0" prefWidth="127.0" style="-fx-max-width: 100px;" text="%client.action.requestTrip" />
         <Button fx:id="botonClienteCotizar" layoutX="12.0" layoutY="363.0" mnemonicParsing="false" onAction="#handleCotizarViaje" prefHeight="27.0" prefWidth="127.0" style="-fx-max-width: 100px;" text="%client.quote.trip" />
             <Label fx:id="clienetDriver" layoutX="314.0" layoutY="390.0" text="%cliente.driver" />
