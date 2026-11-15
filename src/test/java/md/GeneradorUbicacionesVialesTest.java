@@ -17,12 +17,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import md.config.CargarParametros;
+import md.logica.GeneradorUbicacionesViales;
 import md.modelo.TipoVehiculo;
 import md.modelo.Ubicacion;
 import md.rutas.api.PlanificadorRutas;
 import md.rutas.api.RutaCalculada;
 import md.rutas.api.RutaNoDisponibleException;
-import md.simulacion.GeneradorUbicacionesViales;
 
 class GeneradorUbicacionesVialesTest {
 
@@ -30,7 +30,8 @@ class GeneradorUbicacionesVialesTest {
     private GeneradorUbicacionesViales generador;
 
     @BeforeEach
-    void setUp() {motor = new MotorFalso();
+    void setUp() {
+        motor = new MotorFalso();
         generador = new GeneradorUbicacionesViales(motor);
     }
 
@@ -38,7 +39,7 @@ class GeneradorUbicacionesVialesTest {
     @DisplayName("1. Rechaza un motor vial nulo")
     void testRechazaMotorNulo() {
 
-        assertThrows(IllegalArgumentException.class,() -> new GeneradorUbicacionesViales(null));
+        assertThrows(IllegalArgumentException.class, () -> new GeneradorUbicacionesViales(null));
     }
 
     @Test
@@ -58,7 +59,7 @@ class GeneradorUbicacionesVialesTest {
         assertTrue(resultado.getLongitud() >= CargarParametros.getLongitudMin()
                 && resultado.getLongitud() <= CargarParametros.getLongitudMax());
 
-        assertEquals(CargarParametros.getToleranciaAjusteMetros(),motor.ultimaTolerancia,0.0001);
+        assertEquals(CargarParametros.getToleranciaAjusteMetros(), motor.ultimaTolerancia, 0.0001);
     }
 
     @Test
@@ -80,50 +81,48 @@ class GeneradorUbicacionesVialesTest {
     @DisplayName("4. Falla después de agotar los intentos disponibles")
     void testAgotaLosIntentos() {
 
-        assertThrows(IllegalStateException.class,() -> generador.generar());
+        assertThrows(IllegalStateException.class, () -> generador.generar());
 
         assertEquals(100, motor.candidatas.size());
     }
 
     private static class MotorFalso implements PlanificadorRutas {
 
-        private final Queue<Optional<Ubicacion>> respuestas =new ArrayDeque<>();
+        private final Queue<Optional<Ubicacion>> respuestas = new ArrayDeque<>();
 
-        private final List<Ubicacion> candidatas =new ArrayList<>();
+        private final List<Ubicacion> candidatas = new ArrayList<>();
 
         private boolean aceptarSiguienteCandidata;
 
         private double ultimaTolerancia;
 
         @Override
-        public RutaCalculada calcular(Ubicacion origen,Ubicacion destino,TipoVehiculo tipoVehiculo
-        ) throws RutaNoDisponibleException {
+        public RutaCalculada calcular(Ubicacion origen, Ubicacion destino, TipoVehiculo tipoVehiculo)
+                throws RutaNoDisponibleException {
 
             throw new UnsupportedOperationException("Este test no necesita calcular recorridos.");
         }
 
-
         @Override
-        public Optional<Ubicacion> ajustarACalle(Ubicacion candidata,double maxDistanciaMetros) {
+        public Optional<Ubicacion> ajustarACalle(Ubicacion candidata, double maxDistanciaMetros) {
 
-        	candidatas.add(candidata);
-        	ultimaTolerancia = maxDistanciaMetros;
+            candidatas.add(candidata);
+            ultimaTolerancia = maxDistanciaMetros;
 
-        	// Primero consume las respuestas pendientes.
-        	if (!respuestas.isEmpty()) {
-        		return respuestas.remove();
-        	}
+            // Primero consume las respuestas pendientes.
+            if (!respuestas.isEmpty()) {
+                return respuestas.remove();
+            }
 
-        	// Si no quedan respuestas, acepta la siguiente candidata
-        	// cuando así lo indique el test.
-        	if (aceptarSiguienteCandidata) {
-        		aceptarSiguienteCandidata = false;
-        		return Optional.of(candidata);
-        	}
+            // Si no quedan respuestas, acepta la siguiente candidata
+            // cuando así lo indique el test.
+            if (aceptarSiguienteCandidata) {
+                aceptarSiguienteCandidata = false;
+                return Optional.of(candidata);
+            }
 
-        	return Optional.empty();
+            return Optional.empty();
         }
-
 
         @Override
         public void close() {

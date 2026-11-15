@@ -1,4 +1,4 @@
-package md.aplicacion;
+package md.simulacion;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -7,16 +7,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import md.aplicacion.ContextoAplicacion;
 import md.config.DAOLoader;
-import md.simulacion.ConfiguracionSimulacion;
 import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
+import md.logica.GeneradorUbicacionesViales;
+import md.logica.GestorViajes;
 import md.modelo.Usuario;
-import md.simulacion.ConductorSimulado;
-import md.simulacion.Despachador;
-import md.simulacion.Estadisticas;
-import md.simulacion.GeneradorPasajeros;
-import md.simulacion.PoliticaAsignacion;
 
 /**
  * Punto de entrada de la simulación por consola.
@@ -50,6 +47,15 @@ public class AplicacionSimulacion {
             ContextoAplicacion.inicializar(persistencia);
 
             var datos = ContextoAplicacion.getDatosIniciales();
+
+            // Preparamos las ubicaciones y el estado de los conductores.
+            GeneradorUbicacionesViales generadorUbicaciones = ContextoAplicacion.getGeneradorUbicaciones();
+
+            InicializadorEscenario inicializador = new InicializadorEscenario(generadorUbicaciones);
+
+            inicializador.inicializar(datos.getUsuarios());
+
+            GestorViajes gestorViajes = ContextoAplicacion.getGestorViajes();
 
             // Conductores: usuarios con perfil de conductor. Pasajeros: el resto.
             List<Usuario> conductores = new ArrayList<>();
@@ -98,8 +104,13 @@ public class AplicacionSimulacion {
             // pasajeros
             ExecutorService hilos = Executors.newVirtualThreadPerTaskExecutor();
             try {
-                hilos.execute(new GeneradorPasajeros(pasajeros, datos.getServicios(), despachador,
-                        ContextoAplicacion.getGeneradorUbicaciones(), intervaloMs));
+                hilos.execute(new GeneradorPasajeros(
+                        pasajeros,
+                        datos.getServicios(),
+                        despachador,
+                        generadorUbicaciones,
+                        intervaloMs,
+                        gestorViajes));
                 for (Usuario conductor : conductores) {
                     hilos.execute(new ConductorSimulado(conductor, despachador, factor));
                 }

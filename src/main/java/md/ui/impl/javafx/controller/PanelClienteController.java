@@ -17,12 +17,9 @@ import javafx.util.StringConverter;
 import md.aplicacion.ContextoAplicacion;
 import md.logica.GestorViajes;
 import md.logica.ValidacionUbicaciones;
-import md.modelo.CategoriaVehiculo;
 import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
 import md.modelo.Servicio;
-import md.modelo.TipoServicio;
-import md.modelo.TipoVehiculo;
 import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Vehiculo;
@@ -38,8 +35,8 @@ public class PanelClienteController {
 	private WebView mapaView;
 	@FXML
 	private ResourceBundle resource;
-    @FXML
-    private ComboBox<Servicio> comboServicios;
+	@FXML
+	private ComboBox<Servicio> comboServicios;
 	@FXML
 	private Button botonClienteSolicitar;
 	@FXML
@@ -107,25 +104,25 @@ public class PanelClienteController {
 		// Activa la espera del primer clic (Origen)
 		visualizador.activarSeleccion("origen");
 
-        // setea todos los servicios en el comboBox
-        comboServicios.getItems().setAll(ContextoAplicacion.getDatosIniciales().getServicios());
+		// setea todos los servicios en el comboBox
+		comboServicios.getItems().setAll(ContextoAplicacion.getDatosIniciales().getServicios());
 
-        comboServicios.setConverter(new StringConverter<Servicio>() {
-            public String toString(Servicio servicio) {
-                return servicio != null ? servicio.getNombre() : "";
-            }
+		comboServicios.setConverter(new StringConverter<Servicio>() {
+			public String toString(Servicio servicio) {
+				return servicio != null ? servicio.getNombre() : "";
+			}
 
-            public Servicio fromString(String texxt) {
-                return null;
-            }
-        });
+			public Servicio fromString(String texxt) {
+				return null;
+			}
+		});
 
-        // Invalida la cotización si el cliente modifica el servicio seleccionado.
-        comboServicios.valueProperty().addListener((obs, servicioAnterior, servicioNuevo) -> {
-            if (servicioAnterior != servicioNuevo) {
-                invalidarCotizacion();
-            }
-        });
+		// Invalida la cotización si el cliente modifica el servicio seleccionado.
+		comboServicios.valueProperty().addListener((obs, servicioAnterior, servicioNuevo) -> {
+			if (servicioAnterior != servicioNuevo) {
+				invalidarCotizacion();
+			}
+		});
 
 		// Obtiene el gestor de viajes compartido por la aplicación.
 		gestor = ContextoAplicacion.getGestorViajes();
@@ -182,27 +179,27 @@ public class PanelClienteController {
 		invalidarCotizacion();
 
 		if ("origen".equals(tipo)) {
-	        origenActual = sobreCalle;
+			origenActual = sobreCalle;
 
-	        visualizador.mostrarMarcadorSeleccion("origen", sobreCalle);
+			visualizador.mostrarMarcadorSeleccion("origen", sobreCalle);
 
-	        if (destinoActual == null) {
-	            visualizador.activarSeleccion("destino");
-	        } else {
-	            visualizador.cancelarSeleccion();
-	        }
+			if (destinoActual == null) {
+				visualizador.activarSeleccion("destino");
+			} else {
+				visualizador.cancelarSeleccion();
+			}
 
-	    } else if ("destino".equals(tipo)) {
-	        destinoActual = sobreCalle;
+		} else if ("destino".equals(tipo)) {
+			destinoActual = sobreCalle;
 
-	        visualizador.mostrarMarcadorSeleccion("destino", sobreCalle);
+			visualizador.mostrarMarcadorSeleccion("destino", sobreCalle);
 
-	        if (origenActual == null) {
-	            visualizador.activarSeleccion("origen");
-	        } else {
-	            visualizador.cancelarSeleccion();
-	        }
-	    }
+			if (origenActual == null) {
+				visualizador.activarSeleccion("origen");
+			} else {
+				visualizador.cancelarSeleccion();
+			}
+		}
 	}
 
 	/**
@@ -231,9 +228,9 @@ public class PanelClienteController {
 	 */
 	private void borrarPunto(String tipo) {
 		if ("origen".equals(tipo)) {
-	        origenActual = null;
-	    } else {
-	        destinoActual = null;
+			origenActual = null;
+		} else {
+			destinoActual = null;
 		}
 		visualizador.limpiarMarcador(tipo);
 		visualizador.activarSeleccion(tipo);
@@ -359,11 +356,11 @@ public class PanelClienteController {
 	void handleCotizarViaje(ActionEvent event) {
 		// Descarta cualquier cotización anterior antes de intentar calcular una nueva.
 		invalidarCotizacion();
-        servicio = comboServicios.getValue();
+		servicio = comboServicios.getValue();
 
-        // Verificamos que estén completos todos los datos.
-        if (origenActual == null || destinoActual == null
-                || servicio == null) {
+		// Verificamos que estén completos todos los datos.
+		if (origenActual == null || destinoActual == null
+				|| servicio == null) {
 
 			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
 					resource.getString("client.error.missingData"));

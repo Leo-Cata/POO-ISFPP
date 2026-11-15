@@ -6,12 +6,12 @@ import java.util.ResourceBundle;
 
 import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
+import md.logica.GeneradorUbicacionesViales;
 import md.logica.GestorViajes;
 import md.modelo.Usuario;
 import md.rutas.api.PlanificadorRutas;
 import md.rutas.impl.PlanificadorRutasFactory;
-import md.simulacion.GeneradorUbicacionesViales;
-import md.simulacion.InicializadorEscenario;
+import md.config.CargarParametros;
 
 /**
  * Mantiene disponibles los datos iniciales de la aplicación para que los
@@ -25,8 +25,7 @@ public class ContextoAplicacion {
 	private static GestorViajes gestorViajes;
 	private static PlanificadorRutas motorVial; // conserva la instancia del motor de rutas que creamos mediante
 												// PlanificadorRutasFactory
-	private static GeneradorUbicacionesViales generadorUbicaciones; // conserva el generador que utiliza ese motor para
-																	// producir ubicaciones válidas
+	private static GeneradorUbicacionesViales generadorUbicaciones;
 
 	/**
 	 * Carga los datos iniciales y prepara los recursos viales
@@ -50,14 +49,13 @@ public class ContextoAplicacion {
 			// Creamos el motor vial configurado.
 			nuevoMotor = PlanificadorRutasFactory.crear();
 
-			// Creamos el generador utilizando el motor compartido.
-			GeneradorUbicacionesViales nuevoGenerador = new GeneradorUbicacionesViales(nuevoMotor);
-
-			// Preparamos las ubicaciones y el estado de los conductores.
-			InicializadorEscenario inicializador = new InicializadorEscenario(nuevoGenerador);
-
-			inicializador.inicializar(nuevosDatos.getUsuarios());
-
+			// Creamos el generador de ubicaciones compartido.
+			GeneradorUbicacionesViales nuevoGenerador = new GeneradorUbicacionesViales(
+					nuevoMotor,
+					CargarParametros.getLatitudMin(),
+					CargarParametros.getLatitudMax(),
+					CargarParametros.getLongitudMin(),
+					CargarParametros.getLongitudMax());
 			// Creamos el gestor con los usuarios y el motor vial compartidos.
 			GestorViajes nuevoGestor = new GestorViajes(
 					nuevosDatos.getUsuarios(),
@@ -66,9 +64,8 @@ public class ContextoAplicacion {
 			// Conservamos los recursos para el resto de la aplicación.
 			datos = nuevosDatos;
 			motorVial = nuevoMotor;
-			generadorUbicaciones = nuevoGenerador;
 			gestorViajes = nuevoGestor;
-
+			generadorUbicaciones = nuevoGenerador;
 		} catch (RuntimeException e) {
 
 			// Si falla la inicialización, liberamos el motor creado.
@@ -137,15 +134,6 @@ public class ContextoAplicacion {
 		return gestorViajes;
 	}
 
-	public static GeneradorUbicacionesViales getGeneradorUbicaciones() {
-
-		if (generadorUbicaciones == null) {
-			throw new IllegalStateException("El generador de ubicaciones todavía no fue inicializado.");
-		}
-
-		return generadorUbicaciones;
-	}
-
 	/**
 	 * Cierra el motor vial y libera sus recursos.
 	 */
@@ -156,10 +144,19 @@ public class ContextoAplicacion {
 				motorVial.close();
 			} finally {
 				motorVial = null;
-				generadorUbicaciones = null;
 				gestorViajes = null;
+				generadorUbicaciones = null;
 				datos = null;
 			}
 		}
+	}
+
+	public static GeneradorUbicacionesViales getGeneradorUbicaciones() {
+		if (generadorUbicaciones == null) {
+			throw new IllegalStateException(
+					"El generador de ubicaciones todavía no fue inicializado.");
+		}
+
+		return generadorUbicaciones;
 	}
 }

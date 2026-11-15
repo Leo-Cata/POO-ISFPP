@@ -3,13 +3,12 @@ package md.simulacion;
 import java.util.List;
 import java.util.Random;
 
+import md.logica.GeneradorUbicacionesViales;
 import md.logica.GestorViajes;
 import md.modelo.Servicio;
 import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Viaje;
-
-import md.aplicacion.ContextoAplicacion;
 
 /**
  * Hilo productor. Toma un pasajero libre, arma un viaje con un servicio y un
@@ -24,7 +23,7 @@ public class GeneradorPasajeros implements Runnable {
     private final Despachador despachador;
     private final GeneradorUbicacionesViales generadorUbicaciones;
     private final long intervaloMs;
-    private final GestorViajes cotizador = ContextoAplicacion.getGestorViajes();
+    private final GestorViajes cotizador;
     private final Random random = new Random();
 
     /**
@@ -34,17 +33,26 @@ public class GeneradorPasajeros implements Runnable {
      * @param generadorUbicaciones genera origen y destino sobre calles.
      * @param intervaloMs          pausa entre dos pedidos.
      */
-    public GeneradorPasajeros(List<Usuario> pasajeros, List<Servicio> servicios, Despachador despachador,
-            GeneradorUbicacionesViales generadorUbicaciones, long intervaloMs) {
+    public GeneradorPasajeros(
+            List<Usuario> pasajeros,
+            List<Servicio> servicios,
+            Despachador despachador,
+            GeneradorUbicacionesViales generadorUbicaciones,
+            long intervaloMs,
+            GestorViajes gestorViajes) {
         if (pasajeros == null || pasajeros.isEmpty() || servicios == null || servicios.isEmpty()
                 || despachador == null || generadorUbicaciones == null) {
             throw new IllegalArgumentException("Faltan pasajeros, servicios o dependencias.");
+        }
+        if (gestorViajes == null) {
+            throw new IllegalArgumentException("El gestor de viajes no puede ser null.");
         }
         this.pasajeros = pasajeros;
         this.servicios = servicios;
         this.despachador = despachador;
         this.generadorUbicaciones = generadorUbicaciones;
         this.intervaloMs = intervaloMs;
+        this.cotizador = gestorViajes;
     }
 
     @Override

@@ -1,6 +1,7 @@
 
 package md.simulacion;
 
+import md.logica.GeneradorUbicacionesViales;
 import md.modelo.Conductor;
 import md.modelo.RolUsuario;
 import md.modelo.Ubicacion;

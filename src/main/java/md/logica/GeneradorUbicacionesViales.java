@@ -1,10 +1,8 @@
 
-package md.simulacion;
+package md.logica;
 
 import java.util.Random;
 
-import md.config.CargarParametros;
-import md.logica.ValidacionUbicaciones;
 import md.modelo.Ubicacion;
 import md.rutas.api.PlanificadorRutas;
 
@@ -16,13 +14,13 @@ public class GeneradorUbicacionesViales {
      */
     private static final int MAX_INTENTOS = 100;
 
-    /**
-     * ubicacion de respaldo en caso que despues de 100 intentos no sea posible
-     * generar una ubicacion
-     */
-    private static final Ubicacion UBICACION_RESPALDO = new Ubicacion(-42.76711046538174, -65.03593669533258);
     private final PlanificadorRutas motorVial;
     private final Random random;
+
+    private final double latitudMin;
+    private final double latitudMax;
+    private final double longitudMin;
+    private final double longitudMax;
 
     /*
      * recibir PlanificadorRutas por el constructor permite que el generador utilice
@@ -30,13 +28,30 @@ public class GeneradorUbicacionesViales {
      * implementación del contrato, sin depender de una biblioteca concreta
      * (GraphHopperPlanificador).
      */
-    public GeneradorUbicacionesViales(PlanificadorRutas motorVial) {
+    public GeneradorUbicacionesViales(
+            PlanificadorRutas motorVial,
+            double latitudMin,
+            double latitudMax,
+            double longitudMin,
+            double longitudMax) {
 
         if (motorVial == null) {
             throw new IllegalArgumentException("El motor vial no puede ser null.");
         }
 
+        if (!Double.isFinite(latitudMin) || !Double.isFinite(latitudMax)
+                || !Double.isFinite(longitudMin) || !Double.isFinite(longitudMax)
+                || latitudMin < -90 || latitudMax > 90
+                || longitudMin < -180 || longitudMax > 180
+                || latitudMin >= latitudMax || longitudMin >= longitudMax) {
+            throw new IllegalArgumentException("Los límites geográficos no son válidos.");
+        }
+
         this.motorVial = motorVial;
+        this.latitudMin = latitudMin;
+        this.latitudMax = latitudMax;
+        this.longitudMin = longitudMin;
+        this.longitudMax = longitudMax;
         this.random = new Random();
     }
 
@@ -52,9 +67,8 @@ public class GeneradorUbicacionesViales {
 
         for (int intento = 1; intento <= MAX_INTENTOS; intento++) {
 
-            double latitud = generarCoordenada(CargarParametros.getLatitudMin(), CargarParametros.getLatitudMax());
-
-            double longitud = generarCoordenada(CargarParametros.getLongitudMin(), CargarParametros.getLongitudMax());
+            double latitud = generarCoordenada(latitudMin, latitudMax);
+            double longitud = generarCoordenada(longitudMin, longitudMax);
 
             Ubicacion candidata = new Ubicacion(latitud, longitud);
 
@@ -66,18 +80,10 @@ public class GeneradorUbicacionesViales {
                 // El ciclo continúa con un nuevo intento.
             }
         }
-        try {
-            Ubicacion respaldo = UBICACION_RESPALDO;
 
-            return ValidacionUbicaciones.validarYAjustar(respaldo, motorVial);
-
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException(
-                    "No se pudo generar una ubicación vial válida después de "
-                            + MAX_INTENTOS
-                            + " intentos, ni validar la ubicación de respaldo.",
-                    e);
-        }
+        throw new IllegalStateException(
+                "No se pudo generar una ubicación vial válida después de "
+                        + MAX_INTENTOS + " intentos.");
     }
 
     /**
