@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import md.config.CargarParametros;
 import md.logica.GeneradorUbicacionesViales;
+import md.logica.ValidacionUbicaciones;
 import md.modelo.TipoVehiculo;
 import md.modelo.Ubicacion;
 import md.rutas.api.PlanificadorRutas;
@@ -32,14 +33,27 @@ class GeneradorUbicacionesVialesTest {
     @BeforeEach
     void setUp() {
         motor = new MotorFalso();
-        generador = new GeneradorUbicacionesViales(motor);
+        generador = crearGenerador(motor);
+    }
+
+    private GeneradorUbicacionesViales crearGenerador(PlanificadorRutas planificador) {
+        double latitudMin = CargarParametros.getLatitudMin();
+        double latitudMax = CargarParametros.getLatitudMax();
+        double longitudMin = CargarParametros.getLongitudMin();
+        double longitudMax = CargarParametros.getLongitudMax();
+        ValidacionUbicaciones validador = new ValidacionUbicaciones(
+                CargarParametros.getToleranciaAjusteMetros(),
+                latitudMin, latitudMax, longitudMin, longitudMax);
+        return new GeneradorUbicacionesViales(
+                planificador, validador,
+                latitudMin, latitudMax, longitudMin, longitudMax);
     }
 
     @Test
     @DisplayName("1. Rechaza un motor vial nulo")
     void testRechazaMotorNulo() {
 
-        assertThrows(IllegalArgumentException.class, () -> new GeneradorUbicacionesViales(null));
+        assertThrows(IllegalArgumentException.class, () -> crearGenerador(null));
     }
 
     @Test

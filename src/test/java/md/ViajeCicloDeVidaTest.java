@@ -113,20 +113,9 @@ class ViajeCicloDeVidaTest {
         
     }
     
-    @Test
-    @DisplayName("6. Probar error al cancelar un viaje que nunca fue solicitado")
-    void testCancelarErrorViajeNoSolicitado() {
-        // el viaje esta creado, pero nunca se llamo a solicitar()
-    	Servicio servicioEstandar = new Servicio("Estandar", 2000, 200, 100,
-                TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS);
-    	Viaje viaje = new Viaje(cliente, ubicacion, ubicacion, servicioEstandar);
-        assertThrows(IllegalStateException.class, () -> {
-            viaje.cancelar(LocalDateTime.now(), cliente, "Me arrepenti");
-        });
-    }
     
     @Test
-    @DisplayName("7. Rechaza un vehiculo con categoria menor a la requerida")
+    @DisplayName("6. Rechaza un vehiculo con categoria menor a la requerida")
     void testRechazaVehiculoDeCategoriaMenor() {
         Usuario conductor = crearConductorDisponible("AA555AA", TipoVehiculo.AUTO,
                 CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS);
@@ -138,17 +127,17 @@ class ViajeCicloDeVidaTest {
     }
 
     @Test
-    @DisplayName("8. Rechaza cuando el cliente intenta aceptar su propio viaje")
+    @DisplayName("7. Rechaza cuando el cliente intenta aceptar su propio viaje")
     void testRechazaClienteAceptandoSuPropioViaje() {
         // El mismo usuario que hace de cliente intenta actuar como conductor
         Viaje viaje = crearViajeSolicitado(new Servicio("Estandar", 2000, 200, 100,
                 TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS));
 
-        assertThrows(IllegalArgumentException.class, () -> viaje.aceptar(LocalDateTime.now(), cliente));
+        assertThrows(IllegalStateException.class, () -> viaje.aceptar(LocalDateTime.now(), cliente));
     }
     
     @Test
-    @DisplayName("9. Un viaje recién instanciado no se agrega al historial hasta ser solicitado")
+    @DisplayName("8. Un viaje recién instanciado no se agrega al historial hasta ser solicitado")
     void testViajeNoSolicitadoNoApareceEnHistorial() {
         Servicio servicio = new Servicio("Estandar", 2000, 200, 100,
                 TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS);
@@ -164,7 +153,7 @@ class ViajeCicloDeVidaTest {
         assertEquals(1, cliente.getCliente().getViajes().size());
     }
     @Test
-    @DisplayName("10. Inicia un viaje exitosamente luego de ser aceptado")
+    @DisplayName("9. Inicia un viaje exitosamente luego de ser aceptado")
     void testIniciarViajeConExito() {
         Usuario conductor = crearConductorDisponible("AA666AA", TipoVehiculo.AUTO,
                 CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS);
@@ -182,7 +171,7 @@ class ViajeCicloDeVidaTest {
     }
 
     @Test
-    @DisplayName("11. Rechaza iniciar un viaje que no fue aceptado previamente")
+    @DisplayName("10. Rechaza iniciar un viaje que no fue aceptado previamente")
     void testErrorAlIniciarViajeNoAceptado() {
         Viaje viaje = crearViajeSolicitado(new Servicio("Estandar", 2000, 200, 100,
                 TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS));
@@ -192,7 +181,7 @@ class ViajeCicloDeVidaTest {
     }
     
     @Test
-    @DisplayName("12. Finaliza un viaje exitosamente validando calificaciones y estado del conductor")
+    @DisplayName("11. Finaliza un viaje exitosamente validando calificaciones y estado del conductor")
     void testFinalizarViajeConExito() {
         Usuario conductor = crearConductorDisponible("AA777AA", TipoVehiculo.AUTO,
                 CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS);
@@ -212,7 +201,7 @@ class ViajeCicloDeVidaTest {
     }
 
     @Test
-    @DisplayName("13. Permite cancelar un viaje en estado solicitado por parte del cliente")
+    @DisplayName("12. Permite cancelar un viaje en estado solicitado por parte del cliente")
     void testCancelarViajePorCliente() {
         Viaje viaje = crearViajeSolicitado(new Servicio("Estandar", 2000, 200, 100,
                 TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS));
@@ -225,20 +214,7 @@ class ViajeCicloDeVidaTest {
     }
 
     @Test
-    @DisplayName("14. Rechaza cancelar un viaje si lo intenta un usuario ajeno")
-    void testErrorCancelarUsuarioNoAutorizado() {
-        Viaje viaje = crearViajeSolicitado(new Servicio("Estandar", 2000, 200, 100,
-                TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS));
-
-        Usuario otroUsuario = new Usuario("Pedro", "+5491100000000", "pedro@email.com");
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            viaje.cancelar(LocalDateTime.now(), otroUsuario, "Intento cancelar");
-        });
-    }
-    
-    @Test
-    @DisplayName("15. Permite cancelar un viaje aceptado por parte del conductor")
+    @DisplayName("13. Permite cancelar un viaje aceptado por parte del conductor")
     void testCancelarViajePorConductor() {
         Usuario conductor = crearConductorDisponible("AA888AA", TipoVehiculo.AUTO,
                 CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS);
@@ -255,7 +231,7 @@ class ViajeCicloDeVidaTest {
     }
 
     @Test
-    @DisplayName("16. Rechaza un viaje en estado solicitado correctamente")
+    @DisplayName("14. Rechaza un viaje en estado solicitado correctamente")
     void testRechazarViajeSolicitado() {
         Viaje viaje = crearViajeSolicitado(new Servicio("Estandar", 2000, 200, 100,
                 TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS));

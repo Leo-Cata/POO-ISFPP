@@ -5,6 +5,8 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -14,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="labelSubtitulo" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="750.0" prefHeight="888.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.PanelConductorController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="750.0" prefHeight="888.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.PanelConductorController">
    <top>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
@@ -43,7 +45,7 @@
                   </VBox>
                   <VBox prefHeight="100.0" prefWidth="176.0">
                      <children>
-                        <Label fx:id="labelEstadoConductor" text="%driver.status" />
+                        <Label text="%driver.status" />
                         <Label fx:id="labelEstadoConductor" prefHeight="17.0" prefWidth="172.0" text="Label">
                            <VBox.margin>
                               <Insets right="20.0" />
@@ -170,11 +172,18 @@
                               </HBox>
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
-                                    <Label text="%driver.vehicle.category" />
+                                    <Label text="%driver.vehicle.max.category" />
                                     <Label fx:id="labelCategoriaVehiculo" text="Label">
                                        <padding>
                                           <Insets left="180.0" />
                                        </padding></Label>
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" prefHeight="45.0" prefWidth="200.0" spacing="12.0">
+                                 <children>
+                                    <Label text="%driver.vehicle.active.category" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <ComboBox fx:id="comboCategoriaActiva" prefWidth="150.0" />
                                  </children>
                               </HBox>
                            </children>
@@ -206,7 +215,7 @@
                                  </font>
                               </Label>
                               <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-                              <Label fx:id="labelEstadoViaje" text="%driver.trip.status">
+                              <Label text="%driver.trip.status">
                                  <HBox.margin>
                                     <Insets right="20.0" />
                                  </HBox.margin></Label>
@@ -303,6 +312,27 @@
                      </children>
                   </VBox>
                   <Label fx:id="labelSinViaje" alignment="CENTER" prefHeight="17.0" prefWidth="1001.0" text="%driver.trip.noActive" />
+                  <VBox prefHeight="300.0" prefWidth="100.0" spacing="10.0">
+                     <children>
+                        <Label text="%driver.history.title">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Label>
+                        <TableView fx:id="tablaHistorial" prefHeight="260.0" prefWidth="960.0">
+                           <columns>
+                              <TableColumn fx:id="colFechaHistorial" prefWidth="120.0" text="%driver.history.column.date" />
+                              <TableColumn fx:id="colClienteHistorial" prefWidth="120.0" text="%driver.history.column.client" />
+                              <TableColumn fx:id="colServicioHistorial" prefWidth="100.0" text="%driver.history.column.service" />
+                              <TableColumn fx:id="colOrigenHistorial" prefWidth="130.0" text="%driver.history.column.origin" />
+                              <TableColumn fx:id="colDestinoHistorial" prefWidth="130.0" text="%driver.history.column.destination" />
+                              <TableColumn fx:id="colEstadoHistorial" prefWidth="100.0" text="%driver.history.column.status" />
+                              <TableColumn fx:id="colCostoHistorial" prefWidth="90.0" text="%driver.history.column.amount" />
+                              <TableColumn fx:id="colCalificacionHistorial" prefWidth="120.0" text="%driver.history.column.rating" />
+                           </columns>
+                        </TableView>
+                     </children>
+                  </VBox>
                </children>
             </VBox>
          </content>

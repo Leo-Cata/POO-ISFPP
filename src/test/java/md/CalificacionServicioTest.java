@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import md.logica.CalificacionServicio;
 import md.modelo.CalificacionViaje;
 import md.modelo.CategoriaVehiculo;
+import md.modelo.EstadoConductor;
 import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
 import md.modelo.Servicio;
@@ -45,6 +46,7 @@ class CalificacionServicioTest {
 
         conductor.altaConductor("LIC-123", vehiculo);
         conductor.cambiarRolActivo(RolUsuario.CONDUCTOR);
+        conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);
 
         Servicio servicio = new Servicio("Estandar",2000,200,100,TipoVehiculo.AUTO,CategoriaVehiculo.ESTANDAR,
                 TipoServicio.PASAJEROS);
@@ -65,7 +67,8 @@ class CalificacionServicioTest {
 
         calificacionServicio.calificarComoCliente(cliente, viaje, CalificacionViaje.MUY_BUENO);
 
-        assertEquals(CalificacionViaje.MUY_BUENO,viaje.getCalificacionCliente());
+        assertEquals(CalificacionViaje.MUY_BUENO,
+                calificacionServicio.obtenerCalificacionCliente(viaje));
     }
 
     @Test
@@ -74,7 +77,8 @@ class CalificacionServicioTest {
 
         calificacionServicio.calificarComoConductor(conductor, viaje, CalificacionViaje.EXCELENTE);
 
-        assertEquals(CalificacionViaje.EXCELENTE,viaje.getCalificacionConductor());
+        assertEquals(CalificacionViaje.EXCELENTE,
+                calificacionServicio.obtenerCalificacionConductor(viaje));
     }
 
     @Test
@@ -160,49 +164,85 @@ class CalificacionServicioTest {
     void testRegistrarCalificacionesEnHistorial() {
 
         calificacionServicio.calificarComoCliente(cliente, viaje, CalificacionViaje.MUY_BUENO);
-
         calificacionServicio.calificarComoConductor(conductor, viaje, CalificacionViaje.BUENO);
 
-        viaje.finalizar(LocalDateTime.now(),viaje.getCalificacionCliente(),viaje.getCalificacionConductor());
+        viaje.finalizar(LocalDateTime.now(),
+                calificacionServicio.obtenerCalificacionCliente(viaje),
+                calificacionServicio.obtenerCalificacionConductor(viaje));
 
         calificacionServicio.registrarCalificacionesEnHistorial(viaje);
 
-        assertEquals(CalificacionViaje.BUENO,cliente.getCliente().getCalificaciones().get(0));
-
-        assertEquals(CalificacionViaje.MUY_BUENO,conductor.getConductor().getCalificaciones().get(0));
+        // No se consulta la lista interna del modelo: se verifica el historial
+        // mediante los promedios expuestos por CalificacionServicio.
+        assertEquals(3.0, calificacionServicio.calcularPromedioCliente(cliente.getCliente()), 0.0001);
+        assertEquals(4.0, calificacionServicio.calcularPromedioConductor(conductor.getConductor()), 0.0001);
     }
 
     @Test
-    @DisplayName("10. Las calificaciones pendientes se completan con NO_CALIFICADO")
+    @DisplayName("10. Una calificacion pendiente queda como NO_CALIFICADO al finalizar")
     void testCompletarCalificacionesPendientes() {
 
         calificacionServicio.calificarComoCliente(cliente, viaje, CalificacionViaje.MUY_BUENO);
 
-        calificacionServicio.completarCalificacionesPendientes(viaje);
+        // Si el conductor no califica, el servicio devuelve NO_CALIFICADO por defecto.
+        assertEquals(CalificacionViaje.NO_CALIFICADO,
+                calificacionServicio.obtenerCalificacionConductor(viaje));
 
-        assertEquals(CalificacionViaje.NO_CALIFICADO,viaje.getCalificacionConductor());
-
-        viaje.finalizar(LocalDateTime.now(),viaje.getCalificacionCliente(),viaje.getCalificacionConductor());
+        viaje.finalizar(LocalDateTime.now(),
+                calificacionServicio.obtenerCalificacionCliente(viaje),
+                calificacionServicio.obtenerCalificacionConductor(viaje));
 
         calificacionServicio.registrarCalificacionesEnHistorial(viaje);
 
-        assertEquals(0.0,calificacionServicio.calcularPromedioCliente(cliente.getCliente()),0.0001);
+        // La calificacion del cliente la recibe el conductor; el cliente no recibió ninguna.
+        assertEquals(0.0, calificacionServicio.calcularPromedioCliente(cliente.getCliente()), 0.0001);
+        assertEquals(4.0, calificacionServicio.calcularPromedioConductor(conductor.getConductor()), 0.0001);
     }
 
     @Test
     @DisplayName("11. El promedio se calcula sin considerar NO_CALIFICADO")
     void testCalcularPromedios() {
 
-        cliente.getCliente().agregarCalificacion(CalificacionViaje.BUENO);
-        cliente.getCliente().agregarCalificacion(CalificacionViaje.EXCELENTE);
+        // Primer viaje: el cliente recibe BUENO y el conductor recibe REGULAR.
+        calificacionServicio.calificarComoCliente(cliente, viaje, CalificacionViaje.REGULAR);
+        calificacionServicio.calificarComoConductor(conductor, viaje, CalificacionViaje.BUENO);
+        finalizarYRegistrar(viaje);
 
-        conductor.getConductor().agregarCalificacion(CalificacionViaje.REGULAR);
-        conductor.getConductor().agregarCalificacion(CalificacionViaje.MUY_BUENO);
-        conductor.getConductor().agregarCalificacion(CalificacionViaje.NO_CALIFICADO);
+        // Segundo viaje: se agregan EXCELENTE al cliente y MUY_BUENO al conductor.
+        Viaje segundoViaje = crearViajeIniciado(cliente, conductor);
+        calificacionServicio.calificarComoCliente(cliente, segundoViaje, CalificacionViaje.MUY_BUENO);
+        calificacionServicio.calificarComoConductor(conductor, segundoViaje, CalificacionViaje.EXCELENTE);
+        finalizarYRegistrar(segundoViaje);
 
-        assertEquals(4.0,calificacionServicio.calcularPromedioCliente(cliente.getCliente()),0.0001);
+        // Tercer viaje sin calificaciones: NO_CALIFICADO no debe alterar los promedios.
+        Viaje tercerViaje = crearViajeIniciado(cliente, conductor);
+        finalizarYRegistrar(tercerViaje);
 
-        assertEquals(3.0,calificacionServicio.calcularPromedioConductor(conductor.getConductor()),0.0001);
+        assertEquals(4.0, calificacionServicio.calcularPromedioCliente(cliente.getCliente()), 0.0001);
+        assertEquals(3.0, calificacionServicio.calcularPromedioConductor(conductor.getConductor()), 0.0001);
+    }
+
+    /** Finaliza el viaje con las calificaciones registradas (o NO_CALIFICADO por defecto)
+     * y las incorpora a los historiales.
+     */
+    private void finalizarYRegistrar(Viaje viaje) {
+        viaje.finalizar(LocalDateTime.now(),
+                calificacionServicio.obtenerCalificacionCliente(viaje),
+                calificacionServicio.obtenerCalificacionConductor(viaje));
+        calificacionServicio.registrarCalificacionesEnHistorial(viaje);
+    }
+
+    /** Crea un nuevo viaje iniciado con los mismos participantes de la prueba. */
+    private Viaje crearViajeIniciado(Usuario cliente, Usuario conductor) {
+        Servicio servicio = new Servicio("Estandar", 2000, 200, 100,
+                TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR, TipoServicio.PASAJEROS);
+        Viaje nuevoViaje = new Viaje(cliente,
+                new Ubicacion(-42.76, -65.03),
+                new Ubicacion(-42.77, -65.04), servicio);
+        nuevoViaje.solicitar(LocalDateTime.now());
+        nuevoViaje.aceptar(LocalDateTime.now(), conductor);
+        nuevoViaje.iniciar(LocalDateTime.now());
+        return nuevoViaje;
     }
 
     @Test

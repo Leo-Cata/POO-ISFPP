@@ -22,10 +22,15 @@ import md.rutas.api.RutaNoDisponibleException;
 class ValidacionUbicacionesTest {
 
     private PlanificadorFalso motor;
+    private ValidacionUbicaciones validador;
 
     @BeforeEach
     void setUp() {
         motor = new PlanificadorFalso();
+        validador = new ValidacionUbicaciones(
+                CargarParametros.getToleranciaAjusteMetros(),
+                CargarParametros.getLatitudMin(), CargarParametros.getLatitudMax(),
+                CargarParametros.getLongitudMin(), CargarParametros.getLongitudMax());
     }
 
     // Ubicación calculada a partir de los límites configurados del proyecto.
@@ -72,7 +77,7 @@ class ValidacionUbicacionesTest {
 
         motor.respuesta = Optional.of(ajustada);
 
-        Ubicacion resultado = ValidacionUbicaciones.validarYAjustar(candidata,motor);
+        Ubicacion resultado = validador.validarYAjustar(candidata,motor);
 
         assertSame(ajustada, resultado);
         assertEquals(1, motor.llamadas);
@@ -82,7 +87,7 @@ class ValidacionUbicacionesTest {
     @Test
     @DisplayName("2. Rechaza una ubicación nula")
     void testUbicacionNula() {
-        assertThrows(IllegalArgumentException.class,() -> ValidacionUbicaciones.validarYAjustar(null, motor));
+        assertThrows(IllegalArgumentException.class,() -> validador.validarYAjustar(null, motor));
 
         assertEquals(0, motor.llamadas);
     }
@@ -90,7 +95,7 @@ class ValidacionUbicacionesTest {
     @Test
     @DisplayName("3. Rechaza un motor vial nulo")
     void testMotorNulo() {
-        assertThrows(IllegalArgumentException.class,() -> ValidacionUbicaciones.validarYAjustar(ubicacionCentral(),null)
+        assertThrows(IllegalArgumentException.class,() -> validador.validarYAjustar(ubicacionCentral(),null)
         );
 
         assertEquals(0, motor.llamadas);
@@ -101,7 +106,7 @@ class ValidacionUbicacionesTest {
     void testUbicacionFueraDelArea() {
         Ubicacion fueraDelArea = new Ubicacion(CargarParametros.getLatitudMax() + 1,ubicacionCentral().getLongitud());
 
-        assertThrows(IllegalArgumentException.class,() -> ValidacionUbicaciones.validarYAjustar(fueraDelArea,motor));
+        assertThrows(IllegalArgumentException.class,() -> validador.validarYAjustar(fueraDelArea,motor));
 
         assertEquals(0, motor.llamadas);
     }
@@ -111,7 +116,7 @@ class ValidacionUbicacionesTest {
     void testNoEncuentraCalleCercana() {
         motor.respuesta = Optional.empty();
 
-        assertThrows(IllegalArgumentException.class,() -> ValidacionUbicaciones.validarYAjustar(ubicacionCentral(),motor)
+        assertThrows(IllegalArgumentException.class,() -> validador.validarYAjustar(ubicacionCentral(),motor)
         );
 
         assertEquals(1, motor.llamadas);
@@ -121,7 +126,7 @@ class ValidacionUbicacionesTest {
     @DisplayName("6. Rechaza una respuesta nula del motor vial")
     void testRespuestaNulaDelMotor() {motor.respuesta = null;
 
-        assertThrows(IllegalStateException.class,() -> ValidacionUbicaciones.validarYAjustar(ubicacionCentral(),motor)
+        assertThrows(IllegalStateException.class,() -> validador.validarYAjustar(ubicacionCentral(),motor)
         );
 
         assertEquals(1, motor.llamadas);
@@ -134,7 +139,7 @@ class ValidacionUbicacionesTest {
 
         motor.respuesta = Optional.of(ajustadaFueraDelArea);
 
-        assertThrows(IllegalArgumentException.class,() -> ValidacionUbicaciones.validarYAjustar(ubicacionCentral(),motor));
+        assertThrows(IllegalArgumentException.class,() -> validador.validarYAjustar(ubicacionCentral(),motor));
     }
 
     @Test
@@ -142,7 +147,7 @@ class ValidacionUbicacionesTest {
     void testCoordenadasNoFinitas() {
         Ubicacion invalida = new Ubicacion(Double.NaN,ubicacionCentral().getLongitud());
 
-        assertThrows(IllegalArgumentException.class,() -> ValidacionUbicaciones.validarYAjustar(invalida,motor));
+        assertThrows(IllegalArgumentException.class,() -> validador.validarYAjustar(invalida,motor));
 
         assertEquals(0, motor.llamadas);
     }

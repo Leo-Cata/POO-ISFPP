@@ -1,14 +1,24 @@
 package md.ui.impl.javafx.controller;
 
-import java.text.NumberFormat;
+import java.text.NumberFormat; 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextInputDialog;
 import javafx.util.StringConverter;
 import javafx.scene.Node;
@@ -20,6 +30,7 @@ import javafx.scene.control.ComboBox;
 import md.aplicacion.ContextoAplicacion;
 import md.logica.GestorViajes;
 import md.modelo.CalificacionViaje;
+import md.modelo.CategoriaVehiculo;
 import md.modelo.Conductor;
 import md.modelo.EstadoConductor;
 import md.modelo.EstadoViaje;
@@ -32,6 +43,7 @@ import md.modelo.Viaje;
 import md.ui.impl.javafx.controller.util.AlertaUtil;
 import md.ui.impl.javafx.util.NavegadorVistas;
 import md.modelo.TipoServicio;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class PanelConductorController {
@@ -64,6 +76,12 @@ public class PanelConductorController {
 
 	@FXML
 	private Label labelCategoriaVehiculo;
+	@FXML
+	private ComboBox<CategoriaVehiculo> comboCategoriaActiva;
+
+	private boolean actualizandoSeleccionVehiculo;
+	private boolean actualizandoSeleccionCategoria;
+
 
 	@FXML
 	private Label labelServiciosVehiculo;
@@ -114,6 +132,37 @@ public class PanelConductorController {
 	@FXML
 	private Label labelSinViaje;
 
+	// Importe de cada viaje del historial, calculado con su cotización al refrescar la tabla
+	private final Map<UUID, String> importesHistorial = new HashMap<>();
+
+	// Historial de viajes del conductor
+	@FXML
+	private TableView<Viaje> tablaHistorial;
+
+	@FXML
+	private TableColumn<Viaje, String> colFechaHistorial;
+
+	@FXML
+	private TableColumn<Viaje, String> colClienteHistorial;
+
+	@FXML
+	private TableColumn<Viaje, String> colServicioHistorial;
+
+	@FXML
+	private TableColumn<Viaje, String> colOrigenHistorial;
+
+	@FXML
+	private TableColumn<Viaje, String> colDestinoHistorial;
+
+	@FXML
+	private TableColumn<Viaje, String> colEstadoHistorial;
+
+	@FXML
+	private TableColumn<Viaje, String> colCostoHistorial;
+
+	@FXML
+	private TableColumn<Viaje, String> colCalificacionHistorial;
+
 	// Conductor que inició sesión
 	private Conductor conductorActual;
 
@@ -133,6 +182,8 @@ public class PanelConductorController {
 		cargarDatosPersonales(usuario, conductorActual);
 
 		cargarVehiculos(conductorActual);
+
+		configurarTablaHistorial();
 
 		actualizarEstadoBotones();
 
@@ -465,49 +516,131 @@ public class PanelConductorController {
 
 	private void cargarVehiculos(Conductor conductor) {
 
-		comboVehiculos.getItems().clear();
-
-		for (Vehiculo vehiculo : conductor.getVehiculos()) {
-			comboVehiculos.getItems().add(vehiculo);
-		}
+		comboVehiculos.getItems().setAll(conductor.getVehiculos());
 
 		comboVehiculos.setConverter(new StringConverter<Vehiculo>() {
 
+			@Override
 			public String toString(Vehiculo vehiculo) {
-
-				if (vehiculo == null) {
-					return "";
-				}
-
-				return vehiculo.getModelo() + " - " + vehiculo.getPatente();
+				return vehiculo == null ? "" : vehiculo.getModelo() + " - " + vehiculo.getPatente();
 			}
 
+			@Override
 			public Vehiculo fromString(String texto) {
 				return null;
 			}
 		});
 
+		comboCategoriaActiva.setConverter(new StringConverter<CategoriaVehiculo>() {
+
+			@Override
+			public String toString(CategoriaVehiculo categoria) {
+				return categoria == null ? "" : categoria.name();
+			}
+
+			@Override
+			public CategoriaVehiculo fromString(String texto) {
+				return null;
+			}
+		});
+
 		Vehiculo vehiculoActivo = conductor.getVehiculoActivo();
-
 		if (vehiculoActivo != null) {
-
 			comboVehiculos.getSelectionModel().select(vehiculoActivo);
-
 			mostrarDatosVehiculo(vehiculoActivo);
 		}
 
+		configurarCategoriasDisponibles(vehiculoActivo);
+
 		comboVehiculos.valueProperty().addListener((observable, anterior, seleccionado) -> {
-
-			if (seleccionado != null) {
-
-				conductor.setVehiculoActivo(seleccionado);
-
-				conductor.setCategoriaVehiculoActivo(seleccionado.getCategoriaVehiculo());
-
-				mostrarDatosVehiculo(seleccionado);
+			if (actualizandoSeleccionVehiculo || seleccionado == null || seleccionado == anterior) {
+				return;
 			}
+
+			if (hayViajeActivo()) {
+				actualizandoSeleccionVehiculo = true;
+				comboVehiculos.getSelectionModel().select(anterior);
+				actualizandoSeleccionVehiculo = false;
+				mostrarErrorCambioConfiguracionVehiculo();
+				return;
+			}
+
+			conductor.setVehiculoActivo(seleccionado);
+			// Al cambiar de vehículo, se comienza ofreciendo su categoría máxima.
+			conductor.setCategoriaVehiculoActivo(seleccionado.getCategoriaVehiculo());
+			mostrarDatosVehiculo(seleccionado);
+			configurarCategoriasDisponibles(seleccionado);
 		});
+
+		comboCategoriaActiva.valueProperty().addListener((observable, anterior, seleccionada) -> {
+			if (actualizandoSeleccionCategoria || seleccionada == null) {
+				return;
+			}
+
+			Vehiculo activo = conductorActual.getVehiculoActivo();
+			if (hayViajeActivo() || activo == null
+					|| seleccionada.getValorNumerico() > activo.getCategoriaVehiculo().getValorNumerico()) {
+				actualizandoSeleccionCategoria = true;
+				comboCategoriaActiva.getSelectionModel().select(conductorActual.getCategoriaVehiculoActivo());
+				actualizandoSeleccionCategoria = false;
+				mostrarErrorCambioConfiguracionVehiculo();
+				return;
+			}
+
+			conductorActual.setCategoriaVehiculoActivo(seleccionada);
+		});
+
+		actualizarControlesVehiculo();
 	}
+
+	/** Carga únicamente las categorías de servicio que admite el vehículo activo. */
+	private void configurarCategoriasDisponibles(Vehiculo vehiculo) {
+
+		actualizandoSeleccionCategoria = true;
+		comboCategoriaActiva.getItems().clear();
+
+		if (vehiculo == null) {
+			comboCategoriaActiva.getSelectionModel().clearSelection();
+			comboCategoriaActiva.setDisable(true);
+			actualizandoSeleccionCategoria = false;
+			return;
+		}
+
+		List<CategoriaVehiculo> categoriasPermitidas = Arrays.stream(CategoriaVehiculo.values())
+				.filter(categoria -> categoria.getValorNumerico()
+						<= vehiculo.getCategoriaVehiculo().getValorNumerico())
+				.sorted(Comparator.comparingInt(CategoriaVehiculo::getValorNumerico))
+				.toList();
+
+		comboCategoriaActiva.getItems().setAll(categoriasPermitidas);
+
+		CategoriaVehiculo categoriaActual = conductorActual.getCategoriaVehiculoActivo();
+		if (categoriaActual == null || !categoriasPermitidas.contains(categoriaActual)) {
+			categoriaActual = vehiculo.getCategoriaVehiculo();
+			conductorActual.setCategoriaVehiculoActivo(categoriaActual);
+		}
+
+		comboCategoriaActiva.getSelectionModel().select(categoriaActual);
+		actualizandoSeleccionCategoria = false;
+	}
+
+	private boolean hayViajeActivo() {
+		return gestorViajes.consultarViajeActivoConductor(ContextoAplicacion.getUsuarioLogeado()) != null;
+	}
+
+	private void actualizarControlesVehiculo() {
+		boolean bloquear = hayViajeActivo();
+		comboVehiculos.setDisable(bloquear || comboVehiculos.getItems().isEmpty());
+		comboCategoriaActiva.setDisable(bloquear);
+	}
+
+	private void mostrarErrorCambioConfiguracionVehiculo() {
+		ResourceBundle msj = ContextoAplicacion.getMensajes();
+		AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING,
+				msj.getString("login.alert.attention"),
+				msj.getString("driver.vehicle.change.disabled"));
+	}
+
 
 	private void mostrarDatosVehiculo(Vehiculo vehiculo) {
 
@@ -604,9 +737,126 @@ public class PanelConductorController {
 		labelSinViaje.setVisible(!tieneViaje);
 		labelSinViaje.setManaged(!tieneViaje);
 
+		actualizarControlesVehiculo();
+		actualizarHistorial();
+
 		if (tieneViaje) {
 			cargarDatosViaje(viaje);
 		}
+	}
+
+	/** Configura las columnas de la tabla del historial de viajes. */
+	private void configurarTablaHistorial() {
+
+		ResourceBundle msj = ContextoAplicacion.getMensajes();
+		Locale locale = ContextoAplicacion.getLocale();
+		DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", locale);
+
+		colFechaHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
+				formatearFecha(fechaSolicitud(celda.getValue()), formatoFecha)));
+
+		colClienteHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
+				celda.getValue().getCliente() == null ? "—" : celda.getValue().getCliente().getNombre()));
+
+		colServicioHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
+				textoServicio(celda.getValue(), msj)));
+
+		colOrigenHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
+				formatearUbicacion(celda.getValue().getOrigen(), locale)));
+
+		colDestinoHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
+				formatearUbicacion(celda.getValue().getDestino(), locale)));
+
+		colEstadoHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
+				obtenerTextoEstadoViaje(celda.getValue().estadoActual())));
+
+		colCostoHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
+				importesHistorial.getOrDefault(celda.getValue().getId(), "—")));
+
+		colCalificacionHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
+				textoCalificacion(celda.getValue().getCalificacionCliente(), msj)));
+
+		tablaHistorial.setPlaceholder(new Label(msj.getString("driver.history.empty")));
+	}
+
+	/** Carga los viajes finalizados o cancelados del conductor, del más reciente al más antiguo. */
+	private void actualizarHistorial() {
+
+		List<Viaje> historial = new ArrayList<>();
+
+		for (Viaje viaje : conductorActual.getViajes()) {
+
+			EstadoViaje estado = viaje.estadoActual();
+
+			if (estado == EstadoViaje.FINALIZADO || estado == EstadoViaje.CANCELADO) {
+				historial.add(viaje);
+			}
+		}
+
+		historial.sort(Comparator.comparing((Viaje viaje) -> fechaSolicitud(viaje),
+				Comparator.nullsLast(Comparator.<LocalDateTime>reverseOrder())));
+
+		importesHistorial.clear();
+		for (Viaje viaje : historial) {
+			importesHistorial.put(viaje.getId(), calcularImporte(viaje));
+		}
+
+		tablaHistorial.getItems().setAll(historial);
+	}
+
+	/** Calcula el importe de un viaje con su cotización, porque el modelo no guarda el costo final. */
+	private String calcularImporte(Viaje viaje) {
+
+		try {
+			double costo = gestorViajes.obtenerCotizacion(viaje).costoTotal();
+			return "$ " + formatearNumero(costo, 2, ContextoAplicacion.getLocale());
+
+		} catch (RuntimeException e) {
+			// Si el viaje no puede cotizarse, la columna muestra un guion.
+			return "—";
+		}
+	}
+
+	/** Devuelve el tipo de servicio del viaje traducido al idioma actual. */
+	private String textoServicio(Viaje viaje, ResourceBundle msj) {
+
+		if (viaje.getServicio() == null || viaje.getServicio().getTipoServicio() == null) {
+			return "—";
+		}
+
+		return msj.getString(obtenerClaveServicio(viaje.getServicio().getTipoServicio()));
+	}
+
+	/** Devuelve la fecha en que se solicitó el viaje, tomada de su primer registro. */
+	private LocalDateTime fechaSolicitud(Viaje viaje) {
+
+		if (viaje.getRegistroViaje().isEmpty()) {
+			return null;
+		}
+
+		return viaje.getRegistroViaje().get(0).getFechaHora();
+	}
+
+	private String formatearFecha(LocalDateTime fecha, DateTimeFormatter formato) {
+
+		return fecha == null ? "—" : fecha.format(formato);
+	}
+
+	/** Traduce la calificación que recibió el conductor a su texto visible. */
+	private String textoCalificacion(CalificacionViaje calificacion, ResourceBundle msj) {
+
+		if (calificacion == null) {
+			return "—";
+		}
+
+		return switch (calificacion) {
+			case MALO -> msj.getString("calificacion.opcion.malo");
+			case REGULAR -> msj.getString("calificacion.opcion.regular");
+			case BUENO -> msj.getString("calificacion.opcion.bueno");
+			case MUY_BUENO -> msj.getString("calificacion.opcion.muy_bueno");
+			case EXCELENTE -> msj.getString("calificacion.opcion.excelente");
+			default -> "—";
+		};
 	}
 
 	private void cargarDatosViaje(Viaje viaje) {
