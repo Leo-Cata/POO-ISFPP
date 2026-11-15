@@ -8,7 +8,8 @@
     Los datos viales y los recursos de Leaflet se gestionan en el proyecto.
     Los comentarios explican la configuración existente; no la modifican.
 -->
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <!--
      Versión del formato de POM que utiliza Maven. No es la versión de la aplicación. 
     -->
@@ -255,7 +256,7 @@
             <scope>test</scope>
         </dependency>
 
- 
+
         <!--
         
                 profiles: variantes de la configuración Maven según el sistema operativo
@@ -437,7 +438,6 @@
                     <mainClass>${exec.mainClass}</mainClass>
                 </configuration>
             </plugin>
-
 
 
         </plugins>

@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import md.rutas.api.PlanificadorRutas;
-import md.config.CargarParametros;
 import md.modelo.CalificacionViaje;
 import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
@@ -33,6 +32,8 @@ public class GestorViajes {
 
 	private final ProbeHashMap<String, Usuario> usuariosRegistrados;
 	private final PlanificadorRutas motorVial;
+	private final double velocidadMediaKmH;
+	private final double costoCancelacionViajeAceptado;
 
 	/**
 	 * Construye el gestor con los usuarios registrados y el planificador de rutas.
@@ -42,13 +43,43 @@ public class GestorViajes {
 	 *                            recorridos.
 	 * @throws IllegalArgumentException si alguno de los parámetros es null.
 	 */
-	public GestorViajes(ProbeHashMap<String, Usuario> usuariosRegistrados, PlanificadorRutas motorVial) {
+	/**
+	 * Construye el gestor con los usuarios registrados, el planificador de rutas
+	 * y los parámetros necesarios para calcular cotizaciones y cancelaciones.
+	 *
+	 * @param usuariosRegistrados           usuarios disponibles en la aplicación.
+	 * @param motorVial                     planificador utilizado para calcular los
+	 *                                      recorridos.
+	 * @param velocidadMediaKmH             velocidad media utilizada para estimar
+	 *                                      la duración.
+	 * @param costoCancelacionViajeAceptado porcentaje aplicado al cancelar un viaje
+	 *                                      aceptado.
+	 * @throws IllegalArgumentException si algún parámetro no es válido.
+	 */
+	public GestorViajes(
+			ProbeHashMap<String, Usuario> usuariosRegistrados,
+			PlanificadorRutas motorVial,
+			double velocidadMediaKmH,
+			double costoCancelacionViajeAceptado) {
+
 		if (usuariosRegistrados == null || motorVial == null) {
 			throw new IllegalArgumentException("Los usuarios y el motor vial son obligatorios.");
 		}
 
+		if (!Double.isFinite(velocidadMediaKmH) || velocidadMediaKmH <= 0) {
+			throw new IllegalArgumentException("La velocidad media debe ser positiva.");
+		}
+
+		if (!Double.isFinite(costoCancelacionViajeAceptado)
+				|| costoCancelacionViajeAceptado < 0
+				|| costoCancelacionViajeAceptado > 1) {
+			throw new IllegalArgumentException("El costo de cancelación debe estar entre 0 y 1.");
+		}
+
 		this.usuariosRegistrados = usuariosRegistrados;
 		this.motorVial = motorVial;
+		this.velocidadMediaKmH = velocidadMediaKmH;
+		this.costoCancelacionViajeAceptado = costoCancelacionViajeAceptado;
 	}
 
 	/**
@@ -76,11 +107,7 @@ public class GestorViajes {
 			throw new IllegalArgumentException("El servicio, el origen y el destino son obligatorios.");
 		}
 
-		double velocidadMedia = CargarParametros.getVelocidadMediaKmH();
-
-		if (!Double.isFinite(velocidadMedia) || velocidadMedia <= 0) {
-			throw new IllegalStateException("La velocidad media configurada no es válida.");
-		}
+		double velocidadMedia = velocidadMediaKmH;
 
 		double distanciaKm = origen.calcularDistancia(destino);
 		double duracionMinutos = (distanciaKm / velocidadMedia) * 60.0;
@@ -445,7 +472,7 @@ public class GestorViajes {
 			throw new IllegalStateException("No se encontró la cotización del viaje.");
 		}
 
-		double costoCancelacionCliente = CargarParametros.getCostoCancelacionViajeAceptado();
+		double costoCancelacionCliente = costoCancelacionViajeAceptado;
 
 		if (estadoAnterior == EstadoViaje.ACEPTADO) {
 			if (usuario.getRolActivo() == RolUsuario.CLIENTE) {

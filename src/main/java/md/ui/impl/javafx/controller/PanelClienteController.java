@@ -167,8 +167,8 @@ public class PanelClienteController {
 	private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
 		Ubicacion sobreCalle;
 		try {
-			sobreCalle = ValidacionUbicaciones.validarYAjustar(ubicacionClick, ContextoAplicacion.getMotorVial());
-
+			sobreCalle = ContextoAplicacion.getValidadorUbicaciones()
+					.validarYAjustar(ubicacionClick, ContextoAplicacion.getMotorVial());
 		} catch (Exception e) {
 			AlertaUtil.mostrarAlerta(resource.getString("client.alert.invalidLocation"), e.getMessage());
 			visualizador.activarSeleccion(tipo);

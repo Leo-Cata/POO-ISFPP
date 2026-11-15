@@ -26,17 +26,16 @@ public class AplicacionConsultas {
     public static void main(String[] args) throws IOException, DAOException {
 
         try {
-
-            // Seleccionar persistencia
-            DAOFactory persistencia = DAOLoader.getFactory();
-
-            // Preparar el contexto de la aplicación
-            ContextoAplicacion.inicializar(persistencia);
-
-            // Selecciona el idioma y pais
+            // Selecciona el idioma y país.
             String idioma = CargarParametros.getLanguage();
             String pais = CargarParametros.getCountry();
             ContextoAplicacion.inicializarIdioma(idioma, pais);
+
+            // Seleccionar persistencia.
+            DAOFactory persistencia = DAOLoader.getFactory();
+
+            // Preparar el contexto de la aplicación.
+            ContextoAplicacion.inicializar(persistencia);
 
             // Crear e iniciar Motor de UI configurado (JavaFX / CLI)
             UIEngine uiEngine = DAOLoader.crearUIEngine();

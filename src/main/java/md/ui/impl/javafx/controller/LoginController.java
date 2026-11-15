@@ -4,7 +4,6 @@ import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
@@ -30,7 +29,7 @@ public class LoginController {
 
 	private ProbeHashMap<String, Usuario> usuarios = new ProbeHashMap<>();
 
-	private final GestorViajes gestorViajes = ContextoAplicacion.getGestorViajes();
+	private GestorViajes gestorViajes;
 
 	/**
 	 * Inicializa la pantalla de ingreso: carga los usuarios disponibles en el
@@ -38,6 +37,8 @@ public class LoginController {
 	 * de conductor o cliente). Lo invoca JavaFX después de cargar el FXML.
 	 */
 	public void initialize() {
+		gestorViajes = ContextoAplicacion.getGestorViajes();
+
 		// chequea que hayan datos, guarda los usuarios y los pobla en el comboBox
 		if (ContextoAplicacion.getDatosIniciales() != null) {
 			usuarios = ContextoAplicacion.getDatosIniciales().getUsuarios();

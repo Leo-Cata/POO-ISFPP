@@ -15,6 +15,7 @@ public class GeneradorUbicacionesViales {
     private static final int MAX_INTENTOS = 100;
 
     private final PlanificadorRutas motorVial;
+    private final ValidacionUbicaciones validador;
     private final Random random;
 
     private final double latitudMin;
@@ -30,24 +31,20 @@ public class GeneradorUbicacionesViales {
      */
     public GeneradorUbicacionesViales(
             PlanificadorRutas motorVial,
+            ValidacionUbicaciones validador,
             double latitudMin,
             double latitudMax,
             double longitudMin,
             double longitudMax) {
 
-        if (motorVial == null) {
-            throw new IllegalArgumentException("El motor vial no puede ser null.");
+        if (motorVial == null || validador == null) {
+            throw new IllegalArgumentException("El motor vial y el validador son obligatorios.");
         }
 
-        if (!Double.isFinite(latitudMin) || !Double.isFinite(latitudMax)
-                || !Double.isFinite(longitudMin) || !Double.isFinite(longitudMax)
-                || latitudMin < -90 || latitudMax > 90
-                || longitudMin < -180 || longitudMax > 180
-                || latitudMin >= latitudMax || longitudMin >= longitudMax) {
-            throw new IllegalArgumentException("Los límites geográficos no son válidos.");
-        }
+        // Conservá acá las validaciones de los límites geográficos.
 
         this.motorVial = motorVial;
+        this.validador = validador;
         this.latitudMin = latitudMin;
         this.latitudMax = latitudMax;
         this.longitudMin = longitudMin;
@@ -73,8 +70,7 @@ public class GeneradorUbicacionesViales {
             Ubicacion candidata = new Ubicacion(latitud, longitud);
 
             try {
-                return ValidacionUbicaciones.validarYAjustar(candidata, motorVial);
-
+                return validador.validarYAjustar(candidata, motorVial);
             } catch (IllegalArgumentException e) {
                 // La candidata no encontró una calle válida.
                 // El ciclo continúa con un nuevo intento.

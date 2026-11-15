@@ -13,7 +13,6 @@ import md.modelo.Usuario;
 import md.modelo.Viaje;
 import md.ui.api.UIEngine;
 import net.datastructures.Entry;
-import md.logica.ValidacionUbicaciones;
 import md.modelo.Servicio;
 import md.modelo.Ubicacion;
 import md.rutas.api.RutaNoDisponibleException;
@@ -261,13 +260,9 @@ public class CommandLineInterface implements UIEngine {
             // Generar y validar las ubicaciones de esta primera versión.
             System.out.println(msj.getString("viaje.simulando_ubicaciones") + "...");
 
-            Ubicacion origen = ValidacionUbicaciones.validarYAjustar(
-                    ContextoAplicacion.getGeneradorUbicaciones().generar(),
-                    ContextoAplicacion.getMotorVial());
+            Ubicacion origen = ContextoAplicacion.getGeneradorUbicaciones().generar();
 
-            Ubicacion destino = ValidacionUbicaciones.validarYAjustar(
-                    ContextoAplicacion.getGeneradorUbicaciones().generar(),
-                    ContextoAplicacion.getMotorVial());
+            Ubicacion destino = ContextoAplicacion.getGeneradorUbicaciones().generar();
 
             // Obtener los servicios disponibles.
             List<Servicio> servicios = ContextoAplicacion.getDatosIniciales().getServicios();

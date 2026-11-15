@@ -47,12 +47,11 @@ public class AplicacionSimulacion {
             ContextoAplicacion.inicializar(persistencia);
 
             var datos = ContextoAplicacion.getDatosIniciales();
-
-            // Preparamos las ubicaciones y el estado de los conductores.
+            // Preparamos el estado de los conductores para la simulación.
+            // Las ubicaciones de sus vehículos ya fueron asignadas por ContextoAplicacion.
             GeneradorUbicacionesViales generadorUbicaciones = ContextoAplicacion.getGeneradorUbicaciones();
 
-            InicializadorEscenario inicializador = new InicializadorEscenario(generadorUbicaciones);
-
+            InicializadorEscenario inicializador = new InicializadorEscenario();
             inicializador.inicializar(datos.getUsuarios());
 
             GestorViajes gestorViajes = ContextoAplicacion.getGestorViajes();
