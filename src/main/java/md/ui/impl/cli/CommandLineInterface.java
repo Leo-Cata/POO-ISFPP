@@ -15,7 +15,6 @@ import md.ui.api.UIEngine;
 import net.datastructures.Entry;
 import md.modelo.Servicio;
 import md.modelo.Ubicacion;
-import md.rutas.api.RutaNoDisponibleException;
 import md.modelo.CalificacionViaje;
 import md.modelo.EstadoViaje;
 
@@ -351,47 +350,20 @@ public class CommandLineInterface implements UIEngine {
 
             // 5. Confirmada la solicitud: buscar conductor y calcular rutas.
             System.out.println("\n" + msj.getString("viaje.buscando_conductor") + "...");
+            Viaje viaje = gestorViajes.registrarSolicitudViaje(
+                    usuario, servicioSeleccionado, origen, destino);
 
-            GestorViajes.ResultadoSolicitud resultado = gestorViajes.procesarSolicitudViaje(usuario,
-                    servicioSeleccionado, origen, destino);
-
-            if (resultado == null) {
+            if (viaje == null) {
                 System.out.println(msj.getString("viaje.error.sin_conductores"));
                 return;
             }
 
-            // 6. Mostrar la asignación y los dos tramos viales.
-            System.out.println("\n" + msj.getString("viaje.conductor_encontrado")
-                    + ": " + resultado.conductor().getNombre());
-
-            String km = msj.getString("viaje.unidad.km");
-            String min = msj.getString("viaje.unidad.min");
-
-            System.out.println("\n--- "
-                    + msj.getString("viaje.resultados_ruta") + " ---");
-
-            System.out.printf("%s: %.2f %s (%.0f %s)%n",
-                    msj.getString("viaje.ruta.acercamiento"),
-                    resultado.rutas().acercamiento().distanciaKm(),
-                    km,
-                    Math.ceil(resultado.rutas().acercamiento().duracionMinutos()),
-                    min);
-
-            System.out.printf("%s: %.2f %s (%.0f %s)%n",
-                    msj.getString("viaje.ruta.traslado"),
-                    resultado.rutas().traslado().distanciaKm(),
-                    km,
-                    Math.ceil(resultado.rutas().traslado().duracionMinutos()),
-                    min);
+            System.out.println("\n" + msj.getString("viaje.estado")
+                    + ": " + viaje.estadoActual());
 
             System.out.printf("%s: $%.2f%n",
                     msj.getString("viaje.costo_estimado"),
-                    resultado.cotizacion().costoTotal());
-
-            System.out.println(msj.getString("viaje.estado") + ": " + resultado.viaje().estadoActual());
-
-        } catch (RutaNoDisponibleException e) {
-            System.out.println("\n" + msj.getString("viaje.error.ruta_no_disponible"));
+                    cotizacion.costoTotal());
         } catch (IllegalArgumentException | IllegalStateException e) {
             System.out.println("\n[" + msj.getString("login.alert.attention")
                     + "] " + e.getMessage());

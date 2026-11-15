@@ -1,7 +1,5 @@
 package md.ui.impl.javafx.controller;
 
-import java.text.MessageFormat;
-import java.util.List;
 import java.util.ResourceBundle;
 
 import javafx.concurrent.Task;
@@ -16,7 +14,6 @@ import javafx.scene.web.WebView;
 import javafx.util.StringConverter;
 import md.aplicacion.ContextoAplicacion;
 import md.logica.GestorViajes;
-import md.logica.ValidacionUbicaciones;
 import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
 import md.modelo.Servicio;
@@ -24,11 +21,12 @@ import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Vehiculo;
 import md.modelo.Viaje;
-import md.rutas.api.RutaNoDisponibleException;
 import md.ui.api.VisualizadorMapa;
 import md.ui.impl.javafx.controller.util.AlertaUtil;
 import md.ui.impl.javafx.map.VisualizadorRutasLeaflet;
 import md.ui.impl.javafx.util.NavegadorVistas;
+import javafx.application.Platform;
+import md.logica.GestorCicloViajeCliente;
 
 public class PanelClienteController {
 	@FXML
@@ -70,10 +68,10 @@ public class PanelClienteController {
 	private VisualizadorMapa visualizador;
 	private boolean cancelacionBoolean = false;
 
-	// gesto de viaje para delegar todo el procesamiento a la capa lógica.
+	// Gestores encargados del procesamiento del viaje.
 	private GestorViajes gestor;
+	private GestorCicloViajeCliente cicloViajeCliente;
 	private GestorViajes.Cotizacion cotizacion;
-	private GestorViajes.ResultadoSolicitud resultadoSolicitud;
 
 	// variables de ubicacion para cotizar/solicitar
 	private Ubicacion origenActual;
@@ -127,6 +125,9 @@ public class PanelClienteController {
 		// Obtiene el gestor de viajes compartido por la aplicación.
 		gestor = ContextoAplicacion.getGestorViajes();
 
+		// Crea el coordinador del ciclo temporal del viaje.
+		cicloViajeCliente = new GestorCicloViajeCliente(gestor);
+
 		// Recupera el usuario logueado y su posible viaje activo.
 		cliente = ContextoAplicacion.getUsuarioLogeado();
 		viajeActual = cliente != null ? gestor.consultarViajeActivo(cliente) : null;
@@ -136,7 +137,6 @@ public class PanelClienteController {
 
 		// Muestra la información si el cliente tiene un viaje activo.
 		if (viajeActual != null) {
-			asignarConductorInfo();
 			mostrarOcultarInfoViaje(true);
 		} else {
 			mostrarOcultarInfoViaje(false);
@@ -162,6 +162,7 @@ public class PanelClienteController {
 			clienteBotonCancelacionPagar.setVisible(true);
 			clienteBotonCancelacionPagar.setDisable(false);
 		}
+
 	}
 
 	private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
@@ -247,85 +248,100 @@ public class PanelClienteController {
 	}
 
 	/**
-	 * Solicita el viaje cotizado. Exige que no haya deuda pendiente y que el viaje
-	 * haya sido cotizado. El cálculo de rutas y la asignación del conductor se
-	 * ejecutan en un hilo virtual para no congelar la ventana; al terminar, se
-	 * dibujan las rutas y se muestran los datos del conductor, o se informa el
-	 * error (sin conductor, sin ruta, etc.).
+	 * Registra el viaje solicitado por el cliente.
+	 * Comprueba que no existan deudas pendientes y que la solicitud
+	 * haya sido cotizada. El registro se realiza en un hilo de fondo
+	 * para no bloquear la interfaz.
+	 *
+	 * El viaje queda inicialmente en estado SOLICITADO.
 	 *
 	 * @param event evento del botón.
 	 */
 	@FXML
 	void handleSolicitarViaje(ActionEvent event) {
+
 		if (deuda) {
 			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
 					resource.getString("client.request.debt.text"));
 			return;
 		}
-		// chequea que se haya cotizado primero el viaje
-		if (cotizacion == null || origenActual == null || destinoActual == null || servicio == null) {
+
+		// Verificamos que se haya cotizado el viaje.
+		if (cotizacion == null || origenActual == null
+				|| destinoActual == null || servicio == null) {
+
 			botonClienteSolicitar.setDisable(true);
+
 			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
 					resource.getString("client.request.quote.required"));
 			return;
 		}
-		// Valores capturados en el hilo de JavaFX: el hilo de fondo no lee campos de la
-		// UI
+
+		// Capturamos los datos antes de iniciar el hilo de fondo.
 		Usuario clienteActual = cliente;
 		Servicio servicioActual = servicio;
 		Ubicacion origen = origenActual;
 		Ubicacion destino = destinoActual;
 
-		// evita pedir dos veces el mismo viaje mientras se calcula
 		botonClienteSolicitar.setDisable(true);
 
-		// El cálculo de rutas (GraphHopper) corre en un hilo de fondo para no congelar
-		// la ventana
-		Task<GestorViajes.ResultadoSolicitud> tarea = new Task<>() {
+		// Registra la solicitud sin asignar todavía un conductor.
+		Task<Viaje> tarea = new Task<>() {
+
 			@Override
-			protected GestorViajes.ResultadoSolicitud call() throws Exception {
-				return gestor.procesarSolicitudViaje(clienteActual, servicioActual, origen, destino);
+			protected Viaje call() throws Exception {
+				return gestor.registrarSolicitudViaje(
+						clienteActual, servicioActual, origen, destino);
 			}
 		};
 
-		// Se ejecuta en el hilo de JavaFX: acá sí se puede tocar la interfaz
+		// Se ejecuta en el hilo de JavaFX.
 		tarea.setOnSucceeded(e -> {
-			resultadoSolicitud = tarea.getValue();
 
-			// No se encontró ningún conductor compatible.
-			if (resultadoSolicitud == null) {
-				AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-						resource.getString("client.error.noDriver"));
-				botonClienteSolicitar.setDisable(false);
-				return;
-			}
-			viajeActual = resultadoSolicitud.viaje();
+			viajeActual = tarea.getValue();
 
-			// El vehículo es el que realmente quedó asignado al viaje.
-			Vehiculo vehiculo = resultadoSolicitud.viaje().getVehiculo();
-			if (vehiculo == null || vehiculo.getUbicacion() == null) {
+			if (viajeActual == null) {
 				botonClienteSolicitar.setDisable(false);
-				AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
-						resource.getString("client.request.vehicle.location.missing"));
+
+				AlertaUtil.mostrarAlerta(
+						resource.getString("login.alert.attention"),
+						"No se pudo registrar la solicitud del viaje.");
 				return;
 			}
 
-			// Mostramos los recorridos reales calculados por GestorViajes.
-			visualizador.mostrar(resultadoSolicitud.rutas(), vehiculo.getUbicacion(), origen, destino);
+			// La cotización ya fue utilizada.
+			cotizacion = null;
 
-			AlertaUtil.mostrarAlerta(resource.getString("client.request.success.title"), MessageFormat.format(
-					resource.getString("client.request.success.message"), resultadoSolicitud.conductor().getNombre()));
-			asignarConductorInfo();
+			// Mostramos inicialmente el estado SOLICITADO.
 			mostrarOcultarInfoViaje(true);
+
+			// Inicia el ciclo temporal del viaje.
+			cicloViajeCliente.iniciar(
+					viajeActual,
+					viaje -> Platform.runLater(() -> {
+						viajeActual = viaje;
+						mostrarOcultarInfoViaje(true);
+
+						// Si no se encontró conductor, permite realizar otra solicitud.
+						if (viaje.estadoActual() == EstadoViaje.RECHAZADO) {
+							botonClienteSolicitar.setDisable(false);
+						}
+					}),
+					error -> Platform.runLater(() -> AlertaUtil.mostrarAlerta(
+							resource.getString("login.alert.attention"),
+							error.getMessage())));
 		});
 
-		// Se ejecuta en el hilo de JavaFX si el cálculo lanzó una excepción
+		// Se ejecuta si ocurrió un error al registrar la solicitud.
 		tarea.setOnFailed(e -> {
+
 			botonClienteSolicitar.setDisable(false);
+
 			Throwable error = tarea.getException();
-			String mensaje = (error instanceof RutaNoDisponibleException) ? resource.getString("client.error.noRoute")
-					: error.getMessage();
-			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), mensaje);
+
+			AlertaUtil.mostrarAlerta(
+					resource.getString("login.alert.attention"),
+					error != null ? error.getMessage() : "Error al solicitar el viaje.");
 		});
 
 		Thread.ofVirtual().name("solicitud-viaje").start(tarea);
@@ -338,6 +354,8 @@ public class PanelClienteController {
 	 */
 	@FXML
 	void handleCerrarSesion(ActionEvent event) {
+
+		cicloViajeCliente.close();
 
 		ContextoAplicacion.setUsuarioLogeado(null);
 
@@ -413,12 +431,23 @@ public class PanelClienteController {
 	@FXML
 	void handleConfirmarCancelar() {
 		try {
-			// Se conserva la referencia al viaje antes de cancelarlo.
 			Viaje viaje = gestor.consultarViajeActivo(cliente);
+			String motivo = clienteTextfieldCancelar.getText();
 
-			if (viaje == null || !gestor.procesarCancelacionViaje(
-					cliente, clienteTextfieldCancelar.getText())) {
-				AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"),
+			if (viaje == null || motivo == null || motivo.isBlank()) {
+				AlertaUtil.mostrarAlerta(
+						resource.getString("client.unable.cancel.title"),
+						resource.getString("client.unable.cancel.text"));
+				return;
+			}
+
+			// Detiene las transiciones automáticas pendientes.
+			cicloViajeCliente.cancelar();
+
+			// Ejecuta la cancelación real del viaje.
+			if (!gestor.procesarCancelacionViaje(cliente, motivo)) {
+				AlertaUtil.mostrarAlerta(
+						resource.getString("client.unable.cancel.title"),
 						resource.getString("client.unable.cancel.text"));
 				return;
 			}
@@ -468,11 +497,33 @@ public class PanelClienteController {
 	}
 
 	private void asignarConductorInfo() {
-		if (viajeActual == null || viajeActual.getConductor() == null) {
+
+		if (viajeActual == null) {
 			return;
 		}
 
-		clienteConductorNom.setText(viajeActual.getConductor().getNombre());
+		// El estado siempre se muestra, independientemente de que haya conductor.
+		clienteViajeEstadoActual.setText(
+				obtenerTextoEstado(viajeActual.estadoActual()));
+
+		Usuario conductor = viajeActual.getConductor();
+
+		// Todavía no se asignó un conductor.
+		if (conductor == null) {
+			clienteConductorNom.setText("");
+			clienteVehiculoModelo.setText("");
+			clienteConductorPatente.setText("");
+
+			clienetDriver.setVisible(false);
+			clienteConductorNom.setVisible(false);
+			clienteConductorVehiculoTitulo.setVisible(false);
+			clienteVehiculoModelo.setVisible(false);
+			clienteConductorPatente.setVisible(false);
+
+			return;
+		}
+
+		clienteConductorNom.setText(conductor.getNombre());
 
 		Vehiculo vehiculo = viajeActual.getVehiculo();
 
@@ -481,19 +532,43 @@ public class PanelClienteController {
 			clienteConductorPatente.setText(vehiculo.getPatente());
 		}
 
-		clienteViajeEstadoActual.setText(obtenerTextoEstado(viajeActual.estadoActual()));
+		clienetDriver.setVisible(true);
+		clienteConductorNom.setVisible(true);
+		clienteConductorVehiculoTitulo.setVisible(true);
+		clienteVehiculoModelo.setVisible(true);
+		clienteConductorPatente.setVisible(true);
 	}
 
 	// funcion auxiliar para mostrar/ocultar los labels de los datos del viaje
 	private void mostrarOcultarInfoViaje(boolean mostrar) {
-		clienetDriver.setVisible(mostrar);
-		clienteConductorNom.setVisible(mostrar);
-		clienteConductorVehiculoTitulo.setVisible(mostrar);
-		clienteVehiculoModelo.setVisible(mostrar);
-		clienteConductorPatente.setVisible(mostrar);
-		clienteViajeEstadoActual.setVisible(mostrar);
-		clienteViajeEstadoTitulo.setVisible(mostrar);
-		clienteCancelarViaje.setVisible(mostrar);
+
+		if (!mostrar || viajeActual == null) {
+
+			clienetDriver.setVisible(false);
+			clienteConductorNom.setVisible(false);
+			clienteConductorVehiculoTitulo.setVisible(false);
+			clienteVehiculoModelo.setVisible(false);
+			clienteConductorPatente.setVisible(false);
+
+			clienteViajeEstadoActual.setVisible(false);
+			clienteViajeEstadoTitulo.setVisible(false);
+			clienteCancelarViaje.setVisible(false);
+
+			return;
+		}
+
+		clienteViajeEstadoActual.setVisible(true);
+		clienteViajeEstadoTitulo.setVisible(true);
+
+		EstadoViaje estado = viajeActual.estadoActual();
+
+		boolean puedeCancelar = estado == EstadoViaje.SOLICITADO
+				|| estado == EstadoViaje.ACEPTADO
+				|| estado == EstadoViaje.INICIADO;
+
+		clienteCancelarViaje.setVisible(puedeCancelar);
+
+		asignarConductorInfo();
 	}
 
 	// funcion auxiliar para limpiar todos los datos del mapa
@@ -501,7 +576,6 @@ public class PanelClienteController {
 		borrarPunto("destino");
 		borrarPunto("origen");
 		visualizador.limpiarRutas();
-		resultadoSolicitud = null;
 		viajeActual = null;
 		cancelacionBoolean = false;
 		cotizacion = null;

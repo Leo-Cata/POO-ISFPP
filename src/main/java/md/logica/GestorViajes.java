@@ -35,6 +35,10 @@ public class GestorViajes {
 	private final double velocidadMediaKmH;
 	private final double costoCancelacionViajeAceptado;
 
+	private GestorViajes gestor;
+	private GestorCicloViajeCliente cicloViajeCliente;
+	private GestorViajes.Cotizacion cotizacion;
+
 	/**
 	 * Construye el gestor con los usuarios registrados y el planificador de rutas.
 	 *
@@ -118,86 +122,104 @@ public class GestorViajes {
 	}
 
 	/**
-	 * Procesa una solicitud de viaje.
+	 * Registra una solicitud de viaje sin asignarle todavía un conductor.
 	 *
-	 * Selecciona el conductor compatible más cercano, calcula los recorridos viales
-	 * y registra el viaje como solicitado y aceptado.
-	 *
-	 * Las rutas se calculan antes de crear el viaje para evitar registrar una
-	 * solicitud cuando no se pudo obtener un recorrido.
-	 *
-	 * @return el resultado de la solicitud o null si no hay conductores compatibles
-	 *         disponibles.
+	 * El viaje queda en estado SOLICITADO.
 	 */
-	public ResultadoSolicitud procesarSolicitudViaje(Usuario clienteUsuario, Servicio servicio, Ubicacion origen,
-			Ubicacion destino) throws RutaNoDisponibleException {
+	public Viaje registrarSolicitudViaje(
+			Usuario clienteUsuario,
+			Servicio servicio,
+			Ubicacion origen,
+			Ubicacion destino) {
 
 		if (clienteUsuario == null || servicio == null || origen == null || destino == null) {
 			throw new IllegalArgumentException("Los datos de la solicitud son obligatorios.");
 		}
-		if (clienteUsuario.getRolActivo() != RolUsuario.CLIENTE) {
-			throw new IllegalStateException("El usuario debe tener activo el rol CLIENTE para solicitar un viaje.");
-		}
-		if (clienteUsuario.getCliente() == null) {
-			throw new IllegalArgumentException("El usuario no tiene perfil de cliente.");
+
+		if (clienteUsuario.getRolActivo() != RolUsuario.CLIENTE
+				|| clienteUsuario.getCliente() == null) {
+			throw new IllegalStateException("Se requiere un usuario con perfil CLIENTE activo.");
 		}
 
-		if (clienteUsuario.getCliente().enViaje()) {
-			throw new IllegalStateException("El cliente ya tiene un viaje activo.");
-		}
-
-		// Calcular la cotización definitiva (no toca estado compartido).
 		Cotizacion cotizacion = calcularCotizacion(servicio, origen, destino);
 
-		// Desde acá hasta el final se decide la asignación y se cambian estados.
-		// Todo bajo el mismo lock que usa la simulación.
 		BloqueoViajes.LOCK.lock();
 		try {
-			// No permite solicitar viajes mientras exista una deuda pendiente.
 			if (deudasPendientes.containsKey(clienteUsuario)) {
 				throw new IllegalStateException("El cliente tiene una deuda pendiente.");
 			}
 
-			// Se vuelve a chequear dentro del lock: otro hilo pudo crear un viaje mientras
-			// tanto.
 			if (clienteUsuario.getCliente().enViaje()) {
 				throw new IllegalStateException("El cliente ya tiene un viaje activo.");
 			}
 
-			// Seleccionar el conductor compatible más cercano.
-			Movilidad movilidad = new Movilidad(usuariosRegistrados);
+			Viaje nuevoViaje = new Viaje(clienteUsuario, origen, destino, servicio);
+			nuevoViaje.solicitar(LocalDateTime.now());
 
-			Usuario conductorSeleccionado = movilidad.seleccionarConductor(servicio, origen);
+			cotizacionesPorViaje.put(nuevoViaje.getId(), cotizacion);
 
-			if (conductorSeleccionado == null) {
+			return nuevoViaje;
+
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
+
+	/**
+	 * Busca un conductor compatible, planifica las rutas y acepta
+	 * una solicitud que se encuentre en estado SOLICITADO.
+	 *
+	 * @return resultado de la aceptación, o null si no hay conductor disponible.
+	 */
+	public ResultadoSolicitud procesarAceptacionViaje(Viaje viaje)
+			throws RutaNoDisponibleException {
+
+		if (viaje == null) {
+			throw new IllegalArgumentException("El viaje es obligatorio.");
+		}
+
+		BloqueoViajes.LOCK.lock();
+		try {
+			if (viaje.estadoActual() != EstadoViaje.SOLICITADO) {
 				return null;
 			}
 
-			// Calcular los dos recorridos viales.
-			RutasViaje rutas = new PlanificacionViajeService(motorVial)
-					.planificar(conductorSeleccionado.getConductor().getVehiculoActivo(), origen, destino);
+			Cotizacion cotizacion = cotizacionesPorViaje.get(viaje.getId());
 
-			// Crear y registrar el viaje.
-			Viaje nuevoViaje = new Viaje(clienteUsuario, origen, destino, servicio);
+			if (cotizacion == null) {
+				throw new IllegalStateException("No se encontró la cotización del viaje.");
+			}
 
-			nuevoViaje.solicitar(LocalDateTime.now());
+			Movilidad movilidad = new Movilidad(usuariosRegistrados);
+
+			Usuario conductorSeleccionado = movilidad.seleccionarConductor(viaje.getServicio(), viaje.getOrigen());
+
+			if (conductorSeleccionado == null) {
+				viaje.rechazar(LocalDateTime.now());
+				return null;
+			}
 
 			try {
+				RutasViaje rutas = new PlanificacionViajeService(motorVial)
+						.planificar(
+								conductorSeleccionado.getConductor().getVehiculoActivo(),
+								viaje.getOrigen(),
+								viaje.getDestino());
 
-				nuevoViaje.aceptar(LocalDateTime.now(), conductorSeleccionado);
+				viaje.aceptar(LocalDateTime.now(), conductorSeleccionado);
 
-				cotizacionesPorViaje.put(nuevoViaje.getId(), cotizacion);
-			} catch (RuntimeException e) {
+				return new ResultadoSolicitud(
+						viaje, rutas, cotizacion, conductorSeleccionado);
 
-				// Si no pudo aceptarse, no dejamos la solicitud pendiente.
-				if (nuevoViaje.estadoActual() == EstadoViaje.SOLICITADO) {
-					nuevoViaje.rechazar(LocalDateTime.now());
+			} catch (RutaNoDisponibleException | RuntimeException e) {
+
+				if (viaje.estadoActual() == EstadoViaje.SOLICITADO) {
+					viaje.rechazar(LocalDateTime.now());
 				}
 
 				throw e;
 			}
 
-			return new ResultadoSolicitud(nuevoViaje, rutas, cotizacion, conductorSeleccionado);
 		} finally {
 			BloqueoViajes.LOCK.unlock();
 		}
@@ -337,7 +359,9 @@ public class GestorViajes {
 
 				EstadoViaje estado = viaje.estadoActual();
 
-				if (estado == EstadoViaje.ACEPTADO || estado == EstadoViaje.INICIADO) {
+				if (estado == EstadoViaje.SOLICITADO
+						|| estado == EstadoViaje.ACEPTADO
+						|| estado == EstadoViaje.INICIADO) {
 					return viaje;
 				}
 			}
