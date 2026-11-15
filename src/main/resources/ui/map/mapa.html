@@ -37,7 +37,8 @@
         var marcadorOrigen = null;
         var marcadorDestino = null;
         try {
-            mapa = L.map("mapa").setView([-42.785, -65.07], 11);
+			//cambiar esta lineas setView([-43.2489, -65.3054], 12) para trelwe y setView([-42.785, -65.07], 11) para madryn
+            mapa = L.map("mapa").setView([-43.2489, -65.3054], 12); 
             L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 maxZoom: 19,
                 attribution: "© OpenStreetMap contributors",

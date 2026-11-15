@@ -8,7 +8,8 @@ import java.util.Properties;
 
 public class CargarParametros {
 
-	private static final String ARCHIVO_CONFIG = "config.properties";
+	private static final String CIUDAD = "trelew"; // "madryn" o "trelew"
+	private static final String ARCHIVO_CONFIG = "application_" + CIUDAD + ".properties";
 	// los nombres de las claves se escriben UNA sola vez.
 	private static final String CLAVE_ORIGEN = "origen.datos";
 	private static final String CLAVE_UI_TYPE = "app.ui.type";
