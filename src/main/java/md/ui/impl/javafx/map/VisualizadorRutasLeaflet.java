@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import md.config.CargarParametros;
 import md.modelo.Ubicacion;
 import md.rutas.api.PuntoRuta;
 import md.rutas.api.RutasViaje;
@@ -52,6 +53,7 @@ public final class VisualizadorRutasLeaflet implements VisualizadorMapa {
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
                 conectarPuente();
+                configurarVistaInicial();
                 paginaLista = true;
                 aplicarPendientes();
             }
@@ -79,6 +81,18 @@ public final class VisualizadorRutasLeaflet implements VisualizadorMapa {
         if (dibujoPendiente != null) {
             ejecutarJS("window.mostrarRutas(" + dibujoPendiente + ");");
             dibujoPendiente = null;
+        }
+    }
+
+    /** Centra el mapa en la ciudad configurada en application.properties. */
+    private void configurarVistaInicial() {
+        try {
+            webEngine.executeScript(String.format(Locale.US, "window.configurarVista(%f, %f, %d);",
+                    CargarParametros.getMapaCentroLatitud(),
+                    CargarParametros.getMapaCentroLongitud(),
+                    CargarParametros.getMapaZoom()));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

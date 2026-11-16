@@ -67,8 +67,9 @@ class GestorViajesCancelacionTest {
     }
 
     private Viaje crearViajeAceptado() throws RutaNoDisponibleException {
-        GestorViajes.ResultadoSolicitud resultado = gestor.procesarSolicitudViaje(
+        Viaje viaje = gestor.registrarSolicitudViaje(
                 cliente, servicio, origen, destino);
+        GestorViajes.ResultadoSolicitud resultado = gestor.procesarAceptacionViaje(viaje);
         assertNotNull(resultado, "El conductor de prueba debe poder aceptar el viaje.");
         return resultado.viaje();
     }
