@@ -1,5 +1,6 @@
 package md.config;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -8,9 +9,9 @@ import java.util.Properties;
 
 public class CargarParametros {
 
-	private static final String CIUDAD = "madryn"; // "madryn" o "trelew"
-	private static final String ARCHIVO_CONFIG = "application_" + CIUDAD + ".properties";
+	private static final String ARCHIVO_BASE = "config.properties";
 	// los nombres de las claves se escriben UNA sola vez.
+	private static final String CLAVE_CIUDAD = "ciudad";
 	private static final String CLAVE_ORIGEN = "origen.datos";
 	private static final String CLAVE_UI_TYPE = "app.ui.type";
 	private static final String CLAVE_IDIOMA = "app.language";
@@ -29,6 +30,9 @@ public class CargarParametros {
 	private static final String CLAVE_CACHE_RUTAS = "rutas.cache";
 	private static final String CLAVE_VELOCIDAD_MEDIA = "viaje.velocidad.media.kmh";
 	private static final String CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO = "costo.cancelacion.aceptado";
+	private static final String CLAVE_MAPA_CENTRO_LAT = "mapa.centro.latitud";
+	private static final String CLAVE_MAPA_CENTRO_LON = "mapa.centro.longitud";
+	private static final String CLAVE_MAPA_ZOOM = "mapa.zoom";
 
 	// la tabla clave->valor queda guardada para que los getters la consulten
 	// despues.
@@ -57,20 +61,11 @@ public class CargarParametros {
 	 */
 	static {
 
-		try (InputStream input = CargarParametros.class.getClassLoader().getResourceAsStream(ARCHIVO_CONFIG)) { // abre
-																												// el
-																												// archivo
-																												// application.properties
+		Properties general = cargarArchivo(ARCHIVO_BASE);
+		String ciudad = leerClave(general, CLAVE_CIUDAD).trim().toLowerCase(Locale.ROOT);
 
-			if (input != null) {
-				// UTF-8 para que los acentos de los valores no se rompan.
-				properties.load(new InputStreamReader(input, StandardCharsets.UTF_8)); // leer el archivo y copia cada
-																						// clave-valor a la tabla
-			}
-		} catch (Exception e) {
-			throw new ExceptionInInitializerError("Error al cargar la configuración: " + e.getMessage());
-		}
-
+		properties.putAll(general);
+		properties.putAll(cargarArchivo("application_" + ciudad + ".properties"));
 		origenDatos = leerClave(properties, CLAVE_ORIGEN);
 		appUiType = leerClave(properties, CLAVE_UI_TYPE);
 		appLanguage = leerClave(properties, CLAVE_IDIOMA);
@@ -109,6 +104,29 @@ public class CargarParametros {
 	}
 
 	/**
+	 * Lee un archivo de configuración desde el classpath.
+	 *
+	 * @param nombre nombre del archivo, por ejemplo application_trelew.properties
+	 * @return las propiedades del archivo
+	 * @throws IllegalStateException si el archivo no existe
+	 */
+	private static Properties cargarArchivo(String nombre) {
+		try (InputStream input = CargarParametros.class.getClassLoader().getResourceAsStream(nombre)) {
+			if (input == null) {
+				throw new IllegalStateException("No se encontró el archivo de configuración '" + nombre
+						+ "'. Revisá el valor de 'ciudad' en " + ARCHIVO_BASE + ".");
+			}
+			Properties propiedades = new Properties();
+			// UTF-8 para que los acentos de los valores no se rompan.
+			propiedades.load(new InputStreamReader(input, StandardCharsets.UTF_8));
+			return propiedades;
+		} catch (IOException e) {
+			throw new ExceptionInInitializerError("Error al leer " + nombre + ": " + e.getMessage());
+		}
+	}
+	
+
+	/**
 	 * Lee una clave del archivo de configuración y verifica que exista.
 	 *
 	 * @param prop  propiedades ya cargadas desde el archivo
@@ -119,8 +137,8 @@ public class CargarParametros {
 	private static String leerClave(Properties prop, String clave) {
 		String valor = prop.getProperty(clave);
 		if (valor == null || valor.trim().isEmpty()) {
-			throw new IllegalStateException(
-					"La clave '" + clave + "' no existe o está mal escrita en " + ARCHIVO_CONFIG);
+			throw new IllegalStateException("La clave '" + clave + "' no existe o está mal escrita en "
+					+ ARCHIVO_BASE + " o en el archivo de la ciudad.");
 		}
 		return valor;
 	}
@@ -177,6 +195,33 @@ public class CargarParametros {
 	public static double getToleranciaAjusteMetros() {
 		return toleranciaAjusteMetros;
 	}
+	
+	/** Latitud del centro con que se abre el mapa. */
+	public static double getMapaCentroLatitud() {
+		double lat = leerDecimal(CLAVE_MAPA_CENTRO_LAT);
+		if (!Double.isFinite(lat) || lat < -90 || lat > 90) {
+			throw new IllegalStateException("La clave '" + CLAVE_MAPA_CENTRO_LAT + "' debe estar entre -90 y 90.");
+		}
+		return lat;
+	}
+
+	/** Longitud del centro con que se abre el mapa. */
+	public static double getMapaCentroLongitud() {
+		double lon = leerDecimal(CLAVE_MAPA_CENTRO_LON);
+		if (!Double.isFinite(lon) || lon < -180 || lon > 180) {
+			throw new IllegalStateException("La clave '" + CLAVE_MAPA_CENTRO_LON + "' debe estar entre -180 y 180.");
+		}
+		return lon;
+	}
+
+	/** Zoom inicial del mapa, de 1 (todo el planeta) a 19 (calle). */
+	public static int getMapaZoom() {
+		long zoom = leerEntero(CLAVE_MAPA_ZOOM);
+		if (zoom > 19) {
+			throw new IllegalStateException("La clave '" + CLAVE_MAPA_ZOOM + "' debe ser como máximo 19.");
+		}
+		return (int) zoom;
+	}
 
 	public static String getMotorRutas() {
 		return leerClave(properties, CLAVE_MOTOR_RUTAS).trim().toUpperCase(Locale.ROOT);
@@ -196,5 +241,26 @@ public class CargarParametros {
 
 	public static double getCostoCancelacionViajeAceptado() {
 		return costoCancelacionViajeAceptado;
+	}
+	
+	private static double leerDecimal(String clave) {
+		try {
+			return Double.parseDouble(leerClave(properties, clave).trim());
+		} catch (NumberFormatException e) {
+			throw new IllegalStateException("La clave '" + clave + "' debe ser un número.");
+		}
+	}
+	
+	private static long leerEntero(String clave) {
+		String valor = leerClave(properties, clave).trim();
+		try {
+			long numero = Long.parseLong(valor);
+			if (numero <= 0) {
+				throw new IllegalStateException("La clave '" + clave + "' debe ser mayor que cero.");
+			}
+			return numero;
+		} catch (NumberFormatException e) {
+			throw new IllegalStateException("La clave '" + clave + "' debe ser un número entero.");
+		}
 	}
 }

@@ -37,9 +37,8 @@
         var marcadorOrigen = null;
         var marcadorDestino = null;
         try {
-			//cambiar esta lineas setView([-43.2489, -65.3054], 12) para trelew y setView([-42.785, -65.07], 11) para madryn
-            mapa = L.map("mapa").setView([-42.785, -65.07], 11); // madryn 
-            // mapa = L.map("mapa").setView([-43.2489, -65.3054], 12); //trelew
+            // Vista provisoria: Java la reemplaza con el centro y zoom de application_<ciudad>.properties
+            mapa = L.map("mapa").setView([0, 0], 2);
             L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 maxZoom: 19,
                 attribution: "© OpenStreetMap contributors",
@@ -62,6 +61,10 @@
             });
         }
         // 3. Funciones globales expuestas para Java
+        // Java llama a esta funcion al cargar la pagina, con los valores de application_<ciudad>.properties
+        window.configurarVista = function (latitud, longitud, zoom) {
+            if (mapa) mapa.setView([latitud, longitud], zoom);
+        };
         window.activarSeleccion = function (tipo) {
             modoSeleccion = tipo;
         };
