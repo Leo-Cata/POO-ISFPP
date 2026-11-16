@@ -23,7 +23,7 @@ import md.rutas.api.RutaNoDisponibleException;
 public class GestorCicloViajeCliente implements AutoCloseable {
 
     // Tiempo de espera antes de intentar asignar un conductor al viaje.
-    private static final long ESPERA_ACEPTACION_SEGUNDOS = 20;
+    private static final long ESPERA_ACEPTACION_SEGUNDOS = 10;
 
     // Tiempo real equivalente a un minuto estimado por el motor de rutas.
     private static final long MILISEGUNDOS_REALES_POR_MINUTO = 10000;

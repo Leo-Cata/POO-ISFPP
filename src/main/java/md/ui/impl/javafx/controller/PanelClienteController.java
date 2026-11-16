@@ -1,11 +1,15 @@
 package md.ui.impl.javafx.controller;
 
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -14,6 +18,7 @@ import javafx.scene.web.WebView;
 import javafx.util.StringConverter;
 import md.aplicacion.ContextoAplicacion;
 import md.logica.GestorViajes;
+import md.modelo.CalificacionViaje;
 import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
 import md.modelo.Servicio;
@@ -66,14 +71,17 @@ public class PanelClienteController {
 	private Label clienteLabelCancelacion;
 	@FXML
 	private Label clienteCostoPagar;
+	@FXML
+	private Button clienteBotonCalificarConductor;
 
 	private VisualizadorMapa visualizador;
 	private boolean cancelacionBoolean = false;
 
 	// Gestores encargados del procesamiento del viaje.
 	private GestorViajes gestor;
-	private GestorCicloViajeCliente cicloViajeCliente; // Eliminar el atributo cicloViajeCliente para no utilizar la
-														// simulación.
+	private GestorCicloViajeCliente cicloViajeCliente; // Eliminar el atributo
+	// cicloViajeCliente para no utilizar la
+	// simulación.
 	private GestorViajes.Cotizacion cotizacion;
 
 	// variables de ubicacion para cotizar/solicitar
@@ -129,8 +137,9 @@ public class PanelClienteController {
 		gestor = ContextoAplicacion.getGestorViajes();
 
 		// Crea el coordinador del ciclo temporal del viaje.
-		cicloViajeCliente = new GestorCicloViajeCliente(gestor); // Eliminar la inicialización del coordinador para no
-																	// utilizar la simulación.
+		cicloViajeCliente = new GestorCicloViajeCliente(gestor); // Eliminar la
+		// inicialización del coordinador para no
+		// utilizar la simulación.
 
 		// Recupera el usuario logueado y su posible viaje activo.
 		cliente = ContextoAplicacion.getUsuarioLogeado();
@@ -319,10 +328,7 @@ public class PanelClienteController {
 			// Mostramos inicialmente el estado SOLICITADO.
 			mostrarOcultarInfoViaje(true);
 
-			// Para desactivar la simulación, reemplazar el bloque anterior por:
-			//
-			// mostrarOcultarInfoViaje(true);
-
+			// Para desactivar la simulación, eliminar el bloque
 			// Inicia el ciclo temporal del viaje.
 			cicloViajeCliente.iniciar(
 					viajeActual,
@@ -364,7 +370,8 @@ public class PanelClienteController {
 	@FXML
 	void handleCerrarSesion(ActionEvent event) {
 
-		cicloViajeCliente.close(); // Eliminar esta llamada para no utilizar la simulación.
+		cicloViajeCliente.close(); // Eliminar esta llamada para no utilizar la
+		// simulación.
 
 		ContextoAplicacion.setUsuarioLogeado(null);
 
@@ -451,7 +458,8 @@ public class PanelClienteController {
 			}
 
 			// Detiene las transiciones automáticas pendientes.
-			cicloViajeCliente.cancelar(); // Eliminar esta llamada para no utilizar la simulación.
+			cicloViajeCliente.cancelar(); // Eliminar esta llamada para no utilizar la
+			// simulación.
 
 			// Ejecuta la cancelación real del viaje.
 			if (!gestor.procesarCancelacionViaje(cliente, motivo)) {
@@ -505,6 +513,112 @@ public class PanelClienteController {
 		deuda = false;
 	}
 
+	@FXML
+	private void handleCalificarConductor(ActionEvent event) {
+
+		Usuario usuario = ContextoAplicacion.getUsuarioLogeado();
+
+		if (usuario == null || usuario.getCliente() == null) {
+			AlertaUtil.mostrarAlerta(
+					Alert.AlertType.WARNING,
+					resource.getString("login.alert.attention"),
+					resource.getString("viaje.error.sin_viaje_iniciado"));
+			return;
+		}
+
+		try {
+			if (viajeActual == null || viajeActual.estadoActual() != EstadoViaje.INICIADO) {
+				AlertaUtil.mostrarAlerta(
+						Alert.AlertType.WARNING,
+						resource.getString("login.alert.attention"),
+						resource.getString("viaje.error.sin_viaje_iniciado"));
+				return;
+			}
+
+			if (viajeActual.getCalificacionCliente() != CalificacionViaje.NO_CALIFICADO) {
+				AlertaUtil.mostrarAlerta(
+						Alert.AlertType.INFORMATION,
+						resource.getString("calificacion.titulo"),
+						resource.getString("calificacion.error.ya_calificado"));
+				return;
+			}
+
+			ButtonType botonMalo = new ButtonType(
+					resource.getString("calificacion.opcion.malo"), ButtonBar.ButtonData.OK_DONE);
+
+			ButtonType botonRegular = new ButtonType(
+					resource.getString("calificacion.opcion.regular"), ButtonBar.ButtonData.OK_DONE);
+
+			ButtonType botonBueno = new ButtonType(
+					resource.getString("calificacion.opcion.bueno"), ButtonBar.ButtonData.OK_DONE);
+
+			ButtonType botonMuyBueno = new ButtonType(
+					resource.getString("calificacion.opcion.muy_bueno"), ButtonBar.ButtonData.OK_DONE);
+
+			ButtonType botonExcelente = new ButtonType(
+					resource.getString("calificacion.opcion.excelente"), ButtonBar.ButtonData.OK_DONE);
+
+			ButtonType botonNoCalificar = new ButtonType(
+					resource.getString("calificacion.opcion.no_calificar"), ButtonBar.ButtonData.CANCEL_CLOSE);
+
+			Alert dialogo = new Alert(Alert.AlertType.CONFIRMATION);
+			dialogo.setTitle(resource.getString("calificacion.titulo"));
+			dialogo.setHeaderText(null);
+			dialogo.setContentText(resource.getString("calificacion.seleccione"));
+
+			ButtonType[] opciones = {
+					botonMalo, botonRegular, botonBueno,
+					botonMuyBueno, botonExcelente, botonNoCalificar
+			};
+
+			dialogo.getButtonTypes().setAll(opciones);
+
+			for (ButtonType opcion : opciones) {
+				Button boton = (Button) dialogo.getDialogPane().lookupButton(opcion);
+				boton.setDefaultButton(false);
+			}
+
+			Optional<ButtonType> resultado = dialogo.showAndWait();
+
+			if (resultado.isEmpty() || resultado.get() == botonNoCalificar) {
+				return;
+			}
+
+			ButtonType seleccion = resultado.get();
+
+			CalificacionViaje calificacion;
+
+			if (seleccion == botonMalo) {
+				calificacion = CalificacionViaje.MALO;
+			} else if (seleccion == botonRegular) {
+				calificacion = CalificacionViaje.REGULAR;
+			} else if (seleccion == botonBueno) {
+				calificacion = CalificacionViaje.BUENO;
+			} else if (seleccion == botonMuyBueno) {
+				calificacion = CalificacionViaje.MUY_BUENO;
+			} else if (seleccion == botonExcelente) {
+				calificacion = CalificacionViaje.EXCELENTE;
+			} else {
+				return;
+			}
+
+			gestor.calificarComoCliente(usuario, viajeActual, calificacion);
+
+			AlertaUtil.mostrarAlerta(
+					Alert.AlertType.INFORMATION,
+					resource.getString("calificacion.titulo"),
+					resource.getString("calificacion.mensaje.registrada"));
+
+			mostrarOcultarInfoViaje(true);
+
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			AlertaUtil.mostrarAlerta(
+					Alert.AlertType.ERROR,
+					resource.getString("login.alert.attention"),
+					resource.getString("calificacion.error.registro"));
+		}
+	}
+
 	private void asignarConductorInfo() {
 
 		if (viajeActual == null) {
@@ -552,7 +666,8 @@ public class PanelClienteController {
 	private void mostrarOcultarInfoViaje(boolean mostrar) {
 
 		if (!mostrar || viajeActual == null) {
-
+			clienteBotonCalificarConductor.setVisible(false);
+			clienteBotonCalificarConductor.setManaged(false);
 			clienetDriver.setVisible(false);
 			clienteConductorNom.setVisible(false);
 			clienteConductorVehiculoTitulo.setVisible(false);
@@ -568,14 +683,19 @@ public class PanelClienteController {
 
 		clienteViajeEstadoActual.setVisible(true);
 		clienteViajeEstadoTitulo.setVisible(true);
-
 		EstadoViaje estado = viajeActual.estadoActual();
 
 		boolean puedeCancelar = estado == EstadoViaje.SOLICITADO
 				|| estado == EstadoViaje.ACEPTADO
 				|| estado == EstadoViaje.INICIADO;
 
+		boolean puedeCalificar = estado == EstadoViaje.INICIADO
+				&& viajeActual.getCalificacionCliente() == CalificacionViaje.NO_CALIFICADO;
+
 		clienteCancelarViaje.setVisible(puedeCancelar);
+
+		clienteBotonCalificarConductor.setVisible(puedeCalificar);
+		clienteBotonCalificarConductor.setManaged(puedeCalificar);
 
 		asignarConductorInfo();
 	}
