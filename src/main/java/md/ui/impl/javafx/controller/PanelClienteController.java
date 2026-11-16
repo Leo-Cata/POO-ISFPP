@@ -22,6 +22,7 @@ import md.modelo.CalificacionViaje;
 import md.modelo.EstadoViaje;
 import md.modelo.RolUsuario;
 import md.modelo.Servicio;
+import md.modelo.TipoVehiculo;
 import md.modelo.Ubicacion;
 import md.modelo.Usuario;
 import md.modelo.Vehiculo;
@@ -327,7 +328,14 @@ public class PanelClienteController {
 
 			// Mostramos inicialmente el estado SOLICITADO.
 			mostrarOcultarInfoViaje(true);
-
+			// Dibuja el recorrido solicitado por el cliente.
+			dibujarRuta(
+					origen,
+					destino,
+					null,
+					origen,
+					destino,
+					servicioActual.getTipoVehiculo());
 			// Para desactivar la simulación, eliminar el bloque
 			// Inicia el ciclo temporal del viaje.
 			cicloViajeCliente.iniciar(
@@ -336,9 +344,49 @@ public class PanelClienteController {
 						viajeActual = viaje;
 						mostrarOcultarInfoViaje(true);
 
-						// Si no se encontró conductor, permite realizar otra solicitud.
-						if (viaje.estadoActual() == EstadoViaje.RECHAZADO) {
-							botonClienteSolicitar.setDisable(false);
+						switch (viaje.estadoActual()) {
+
+							case ACEPTADO -> {
+								Vehiculo vehiculo = viaje.getVehiculo();
+
+								if (vehiculo != null && vehiculo.getUbicacion() != null) {
+									Ubicacion ubicacionConductor = vehiculo.getUbicacion();
+
+									dibujarRuta(
+											ubicacionConductor,
+											origen,
+											ubicacionConductor,
+											origen,
+											null,
+											vehiculo.getTipoVehiculo());
+								}
+							}
+
+							case INICIADO -> {
+								Vehiculo vehiculo = viaje.getVehiculo();
+
+								dibujarRuta(
+										origen,
+										destino,
+										null,
+										origen,
+										destino,
+										vehiculo != null
+												? vehiculo.getTipoVehiculo()
+												: servicioActual.getTipoVehiculo());
+							}
+
+							case FINALIZADO, RECHAZADO -> {
+								visualizador.limpiarRutas();
+
+								if (viaje.estadoActual() == EstadoViaje.RECHAZADO) {
+									botonClienteSolicitar.setDisable(false);
+								}
+							}
+
+							default -> {
+								// No se modifica el mapa.
+							}
 						}
 					}),
 					error -> Platform.runLater(() -> AlertaUtil.mostrarAlerta(
@@ -738,5 +786,25 @@ public class PanelClienteController {
 		};
 
 		return resource.getString(clave);
+	}
+
+	private void dibujarRuta(
+			Ubicacion desde,
+			Ubicacion hasta,
+			Ubicacion conductor,
+			Ubicacion origen,
+			Ubicacion destino,
+			TipoVehiculo tipoVehiculo) {
+
+		try {
+			var ruta = ContextoAplicacion.getMotorVial()
+					.calcular(desde, hasta, tipoVehiculo);
+
+			visualizador.mostrarRuta(
+					ruta.geometria(), conductor, origen, destino);
+
+		} catch (Exception e) {
+			System.err.println("No se pudo calcular la ruta: " + e.getMessage());
+		}
 	}
 }

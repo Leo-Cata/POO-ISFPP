@@ -1,6 +1,7 @@
 package md.ui.impl.javafx.map;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 import javafx.application.Platform;
@@ -148,7 +149,8 @@ public final class VisualizadorRutasLeaflet implements VisualizadorMapa {
 
     @Override
     public void mostrar(RutasViaje rutas, Ubicacion conductor, Ubicacion origen, Ubicacion destino) {
-        String json = aJson(rutas, conductor, origen, destino);
+        String json = aJson(rutas, conductor, origen, destino, true, true);
+        // String json = aJson(rutas, conductor, origen, destino);
         if (!paginaLista) {
             dibujoPendiente = json;
         } else {
@@ -156,39 +158,145 @@ public final class VisualizadorRutasLeaflet implements VisualizadorMapa {
         }
     }
 
-    private String aJson(RutasViaje rutas, Ubicacion conductor, Ubicacion origen, Ubicacion destino) {
+    @Override
+    public void mostrarAcercamiento(
+            RutasViaje rutas,
+            Ubicacion conductor,
+            Ubicacion origen) {
+
+        String json = aJson(rutas, conductor, origen, null, true, false);
+        if (!paginaLista) {
+            dibujoPendiente = json;
+        } else {
+            ejecutarJS("window.mostrarRutas(" + json + ");");
+        }
+    }
+
+    @Override
+    public void mostrarTraslado(
+            RutasViaje rutas,
+            Ubicacion origen,
+            Ubicacion destino) {
+
+        String json = aJson(rutas, null, origen, destino, false, true);
+        if (!paginaLista) {
+            dibujoPendiente = json;
+        } else {
+            ejecutarJS("window.mostrarRutas(" + json + ");");
+        }
+    }
+
+    @Override
+    public void mostrarRuta(
+            List<PuntoRuta> geometria,
+            Ubicacion conductor,
+            Ubicacion origen,
+            Ubicacion destino) {
+
+        StringBuilder sb = new StringBuilder("{");
+
+        sb.append("\"acercamiento\":[],");
+        sb.append("\"traslado\":[");
+
+        if (geometria != null) {
+            boolean primero = true;
+
+            for (PuntoRuta p : geometria) {
+                if (!primero) {
+                    sb.append(",");
+                }
+
+                sb.append(String.format(
+                        Locale.US, "[%f,%f]", p.latitud(), p.longitud()));
+
+                primero = false;
+            }
+        }
+
+        sb.append("],");
+        sb.append("\"conductor\":").append(coordenadasJson(conductor)).append(",");
+        sb.append("\"origen\":").append(coordenadasJson(origen)).append(",");
+        sb.append("\"destino\":").append(coordenadasJson(destino));
+        sb.append("}");
+
+        String json = sb.toString();
+
+        if (!paginaLista) {
+            dibujoPendiente = json;
+        } else {
+            ejecutarJS("window.mostrarRutas(" + json + ");");
+        }
+    }
+
+    private String aJson(
+            RutasViaje rutas,
+            Ubicacion conductor,
+            Ubicacion origen,
+            Ubicacion destino,
+            boolean incluirAcercamiento,
+            boolean incluirTraslado) {
+
         StringBuilder sb = new StringBuilder();
         sb.append("{");
+
         sb.append("\"acercamiento\":[");
-        if (rutas != null && rutas.acercamiento() != null) {
+        if (incluirAcercamiento && rutas != null && rutas.acercamiento() != null) {
             boolean primero = true;
+
             for (PuntoRuta p : rutas.acercamiento().geometria()) {
-                if (!primero)
+                if (!primero) {
                     sb.append(",");
+                }
+
                 sb.append(String.format(Locale.US, "[%f,%f]", p.latitud(), p.longitud()));
                 primero = false;
             }
         }
+
         sb.append("],");
+
         sb.append("\"traslado\":[");
-        if (rutas != null && rutas.traslado() != null) {
+        if (incluirTraslado && rutas != null && rutas.traslado() != null) {
             boolean primero = true;
+
             for (PuntoRuta p : rutas.traslado().geometria()) {
-                if (!primero)
+                if (!primero) {
                     sb.append(",");
+                }
+
                 sb.append(String.format(Locale.US, "[%f,%f]", p.latitud(), p.longitud()));
                 primero = false;
             }
         }
+
         sb.append("],");
-        sb.append(String.format(Locale.US, "\"conductor\":[%f,%f],",
-                conductor != null ? conductor.getLatitud() : 0, conductor != null ? conductor.getLongitud() : 0));
-        sb.append(String.format(Locale.US, "\"origen\":[%f,%f],",
-                origen != null ? origen.getLatitud() : 0, origen != null ? origen.getLongitud() : 0));
-        sb.append(String.format(Locale.US, "\"destino\":[%f,%f]",
-                destino != null ? destino.getLatitud() : 0, destino != null ? destino.getLongitud() : 0));
+
+        sb.append("\"conductor\":");
+        sb.append(coordenadasJson(conductor));
+        sb.append(",");
+
+        sb.append("\"origen\":");
+        sb.append(coordenadasJson(origen));
+        sb.append(",");
+
+        sb.append("\"destino\":");
+        sb.append(coordenadasJson(destino));
+
         sb.append("}");
+
         return sb.toString();
+    }
+
+    private String coordenadasJson(Ubicacion ubicacion) {
+        if (ubicacion == null) {
+            return "null";
+        }
+
+        return String.format(
+                Locale.US,
+                "[%f,%f]",
+                ubicacion.getLatitud(),
+                ubicacion.getLongitud());
     }
 
     @Override
