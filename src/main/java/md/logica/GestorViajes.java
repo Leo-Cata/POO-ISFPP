@@ -35,10 +35,6 @@ public class GestorViajes {
 	private final double velocidadMediaKmH;
 	private final double costoCancelacionViajeAceptado;
 
-	private GestorViajes gestor;
-	private GestorCicloViajeCliente cicloViajeCliente;
-	private GestorViajes.Cotizacion cotizacion;
-
 	/**
 	 * Construye el gestor con los usuarios registrados y el planificador de rutas.
 	 *

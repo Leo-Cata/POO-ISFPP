@@ -13,6 +13,7 @@ import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
 import md.logica.GeneradorUbicacionesViales;
 import md.logica.GestorViajes;
+import md.modelo.EstadoConductor;
 import md.modelo.Usuario;
 
 /**
@@ -62,6 +63,7 @@ public class AplicacionSimulacion {
             for (Usuario usuario : datos.getUsuarios().values()) {
                 if (usuario.getConductor() != null) {
                     conductores.add(usuario);
+                    usuario.getConductor().setEstado(EstadoConductor.DISPONIBLE);
                 } else {
                     pasajeros.add(usuario);
                 }
