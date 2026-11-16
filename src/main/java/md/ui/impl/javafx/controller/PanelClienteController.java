@@ -25,6 +25,8 @@ import md.ui.api.VisualizadorMapa;
 import md.ui.impl.javafx.controller.util.AlertaUtil;
 import md.ui.impl.javafx.map.VisualizadorRutasLeaflet;
 import md.ui.impl.javafx.util.NavegadorVistas;
+
+// Eliminar ambos imports para no utilizar la simulación.
 import javafx.application.Platform;
 import md.logica.GestorCicloViajeCliente;
 
@@ -70,7 +72,8 @@ public class PanelClienteController {
 
 	// Gestores encargados del procesamiento del viaje.
 	private GestorViajes gestor;
-	private GestorCicloViajeCliente cicloViajeCliente;
+	private GestorCicloViajeCliente cicloViajeCliente; // Eliminar el atributo cicloViajeCliente para no utilizar la
+														// simulación.
 	private GestorViajes.Cotizacion cotizacion;
 
 	// variables de ubicacion para cotizar/solicitar
@@ -126,7 +129,8 @@ public class PanelClienteController {
 		gestor = ContextoAplicacion.getGestorViajes();
 
 		// Crea el coordinador del ciclo temporal del viaje.
-		cicloViajeCliente = new GestorCicloViajeCliente(gestor);
+		cicloViajeCliente = new GestorCicloViajeCliente(gestor); // Eliminar la inicialización del coordinador para no
+																	// utilizar la simulación.
 
 		// Recupera el usuario logueado y su posible viaje activo.
 		cliente = ContextoAplicacion.getUsuarioLogeado();
@@ -315,6 +319,10 @@ public class PanelClienteController {
 			// Mostramos inicialmente el estado SOLICITADO.
 			mostrarOcultarInfoViaje(true);
 
+			// Para desactivar la simulación, reemplazar el bloque anterior por:
+			//
+			// mostrarOcultarInfoViaje(true);
+
 			// Inicia el ciclo temporal del viaje.
 			cicloViajeCliente.iniciar(
 					viajeActual,
@@ -330,6 +338,7 @@ public class PanelClienteController {
 					error -> Platform.runLater(() -> AlertaUtil.mostrarAlerta(
 							resource.getString("login.alert.attention"),
 							error.getMessage())));
+
 		});
 
 		// Se ejecuta si ocurrió un error al registrar la solicitud.
@@ -355,7 +364,7 @@ public class PanelClienteController {
 	@FXML
 	void handleCerrarSesion(ActionEvent event) {
 
-		cicloViajeCliente.close();
+		cicloViajeCliente.close(); // Eliminar esta llamada para no utilizar la simulación.
 
 		ContextoAplicacion.setUsuarioLogeado(null);
 
@@ -442,7 +451,7 @@ public class PanelClienteController {
 			}
 
 			// Detiene las transiciones automáticas pendientes.
-			cicloViajeCliente.cancelar();
+			cicloViajeCliente.cancelar(); // Eliminar esta llamada para no utilizar la simulación.
 
 			// Ejecuta la cancelación real del viaje.
 			if (!gestor.procesarCancelacionViaje(cliente, motivo)) {
