@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
 
-<VBox prefHeight="656.0" prefWidth="833.0" xmlns="http://javafx.com/javafx/26"
+<VBox prefHeight="656.0" prefWidth="833.0" xmlns="http://javafx.com/javafx/21"
   xmlns:fx="http://javafx.com/fxml/1"
   fx:controller="md.ui.impl.javafx.controller.PanelClienteController">
   <children>

@@ -41,25 +41,41 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
 
-  <VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.LoginController">
+<VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/21"
+  xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.LoginController">
   <children>
-    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
+    <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0"
+      VBox.vgrow="ALWAYS">
       <children>
-        <Label fx:id="labelSeleccionarUsuario" alignment="CENTER" layoutX="259.0" layoutY="42.0" style="&#10;" text="%login.user.select" textAlignment="CENTER" textFill="#9f9f9f" wrapText="false">
+        <MenuButton layoutX="520.0" layoutY="12.0" text="%login.language">
+          <items>
+            <MenuItem text="Español" onAction="#handleIdiomaEspanol" />
+            <MenuItem text="English" onAction="#handleIdiomaIngles" />
+          </items>
+        </MenuButton>
+        <Label fx:id="labelSeleccionarUsuario" alignment="CENTER" layoutX="259.0" layoutY="42.0"
+          style="&#10;" text="%login.user.select" textAlignment="CENTER" textFill="#9f9f9f"
+          wrapText="false">
           <font>
             <Font size="14.0" />
           </font>
         </Label>
-            <ComboBox fx:id="comboUsuarios" layoutX="102.0" layoutY="63.0" prefHeight="28.0" prefWidth="434.0" style="-fx-min-width: 70%;" />
-            <Group />
-            <Button fx:id="botonIngresar" layoutX="296.0" layoutY="280.0" mnemonicParsing="false" text="%login.action.login"  onAction="#handleIngresar"/>
-            <RadioButton fx:id="radioCliente" layoutX="297.0" layoutY="248.0" mnemonicParsing="false" text="%login.role.client">
-               <toggleGroup>
-                  <ToggleGroup fx:id="tipoUsuario" />
-               </toggleGroup>
-            </RadioButton>
-            <RadioButton fx:id="radioConductor" layoutX="297.0" layoutY="223.0" mnemonicParsing="false" text="%login.role.driver" toggleGroup="$tipoUsuario" />
+        <ComboBox fx:id="comboUsuarios" layoutX="102.0" layoutY="63.0" prefHeight="28.0"
+          prefWidth="434.0" style="-fx-min-width: 70%;" />
+        <Group />
+        <Button fx:id="botonIngresar" layoutX="296.0" layoutY="280.0" mnemonicParsing="false"
+          text="%login.action.login" onAction="#handleIngresar" />
+        <RadioButton fx:id="radioCliente" layoutX="297.0" layoutY="248.0" mnemonicParsing="false"
+          text="%login.role.client">
+          <toggleGroup>
+            <ToggleGroup fx:id="tipoUsuario" />
+          </toggleGroup>
+        </RadioButton>
+        <RadioButton fx:id="radioConductor" layoutX="297.0" layoutY="223.0" mnemonicParsing="false"
+          text="%login.role.driver" toggleGroup="$tipoUsuario" />
       </children>
     </AnchorPane>
   </children>

@@ -1,12 +1,18 @@
 package md.ui.impl.javafx.controller;
 
+import java.io.IOException;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import md.aplicacion.ContextoAplicacion;
 import md.logica.GestorViajes;
@@ -121,4 +127,54 @@ public class LoginController {
 		}
 	}
 
+	@FXML
+	private void handleIdiomaEspanol() {
+		cambiarIdioma("es", "ES");
+	}
+
+	@FXML
+	private void handleIdiomaIngles() {
+		cambiarIdioma("en", "US");
+	}
+
+	/**
+	 * Cambia el idioma de la aplicación y vuelve a cargar la pantalla de login
+	 * para actualizar sus textos.
+	 *
+	 * @param idioma código del idioma seleccionado.
+	 * @param pais   código del país correspondiente.
+	 */
+	private void cambiarIdioma(String idioma, String pais) {
+		Locale idiomaAnterior = ContextoAplicacion.getLocale();
+		Locale nuevoIdioma = new Locale(idioma, pais);
+
+		if (nuevoIdioma.equals(idiomaAnterior)) {
+			return;
+		}
+
+		try {
+			ContextoAplicacion.inicializarIdioma(idioma, pais);
+
+			FXMLLoader loader = new FXMLLoader(
+					getClass().getResource("/ui/javafx/view/login.fxml"),
+					ContextoAplicacion.getMensajes());
+
+			Parent root = loader.load();
+
+			Stage stage = (Stage) comboUsuarios.getScene().getWindow();
+
+			stage.setTitle(ContextoAplicacion.getMensajes().getString("login.app.title"));
+			stage.setScene(new Scene(root));
+			stage.show();
+
+		} catch (IOException e) {
+			if (idiomaAnterior != null) {
+				ContextoAplicacion.inicializarIdioma(
+						idiomaAnterior.getLanguage(),
+						idiomaAnterior.getCountry());
+			}
+
+			e.printStackTrace();
+		}
+	}
 }

@@ -16,7 +16,10 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="750.0" prefHeight="888.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="md.ui.impl.javafx.controller.PanelConductorController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="750.0"
+   prefHeight="888.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/21"
+   xmlns:fx="http://javafx.com/fxml/1"
+   fx:controller="md.ui.impl.javafx.controller.PanelConductorController">
    <top>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
@@ -24,9 +27,13 @@
                <children>
                   <Label fx:id="labelMenuCliente" text="%driver.panel.title" />
                   <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-                  <Button fx:id="botonCambiarDisponibilidad" mnemonicParsing="false" onAction="#handleCambiarDisponibilidad" text="%menu.conductor.panel.estado.accion.pasar_fuera_servicio" />
-                  <Button mnemonicParsing="false" onAction="#handleCambiarRolCliente" text="%menu.conductor.opcion.cambiar_cliente" />
-                  <Button fx:id="botonCambiarUsuario" mnemonicParsing="false" onAction="#handleCerrarSesion" text="%driver.change.user" />
+                  <Button fx:id="botonCambiarDisponibilidad" mnemonicParsing="false"
+                     onAction="#handleCambiarDisponibilidad"
+                     text="%menu.conductor.panel.estado.accion.pasar_fuera_servicio" />
+                  <Button mnemonicParsing="false" onAction="#handleCambiarRolCliente"
+                     text="%menu.conductor.opcion.cambiar_cliente" />
+                  <Button fx:id="botonCambiarUsuario" mnemonicParsing="false"
+                     onAction="#handleCerrarSesion" text="%driver.change.user" />
                </children>
                <padding>
                   <Insets top="10.0" />
@@ -39,28 +46,34 @@
                         <Label fx:id="labelSaludo" text="%driver.panel.greeting">
                            <font>
                               <Font name="System Bold" size="24.0" />
-                           </font></Label>
-                        <Label fx:id="labelSubtitulo" prefHeight="20.0" prefWidth="191.0" text="%driver.panel.subtitle" textFill="#a4a1a1" />
+                           </font>
+                        </Label>
+                        <Label fx:id="labelSubtitulo" prefHeight="20.0" prefWidth="191.0"
+                           text="%driver.panel.subtitle" textFill="#a4a1a1" />
                      </children>
                   </VBox>
                   <VBox prefHeight="100.0" prefWidth="176.0">
                      <children>
                         <Label text="%driver.status" />
-                        <Label fx:id="labelEstadoConductor" prefHeight="17.0" prefWidth="172.0" text="Label">
+                        <Label fx:id="labelEstadoConductor" prefHeight="17.0" prefWidth="172.0"
+                           text="Label">
                            <VBox.margin>
                               <Insets right="20.0" />
-                           </VBox.margin></Label>
+                           </VBox.margin>
+                        </Label>
                      </children>
                      <HBox.margin>
                         <Insets left="350.0" />
                      </HBox.margin>
                   </VBox>
-               </children></HBox>
+               </children>
+            </HBox>
          </children>
       </VBox>
    </top>
    <center>
-      <ScrollPane fitToWidth="true" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <ScrollPane fitToWidth="true" prefHeight="200.0" prefWidth="200.0"
+         BorderPane.alignment="CENTER">
          <content>
             <VBox prefHeight="680.0" prefWidth="986.0" spacing="20.0">
                <padding>
@@ -72,7 +85,8 @@
                         <Label text="%driver.personal.title">
                            <font>
                               <Font size="18.0" />
-                           </font></Label>
+                           </font>
+                        </Label>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <Label text="%driver.personal.name">
@@ -84,7 +98,8 @@
                               <Label fx:id="labelNombreConductor" text="Label">
                                  <HBox.margin>
                                     <Insets right="20.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                            </children>
                            <VBox.margin>
                               <Insets />
@@ -97,7 +112,8 @@
                               <Label fx:id="labelEmailConductor" text="Label">
                                  <HBox.margin>
                                     <Insets right="20.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
@@ -107,7 +123,8 @@
                               <Label fx:id="labelTelefonoConductor" text="Label">
                                  <HBox.margin>
                                     <Insets right="20.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
@@ -117,21 +134,24 @@
                               <Label fx:id="labelLicenciaConductor" text="Label">
                                  <HBox.margin>
                                     <Insets right="20.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                            </children>
                         </HBox>
                      </children>
                   </VBox>
                   <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
                      <children>
-                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" HBox.hgrow="ALWAYS">
+                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0"
+                           HBox.hgrow="ALWAYS">
                            <children>
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
                                     <Label text="%driver.vehicle.title">
                                        <font>
                                           <Font size="18.0" />
-                                       </font></Label>
+                                       </font>
+                                    </Label>
                                  </children>
                               </HBox>
                               <HBox prefHeight="100.0" prefWidth="200.0">
@@ -154,8 +174,10 @@
                                     <Label fx:id="labelModeloVehiculo" text="Label">
                                        <padding>
                                           <Insets left="192.0" />
-                                       </padding></Label>
-                                    <Region layoutX="130.0" layoutY="10.0" prefHeight="200.0" prefWidth="200.0" />
+                                       </padding>
+                                    </Label>
+                                    <Region layoutX="130.0" layoutY="10.0" prefHeight="200.0"
+                                       prefWidth="200.0" />
                                  </children>
                               </HBox>
                               <HBox prefHeight="100.0" prefWidth="200.0">
@@ -163,11 +185,13 @@
                                     <Label text="%driver.vehicle.plate">
                                        <font>
                                           <Font name="System Italic" size="13.0" />
-                                       </font></Label>
+                                       </font>
+                                    </Label>
                                     <Label fx:id="labelPatenteVehiculo" text="Label">
                                        <HBox.margin>
                                           <Insets left="200.0" />
-                                       </HBox.margin></Label>
+                                       </HBox.margin>
+                                    </Label>
                                  </children>
                               </HBox>
                               <HBox prefHeight="100.0" prefWidth="200.0">
@@ -176,10 +200,12 @@
                                     <Label fx:id="labelCategoriaVehiculo" text="Label">
                                        <padding>
                                           <Insets left="180.0" />
-                                       </padding></Label>
+                                       </padding>
+                                    </Label>
                                  </children>
                               </HBox>
-                              <HBox alignment="CENTER_LEFT" prefHeight="45.0" prefWidth="200.0" spacing="12.0">
+                              <HBox alignment="CENTER_LEFT" prefHeight="45.0" prefWidth="200.0"
+                                 spacing="12.0">
                                  <children>
                                     <Label text="%driver.vehicle.active.category" />
                                     <Region HBox.hgrow="ALWAYS" />
@@ -191,7 +217,8 @@
                               <Insets top="16.0" />
                            </padding>
                         </VBox>
-                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0" HBox.hgrow="ALWAYS">
+                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0"
+                           HBox.hgrow="ALWAYS">
                            <children>
                               <Label text="%driver.services.title" />
                               <Label fx:id="labelServiciosVehiculo" text="Label" />
@@ -202,7 +229,8 @@
                         </VBox>
                      </children>
                   </HBox>
-                  <VBox fx:id="contenedorViajeActual" prefHeight="200.0" prefWidth="100.0" spacing="12.0" VBox.vgrow="ALWAYS">
+                  <VBox fx:id="contenedorViajeActual" prefHeight="200.0" prefWidth="100.0"
+                     spacing="12.0" VBox.vgrow="ALWAYS">
                      <padding>
                         <Insets top="10.0" />
                      </padding>
@@ -218,11 +246,13 @@
                               <Label text="%driver.trip.status">
                                  <HBox.margin>
                                     <Insets right="20.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                               <Label fx:id="labelEstadoViaje" text="Label">
                                  <HBox.margin>
                                     <Insets right="20.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
@@ -231,7 +261,8 @@
                               <Label fx:id="labelClienteViaje" text="Label">
                                  <HBox.margin>
                                     <Insets left="50.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
@@ -240,7 +271,8 @@
                               <Label fx:id="labelOrigenViaje" text="Label">
                                  <HBox.margin>
                                     <Insets left="50.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
@@ -249,18 +281,22 @@
                               <Label fx:id="labelDestinoViaje" text="Label">
                                  <HBox.margin>
                                     <Insets left="20.0" />
-                                 </HBox.margin></Label>
+                                 </HBox.margin>
+                              </Label>
                            </children>
                         </HBox>
                         <GridPane>
-                          <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="491.0" minWidth="10.0" prefWidth="371.0" />
-                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="755.0" minWidth="10.0" prefWidth="290.0" />
-                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="755.0" minWidth="10.0" prefWidth="347.0" />
-                          </columnConstraints>
-                          <rowConstraints>
-                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                          </rowConstraints>
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="491.0" minWidth="10.0"
+                                 prefWidth="371.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="755.0" minWidth="10.0"
+                                 prefWidth="290.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="755.0" minWidth="10.0"
+                                 prefWidth="347.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           </rowConstraints>
                            <children>
                               <VBox prefHeight="200.0" prefWidth="100.0">
                                  <children>
@@ -293,25 +329,34 @@
                         <Label fx:id="labelHoraInicioViaje" text="Label" />
                         <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
                            <children>
-                              <Button fx:id="botonIniciarViaje" mnemonicParsing="false" onAction="#handleIniciarViaje" text="%driver.action.start" />
-                              <Button fx:id="botonCalificarCliente" mnemonicParsing="false" onAction="#handleCalificarCliente" text="%driver.action.rate" HBox.hgrow="ALWAYS">
-                                 <HBox.margin>
-                                    <Insets left="100.0" />
-                                 </HBox.margin></Button>
-                              <Button fx:id="botonCancelarViaje" mnemonicParsing="false" onAction="#handleCancelarViaje" text="%driver.action.cancel">
+                              <Button fx:id="botonIniciarViaje" mnemonicParsing="false"
+                                 onAction="#handleIniciarViaje" text="%driver.action.start" />
+                              <Button fx:id="botonCalificarCliente" mnemonicParsing="false"
+                                 onAction="#handleCalificarCliente" text="%driver.action.rate"
+                                 HBox.hgrow="ALWAYS">
                                  <HBox.margin>
                                     <Insets left="100.0" />
                                  </HBox.margin>
                               </Button>
-                              <Button fx:id="botonFinalizarViaje" mnemonicParsing="false" onAction="#handleFinalizarViaje" text="%driver.action.finish" HBox.hgrow="ALWAYS">
+                              <Button fx:id="botonCancelarViaje" mnemonicParsing="false"
+                                 onAction="#handleCancelarViaje" text="%driver.action.cancel">
                                  <HBox.margin>
                                     <Insets left="100.0" />
-                                 </HBox.margin></Button>
+                                 </HBox.margin>
+                              </Button>
+                              <Button fx:id="botonFinalizarViaje" mnemonicParsing="false"
+                                 onAction="#handleFinalizarViaje" text="%driver.action.finish"
+                                 HBox.hgrow="ALWAYS">
+                                 <HBox.margin>
+                                    <Insets left="100.0" />
+                                 </HBox.margin>
+                              </Button>
                            </children>
                         </HBox>
                      </children>
                   </VBox>
-                  <Label fx:id="labelSinViaje" alignment="CENTER" prefHeight="17.0" prefWidth="1001.0" text="%driver.trip.noActive" />
+                  <Label fx:id="labelSinViaje" alignment="CENTER" prefHeight="17.0"
+                     prefWidth="1001.0" text="%driver.trip.noActive" />
                   <VBox prefHeight="300.0" prefWidth="100.0" spacing="10.0">
                      <children>
                         <Label text="%driver.history.title">
@@ -321,14 +366,22 @@
                         </Label>
                         <TableView fx:id="tablaHistorial" prefHeight="260.0" prefWidth="960.0">
                            <columns>
-                              <TableColumn fx:id="colFechaHistorial" prefWidth="120.0" text="%driver.history.column.date" />
-                              <TableColumn fx:id="colClienteHistorial" prefWidth="120.0" text="%driver.history.column.client" />
-                              <TableColumn fx:id="colServicioHistorial" prefWidth="100.0" text="%driver.history.column.service" />
-                              <TableColumn fx:id="colOrigenHistorial" prefWidth="130.0" text="%driver.history.column.origin" />
-                              <TableColumn fx:id="colDestinoHistorial" prefWidth="130.0" text="%driver.history.column.destination" />
-                              <TableColumn fx:id="colEstadoHistorial" prefWidth="100.0" text="%driver.history.column.status" />
-                              <TableColumn fx:id="colCostoHistorial" prefWidth="90.0" text="%driver.history.column.amount" />
-                              <TableColumn fx:id="colCalificacionHistorial" prefWidth="120.0" text="%driver.history.column.rating" />
+                              <TableColumn fx:id="colFechaHistorial" prefWidth="120.0"
+                                 text="%driver.history.column.date" />
+                              <TableColumn fx:id="colClienteHistorial" prefWidth="120.0"
+                                 text="%driver.history.column.client" />
+                              <TableColumn fx:id="colServicioHistorial" prefWidth="100.0"
+                                 text="%driver.history.column.service" />
+                              <TableColumn fx:id="colOrigenHistorial" prefWidth="130.0"
+                                 text="%driver.history.column.origin" />
+                              <TableColumn fx:id="colDestinoHistorial" prefWidth="130.0"
+                                 text="%driver.history.column.destination" />
+                              <TableColumn fx:id="colEstadoHistorial" prefWidth="100.0"
+                                 text="%driver.history.column.status" />
+                              <TableColumn fx:id="colCostoHistorial" prefWidth="90.0"
+                                 text="%driver.history.column.amount" />
+                              <TableColumn fx:id="colCalificacionHistorial" prefWidth="120.0"
+                                 text="%driver.history.column.rating" />
                            </columns>
                         </TableView>
                      </children>
