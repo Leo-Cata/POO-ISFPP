@@ -38,12 +38,40 @@ public class AplicacionConsultas {
             ContextoAplicacion.inicializar(persistencia);
 
             // Crear e iniciar Motor de UI configurado (JavaFX / CLI)
-            UIEngine uiEngine = DAOLoader.crearUIEngine();
+            UIEngine uiEngine = crearUIEngine();
             uiEngine.start();
         } finally {
 
             // Liberar los recursos del motor vial al finalizar.
             ContextoAplicacion.cerrar();
         }
+    }
+
+    /**
+     * Crea la implementación de la interfaz de usuario según el tipo
+     * configurado en la aplicación (JavaFX o CLI).
+     *
+     * @return la implementación de UIEngine correspondiente
+     * @throws IllegalStateException si el tipo de interfaz no está soportado
+     *                               o no se puede inicializar JavaFX
+     */
+    private static UIEngine crearUIEngine() {
+        String uiType = CargarParametros.getUiType();
+
+        if ("JAVAFX".equals(uiType)) {
+            try {
+                Class<?> clazz = Class.forName("md.ui.impl.javafx.JavaFXUserInterface");
+                return (UIEngine) clazz.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                throw new IllegalStateException(
+                        "No se pudo cargar JavaFX: " + e.getMessage(), e);
+            }
+        }
+
+        if ("CLI".equals(uiType)) {
+            return new md.ui.impl.cli.CommandLineInterface();
+        }
+
+        throw new IllegalStateException("Tipo de interfaz no soportado: " + uiType);
     }
 }
