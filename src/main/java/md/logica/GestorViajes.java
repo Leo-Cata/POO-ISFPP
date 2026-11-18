@@ -607,6 +607,21 @@ public class GestorViajes {
 	}
 
 	/**
+	 * Obtiene la calificación que el cliente registró para un viaje.
+	 *
+	 * @param viaje viaje cuya calificación se desea consultar.
+	 * @return calificación registrada o NO_CALIFICADO si todavía no existe.
+	 */
+	public CalificacionViaje obtenerCalificacionCliente(Viaje viaje) {
+		BloqueoViajes.LOCK.lock();
+		try {
+			return calificacionServicio.obtenerCalificacionCliente(viaje);
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
+
+	/**
 	 * Registra la calificación que el conductor otorga al cliente.
 	 */
 	public void calificarComoConductor(Usuario conductor, Viaje viaje, CalificacionViaje calificacion) {

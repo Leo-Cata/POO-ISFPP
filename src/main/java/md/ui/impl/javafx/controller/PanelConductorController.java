@@ -1,6 +1,6 @@
 package md.ui.impl.javafx.controller;
 
-import java.text.NumberFormat; 
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -82,7 +82,6 @@ public class PanelConductorController {
 	private boolean actualizandoSeleccionVehiculo;
 	private boolean actualizandoSeleccionCategoria;
 
-
 	@FXML
 	private Label labelServiciosVehiculo;
 
@@ -132,7 +131,8 @@ public class PanelConductorController {
 	@FXML
 	private Label labelSinViaje;
 
-	// Importe de cada viaje del historial, calculado con su cotización al refrescar la tabla
+	// Importe de cada viaje del historial, calculado con su cotización al refrescar
+	// la tabla
 	private final Map<UUID, String> importesHistorial = new HashMap<>();
 
 	// Historial de viajes del conductor
@@ -593,7 +593,9 @@ public class PanelConductorController {
 		actualizarControlesVehiculo();
 	}
 
-	/** Carga únicamente las categorías de servicio que admite el vehículo activo. */
+	/**
+	 * Carga únicamente las categorías de servicio que admite el vehículo activo.
+	 */
 	private void configurarCategoriasDisponibles(Vehiculo vehiculo) {
 
 		actualizandoSeleccionCategoria = true;
@@ -607,8 +609,7 @@ public class PanelConductorController {
 		}
 
 		List<CategoriaVehiculo> categoriasPermitidas = Arrays.stream(CategoriaVehiculo.values())
-				.filter(categoria -> categoria.getValorNumerico()
-						<= vehiculo.getCategoriaVehiculo().getValorNumerico())
+				.filter(categoria -> categoria.getValorNumerico() <= vehiculo.getCategoriaVehiculo().getValorNumerico())
 				.sorted(Comparator.comparingInt(CategoriaVehiculo::getValorNumerico))
 				.toList();
 
@@ -640,7 +641,6 @@ public class PanelConductorController {
 				msj.getString("login.alert.attention"),
 				msj.getString("driver.vehicle.change.disabled"));
 	}
-
 
 	private void mostrarDatosVehiculo(Vehiculo vehiculo) {
 
@@ -774,12 +774,15 @@ public class PanelConductorController {
 				importesHistorial.getOrDefault(celda.getValue().getId(), "—")));
 
 		colCalificacionHistorial.setCellValueFactory(celda -> new ReadOnlyStringWrapper(
-				textoCalificacion(celda.getValue().getCalificacionCliente(), msj)));
+				textoCalificacion(gestorViajes.obtenerCalificacionCliente(celda.getValue()), msj)));
 
 		tablaHistorial.setPlaceholder(new Label(msj.getString("driver.history.empty")));
 	}
 
-	/** Carga los viajes finalizados o cancelados del conductor, del más reciente al más antiguo. */
+	/**
+	 * Carga los viajes finalizados o cancelados del conductor, del más reciente al
+	 * más antiguo.
+	 */
 	private void actualizarHistorial() {
 
 		List<Viaje> historial = new ArrayList<>();
@@ -804,7 +807,10 @@ public class PanelConductorController {
 		tablaHistorial.getItems().setAll(historial);
 	}
 
-	/** Calcula el importe de un viaje con su cotización, porque el modelo no guarda el costo final. */
+	/**
+	 * Calcula el importe de un viaje con su cotización, porque el modelo no guarda
+	 * el costo final.
+	 */
 	private String calcularImporte(Viaje viaje) {
 
 		try {
@@ -827,7 +833,9 @@ public class PanelConductorController {
 		return msj.getString(obtenerClaveServicio(viaje.getServicio().getTipoServicio()));
 	}
 
-	/** Devuelve la fecha en que se solicitó el viaje, tomada de su primer registro. */
+	/**
+	 * Devuelve la fecha en que se solicitó el viaje, tomada de su primer registro.
+	 */
 	private LocalDateTime fechaSolicitud(Viaje viaje) {
 
 		if (viaje.getRegistroViaje().isEmpty()) {

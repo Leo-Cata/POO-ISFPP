@@ -38,17 +38,18 @@ class CalificacionServicioTest {
 
         calificacionServicio = new CalificacionServicio();
 
-        cliente = new Usuario("Ana Martinez","2800000000","ana@email.com");
+        cliente = new Usuario("Ana Martinez", "2800000000", "ana@email.com");
 
-        Vehiculo vehiculo = new Vehiculo("AA111AA","Ford Focus",4,TipoVehiculo.AUTO,CategoriaVehiculo.ESTANDAR,TipoServicio.PASAJEROS);
+        Vehiculo vehiculo = new Vehiculo("AA111AA", "Ford Focus", 4, TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR,
+                TipoServicio.PASAJEROS);
 
-        conductor = new Usuario("Juan Perez","2800000001","juan@email.com");
+        conductor = new Usuario("Juan Perez", "2800000001", "juan@email.com");
 
         conductor.altaConductor("LIC-123", vehiculo);
         conductor.cambiarRolActivo(RolUsuario.CONDUCTOR);
         conductor.getConductor().setEstado(EstadoConductor.DISPONIBLE);
 
-        Servicio servicio = new Servicio("Estandar",2000,200,100,TipoVehiculo.AUTO,CategoriaVehiculo.ESTANDAR,
+        Servicio servicio = new Servicio("Estandar", 2000, 200, 100, TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR,
                 TipoServicio.PASAJEROS);
 
         Ubicacion origen = new Ubicacion(-42.76, -65.03);
@@ -85,20 +86,20 @@ class CalificacionServicioTest {
     @DisplayName("3. Un cliente ajeno al viaje no puede calificarlo")
     void testClienteAjenoNoPuedeCalificar() {
 
-        Usuario otroCliente = new Usuario("Pedro Lopez","2800000002","pedro@email.com");
+        Usuario otroCliente = new Usuario("Pedro Lopez", "2800000002", "pedro@email.com");
 
-        assertThrows(IllegalArgumentException.class,() -> calificacionServicio.calificarComoCliente(
-                        otroCliente, viaje, CalificacionViaje.BUENO));
+        assertThrows(IllegalArgumentException.class, () -> calificacionServicio.calificarComoCliente(
+                otroCliente, viaje, CalificacionViaje.BUENO));
     }
 
     @Test
     @DisplayName("4. Un conductor ajeno al viaje no puede calificarlo")
     void testConductorAjenoNoPuedeCalificar() {
 
-        Usuario otroConductor = new Usuario("Carlos Gomez","2800000003","carlos@email.com");
+        Usuario otroConductor = new Usuario("Carlos Gomez", "2800000003", "carlos@email.com");
 
-        assertThrows(IllegalArgumentException.class,() -> calificacionServicio.calificarComoConductor(
-                        otroConductor, viaje, CalificacionViaje.BUENO));
+        assertThrows(IllegalArgumentException.class, () -> calificacionServicio.calificarComoConductor(
+                otroConductor, viaje, CalificacionViaje.BUENO));
     }
 
     @Test
@@ -107,44 +108,44 @@ class CalificacionServicioTest {
 
         calificacionServicio.calificarComoCliente(cliente, viaje, CalificacionViaje.BUENO);
 
-        assertThrows(IllegalStateException.class,() -> calificacionServicio.calificarComoCliente(
-                        cliente, viaje, CalificacionViaje.EXCELENTE));
+        assertThrows(IllegalStateException.class, () -> calificacionServicio.calificarComoCliente(
+                cliente, viaje, CalificacionViaje.EXCELENTE));
 
         calificacionServicio.calificarComoConductor(conductor, viaje, CalificacionViaje.MUY_BUENO);
 
-        assertThrows(IllegalStateException.class,() -> calificacionServicio.calificarComoConductor(
-                        conductor, viaje, CalificacionViaje.EXCELENTE));
+        assertThrows(IllegalStateException.class, () -> calificacionServicio.calificarComoConductor(
+                conductor, viaje, CalificacionViaje.EXCELENTE));
     }
 
     @Test
     @DisplayName("6. No se permiten calificaciones nulas ni NO_CALIFICADO")
     void testRechazaCalificacionesInvalidas() {
 
-        assertThrows(IllegalArgumentException.class,() -> calificacionServicio.calificarComoCliente(
-                        cliente, viaje, null));
+        assertThrows(IllegalArgumentException.class, () -> calificacionServicio.calificarComoCliente(
+                cliente, viaje, null));
 
-        assertThrows(IllegalArgumentException.class,() -> calificacionServicio.calificarComoCliente(
-                        cliente, viaje, CalificacionViaje.NO_CALIFICADO));
+        assertThrows(IllegalArgumentException.class, () -> calificacionServicio.calificarComoCliente(
+                cliente, viaje, CalificacionViaje.NO_CALIFICADO));
     }
 
     @Test
-    @DisplayName("7. Solo se pueden calificar viajes iniciados")
+    @DisplayName("7. No se permiten calificaciones en viajes no iniciados ni finalizados")
     void testNoPermiteCalificarViajeNoIniciado() {
 
-        Usuario otroCliente = new Usuario("Maria Lopez","2800000004","maria@email.com");
+        Usuario otroCliente = new Usuario("Maria Lopez", "2800000004", "maria@email.com");
 
-        Servicio servicio = new Servicio("Estandar",2000,200,100,TipoVehiculo.AUTO,CategoriaVehiculo.ESTANDAR,
+        Servicio servicio = new Servicio("Estandar", 2000, 200, 100, TipoVehiculo.AUTO, CategoriaVehiculo.ESTANDAR,
                 TipoServicio.PASAJEROS);
 
-        Viaje viajeSolicitado = new Viaje(otroCliente,new Ubicacion(-42.76, -65.03),
-                new Ubicacion(-42.77, -65.04),servicio);
+        Viaje viajeSolicitado = new Viaje(otroCliente, new Ubicacion(-42.76, -65.03),
+                new Ubicacion(-42.77, -65.04), servicio);
 
         viajeSolicitado.solicitar(LocalDateTime.now());
 
         assertEquals(EstadoViaje.SOLICITADO, viajeSolicitado.estadoActual());
 
-        assertThrows(IllegalStateException.class,() -> calificacionServicio.calificarComoCliente(
-                        otroCliente, viajeSolicitado, CalificacionViaje.BUENO));
+        assertThrows(IllegalStateException.class, () -> calificacionServicio.calificarComoCliente(
+                otroCliente, viajeSolicitado, CalificacionViaje.BUENO));
     }
 
     @Test
@@ -194,7 +195,8 @@ class CalificacionServicioTest {
 
         calificacionServicio.registrarCalificacionesEnHistorial(viaje);
 
-        // La calificacion del cliente la recibe el conductor; el cliente no recibió ninguna.
+        // La calificacion del cliente la recibe el conductor; el cliente no recibió
+        // ninguna.
         assertEquals(0.0, calificacionServicio.calcularPromedioCliente(cliente.getCliente()), 0.0001);
         assertEquals(4.0, calificacionServicio.calcularPromedioConductor(conductor.getConductor()), 0.0001);
     }
@@ -222,7 +224,9 @@ class CalificacionServicioTest {
         assertEquals(3.0, calificacionServicio.calcularPromedioConductor(conductor.getConductor()), 0.0001);
     }
 
-    /** Finaliza el viaje con las calificaciones registradas (o NO_CALIFICADO por defecto)
+    /**
+     * Finaliza el viaje con las calificaciones registradas (o NO_CALIFICADO por
+     * defecto)
      * y las incorpora a los historiales.
      */
     private void finalizarYRegistrar(Viaje viaje) {
@@ -249,8 +253,36 @@ class CalificacionServicioTest {
     @DisplayName("12. El promedio es cero cuando no existen calificaciones")
     void testPromedioSinCalificaciones() {
 
-        Usuario usuarioNuevo = new Usuario("Usuario Nuevo","2800000005","nuevo@email.com");
+        Usuario usuarioNuevo = new Usuario("Usuario Nuevo", "2800000005", "nuevo@email.com");
 
-        assertEquals(0.0,calificacionServicio.calcularPromedioCliente(usuarioNuevo.getCliente()),0.0001);
+        assertEquals(0.0, calificacionServicio.calcularPromedioCliente(usuarioNuevo.getCliente()), 0.0001);
+    }
+
+    @Test
+    @DisplayName("13. El cliente puede calificar un viaje finalizado")
+    void testCalificarViajeFinalizado() {
+
+        viaje.finalizar(
+                LocalDateTime.now(),
+                CalificacionViaje.NO_CALIFICADO,
+                CalificacionViaje.NO_CALIFICADO);
+
+        calificacionServicio.calificarComoCliente(
+                cliente, viaje, CalificacionViaje.MUY_BUENO);
+
+        assertEquals(
+                4.0,
+                calificacionServicio.calcularPromedioConductor(
+                        conductor.getConductor()),
+                0.0001);
+
+        assertEquals(
+                CalificacionViaje.MUY_BUENO,
+                calificacionServicio.obtenerCalificacionCliente(viaje));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> calificacionServicio.calificarComoCliente(
+                        cliente, viaje, CalificacionViaje.EXCELENTE));
     }
 }

@@ -20,8 +20,8 @@ import md.modelo.Viaje;
 public class CalificacionServicio {
     private final Map<Cliente, List<CalificacionViaje>> calificacionesClientes = new HashMap<>();
     private final Map<Conductor, List<CalificacionViaje>> calificacionesConductores = new HashMap<>();
-    private final Map<UUID, CalificacionViaje> calificacionesPendientesCliente = new HashMap<>();
-    private final Map<UUID, CalificacionViaje> calificacionesPendientesConductor = new HashMap<>();
+    private final Map<UUID, CalificacionViaje> calificacionesRegistradasCliente = new HashMap<>();
+    private final Map<UUID, CalificacionViaje> calificacionesRegistradasConductor = new HashMap<>();
 
     /**
      * Registra la calificación que el cliente otorga al conductor.
@@ -40,13 +40,30 @@ public class CalificacionServicio {
                     "El usuario no es el cliente de este viaje.");
         }
 
-        if (calificacionesPendientesCliente.containsKey(viaje.getId())
+        if (calificacionesRegistradasCliente.containsKey(viaje.getId())
                 || viaje.getCalificacionCliente() != CalificacionViaje.NO_CALIFICADO) {
             throw new IllegalStateException(
                     "El cliente ya calificó este viaje.");
         }
 
-        calificacionesPendientesCliente.put(viaje.getId(), calificacion);
+        Usuario conductor = viaje.getConductor();
+
+        if (viaje.estadoActual() == EstadoViaje.FINALIZADO
+                && (conductor == null || conductor.getConductor() == null)) {
+            throw new IllegalStateException(
+                    "No se encontró el perfil del conductor.");
+        }
+
+        calificacionesRegistradasCliente.put(viaje.getId(), calificacion);
+
+        // Si el viaje ya finalizó, se incorpora directamente al historial.
+        if (viaje.estadoActual() == EstadoViaje.FINALIZADO) {
+            calificacionesConductores.computeIfAbsent(
+                    conductor.getConductor(), k -> new ArrayList<>()).add(calificacion); // obtiene el valor asociado a
+                                                                                         // una clave y, si no existe,
+                                                                                         // crearlo y almacenarlo
+                                                                                         // automáticamente.
+        }
     }
 
     /**
@@ -66,13 +83,29 @@ public class CalificacionServicio {
                     "El usuario no es el conductor de este viaje.");
         }
 
-        if (calificacionesPendientesConductor.containsKey(viaje.getId())
+        if (calificacionesRegistradasConductor.containsKey(viaje.getId())
                 || viaje.getCalificacionConductor() != CalificacionViaje.NO_CALIFICADO) {
             throw new IllegalStateException(
                     "El conductor ya calificó este viaje.");
         }
 
-        calificacionesPendientesConductor.put(viaje.getId(), calificacion);
+        Usuario cliente = viaje.getCliente();
+
+        if (viaje.estadoActual() == EstadoViaje.FINALIZADO
+                && (cliente == null || cliente.getCliente() == null)) {
+            throw new IllegalStateException(
+                    "No se encontró el perfil del cliente.");
+        }
+
+        calificacionesRegistradasConductor.put(viaje.getId(), calificacion);
+
+        // Si el viaje ya finalizó, se incorpora directamente al historial.
+        if (viaje.estadoActual() == EstadoViaje.FINALIZADO) {
+            calificacionesClientes.computeIfAbsent(
+                    cliente.getCliente(), k -> new ArrayList<>()).add(calificacion);
+            // obtiene el valor asociado a una clave y, si no existe, crearlo y almacenarlo
+            // automáticamente.
+        }
     }
 
     /**
@@ -142,6 +175,8 @@ public class CalificacionServicio {
 
         return calcularPromedio(
                 calificacionesClientes.getOrDefault(cliente, new ArrayList<>()));
+        // obtiene el valor asociado a una clave o devolver un valor alternativo si esa
+        // clave no existe.
     }
 
     /**
@@ -159,6 +194,8 @@ public class CalificacionServicio {
 
         return calcularPromedio(
                 calificacionesConductores.getOrDefault(conductor, new ArrayList<>()));
+        // obtiene el valor asociado a una clave o devolver un valor alternativo si esa
+        // clave no existe.
     }
 
     /**
@@ -176,8 +213,7 @@ public class CalificacionServicio {
         if (viaje == null) {
             throw new IllegalArgumentException("El viaje no puede ser null.");
         }
-
-        return calificacionesPendientesCliente.getOrDefault(
+        return calificacionesRegistradasCliente.getOrDefault(
                 viaje.getId(), CalificacionViaje.NO_CALIFICADO);
     }
 
@@ -185,7 +221,7 @@ public class CalificacionServicio {
         if (viaje == null) {
             throw new IllegalArgumentException("El viaje no puede ser null.");
         }
-        return calificacionesPendientesConductor.getOrDefault(
+        return calificacionesRegistradasConductor.getOrDefault(
                 viaje.getId(), CalificacionViaje.NO_CALIFICADO);
     }
 
@@ -206,9 +242,12 @@ public class CalificacionServicio {
                     "La calificación no es válida.");
         }
 
-        if (viaje.estadoActual() != EstadoViaje.INICIADO) {
+        EstadoViaje estado = viaje.estadoActual();
+
+        if (estado != EstadoViaje.INICIADO
+                && estado != EstadoViaje.FINALIZADO) {
             throw new IllegalStateException(
-                    "Solamente se pueden calificar viajes iniciados.");
+                    "Solamente se pueden calificar viajes iniciados o finalizados.");
         }
     }
 

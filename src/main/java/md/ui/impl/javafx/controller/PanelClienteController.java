@@ -74,6 +74,12 @@ public class PanelClienteController {
 	private Label clienteCostoPagar;
 	@FXML
 	private Button clienteBotonCalificarConductor;
+	@FXML
+	private Button botonClienteCotizar;
+	@FXML
+	private Button botonClienteBorrarOrigen;
+	@FXML
+	private Button botonClienteBorrarDestino;
 
 	private VisualizadorMapa visualizador;
 	private boolean cancelacionBoolean = false;
@@ -96,6 +102,8 @@ public class PanelClienteController {
 
 	// variable para que no deje solicitar un viaje si tiene una deuda
 	private boolean deuda;
+
+	private boolean solicitudEnProceso;
 
 	/**
 	 * Inicializa el panel del cliente: carga el mapa, registra la selección de
@@ -181,6 +189,7 @@ public class PanelClienteController {
 			clienteBotonCancelacionPagar.setDisable(false);
 		}
 
+		actualizarBotonesSolicitud();
 	}
 
 	private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
@@ -257,12 +266,35 @@ public class PanelClienteController {
 		invalidarCotizacion();
 	}
 
+	/**
+	 * Indica si el cliente tiene un viaje que todavía no ha finalizado.
+	 *
+	 * @return true si existe un viaje solicitado, aceptado o iniciado
+	 */
+	private boolean tieneViajeEnCurso() {
+		return viajeActual != null
+				&& (viajeActual.estadoActual() == EstadoViaje.SOLICITADO
+						|| viajeActual.estadoActual() == EstadoViaje.ACEPTADO
+						|| viajeActual.estadoActual() == EstadoViaje.INICIADO);
+	}
+
+	/**
+	 * Actualiza el estado de los botones según la situación del cliente.
+	 */
+	private void actualizarBotonesSolicitud() {
+		boolean bloquear = deuda || tieneViajeEnCurso() || solicitudEnProceso;
+
+		botonClienteCotizar.setDisable(bloquear);
+		botonClienteBorrarOrigen.setDisable(bloquear);
+		botonClienteBorrarDestino.setDisable(bloquear);
+
+		botonClienteSolicitar.setDisable(bloquear || cotizacion == null);
+	}
+
 	// metodo auxiliar para no permitir cambiar de puntos una vez cotizado
 	private void invalidarCotizacion() {
 		cotizacion = null;
-		if (botonClienteSolicitar != null) {
-			botonClienteSolicitar.setDisable(true);
-		}
+		actualizarBotonesSolicitud();
 	}
 
 	/**
@@ -301,7 +333,8 @@ public class PanelClienteController {
 		Ubicacion origen = origenActual;
 		Ubicacion destino = destinoActual;
 
-		botonClienteSolicitar.setDisable(true);
+		solicitudEnProceso = true;
+		actualizarBotonesSolicitud();
 
 		// Registra la solicitud sin asignar todavía un conductor.
 		Task<Viaje> tarea = new Task<>() {
@@ -317,9 +350,10 @@ public class PanelClienteController {
 		tarea.setOnSucceeded(e -> {
 
 			viajeActual = tarea.getValue();
+			solicitudEnProceso = false;
 
 			if (viajeActual == null) {
-				botonClienteSolicitar.setDisable(false);
+				actualizarBotonesSolicitud();
 
 				AlertaUtil.mostrarAlerta(
 						resource.getString("login.alert.attention"),
@@ -383,9 +417,6 @@ public class PanelClienteController {
 							case FINALIZADO, RECHAZADO -> {
 								visualizador.limpiarRutas();
 
-								if (viaje.estadoActual() == EstadoViaje.RECHAZADO) {
-									botonClienteSolicitar.setDisable(false);
-								}
 							}
 
 							default -> {
@@ -402,7 +433,8 @@ public class PanelClienteController {
 		// Se ejecuta si ocurrió un error al registrar la solicitud.
 		tarea.setOnFailed(e -> {
 
-			botonClienteSolicitar.setDisable(false);
+			solicitudEnProceso = false;
+			actualizarBotonesSolicitud();
 
 			Throwable error = tarea.getException();
 
@@ -440,6 +472,10 @@ public class PanelClienteController {
 	 */
 	@FXML
 	void handleCotizarViaje(ActionEvent event) {
+
+		if (deuda || tieneViajeEnCurso() || solicitudEnProceso) {
+			return;
+		}
 		// Descarta cualquier cotización anterior antes de intentar calcular una nueva.
 		invalidarCotizacion();
 		servicio = comboServicios.getValue();
@@ -472,7 +508,7 @@ public class PanelClienteController {
 					resource.getString("viaje.costo_estimado"), cotizacion.costoTotal());
 			AlertaUtil.mostrarAlerta(resource.getString("viaje.cotizacion.titulo"), detalle);
 
-			botonClienteSolicitar.setDisable(false);
+			actualizarBotonesSolicitud();
 		} catch (IllegalArgumentException | IllegalStateException e) {
 			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"), e.getMessage());
 		}
@@ -563,6 +599,7 @@ public class PanelClienteController {
 		clienteCostoPagar.setVisible(false);
 		clienteBotonCancelacionPagar.setVisible(false);
 		deuda = false;
+		actualizarBotonesSolicitud();
 	}
 
 	@FXML
@@ -579,7 +616,9 @@ public class PanelClienteController {
 		}
 
 		try {
-			if (viajeActual == null || viajeActual.estadoActual() != EstadoViaje.INICIADO) {
+			if (viajeActual == null
+					|| (viajeActual.estadoActual() != EstadoViaje.INICIADO
+							&& viajeActual.estadoActual() != EstadoViaje.FINALIZADO)) {
 				AlertaUtil.mostrarAlerta(
 						Alert.AlertType.WARNING,
 						resource.getString("login.alert.attention"),
@@ -587,7 +626,7 @@ public class PanelClienteController {
 				return;
 			}
 
-			if (viajeActual.getCalificacionCliente() != CalificacionViaje.NO_CALIFICADO) {
+			if (gestor.obtenerCalificacionCliente(viajeActual) != CalificacionViaje.NO_CALIFICADO) {
 				AlertaUtil.mostrarAlerta(
 						Alert.AlertType.INFORMATION,
 						resource.getString("calificacion.titulo"),
@@ -717,6 +756,8 @@ public class PanelClienteController {
 	// funcion auxiliar para mostrar/ocultar los labels de los datos del viaje
 	private void mostrarOcultarInfoViaje(boolean mostrar) {
 
+		actualizarBotonesSolicitud();
+
 		if (!mostrar || viajeActual == null) {
 			clienteBotonCalificarConductor.setVisible(false);
 			clienteBotonCalificarConductor.setManaged(false);
@@ -741,8 +782,9 @@ public class PanelClienteController {
 				|| estado == EstadoViaje.ACEPTADO
 				|| estado == EstadoViaje.INICIADO;
 
-		boolean puedeCalificar = estado == EstadoViaje.INICIADO
-				&& viajeActual.getCalificacionCliente() == CalificacionViaje.NO_CALIFICADO;
+		boolean puedeCalificar = (estado == EstadoViaje.INICIADO
+				|| estado == EstadoViaje.FINALIZADO)
+				&& gestor.obtenerCalificacionCliente(viajeActual) == CalificacionViaje.NO_CALIFICADO;
 
 		clienteCancelarViaje.setVisible(puedeCancelar);
 
