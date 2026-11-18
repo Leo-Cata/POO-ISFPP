@@ -8,7 +8,6 @@ import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import md.config.CargarParametros;
 import md.modelo.Ubicacion;
 import md.rutas.api.PuntoRuta;
 import md.rutas.api.RutasViaje;
