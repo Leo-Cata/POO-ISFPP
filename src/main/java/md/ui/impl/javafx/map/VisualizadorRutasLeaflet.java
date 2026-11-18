@@ -19,14 +19,36 @@ public final class VisualizadorRutasLeaflet implements VisualizadorMapa {
     private final WebView webView;
     private final WebEngine webEngine;
     private final PuenteSeleccionMapa puenteSeleccion;
+
+    private final double latitudInicial;
+    private final double longitudInicial;
+    private final int zoomInicial;
+
     private boolean paginaLista = false;
     private String dibujoPendiente = null;
     private String modoSeleccionPendiente = null;
 
-    public VisualizadorRutasLeaflet(WebView webView) {
+    /**
+     * Inicializa el visualizador del mapa con los parámetros de vista inicial.
+     *
+     * @param webView         componente donde se mostrará el mapa.
+     * @param latitudInicial  latitud del centro inicial.
+     * @param longitudInicial longitud del centro inicial.
+     * @param zoomInicial     nivel de zoom inicial.
+     */
+    public VisualizadorRutasLeaflet(
+            WebView webView,
+            double latitudInicial,
+            double longitudInicial,
+            int zoomInicial) {
+
         this.webView = webView;
         this.webEngine = webView.getEngine();
         this.puenteSeleccion = new PuenteSeleccionMapa();
+        this.latitudInicial = latitudInicial;
+        this.longitudInicial = longitudInicial;
+        this.zoomInicial = zoomInicial;
+
         inicializar();
     }
 
@@ -85,13 +107,13 @@ public final class VisualizadorRutasLeaflet implements VisualizadorMapa {
         }
     }
 
-    /** Centra el mapa en la ciudad configurada en application.properties. */
+    /** Configura la vista inicial del mapa con los parámetros recibidos. */
     private void configurarVistaInicial() {
         try {
             webEngine.executeScript(String.format(Locale.US, "window.configurarVista(%f, %f, %d);",
-                    CargarParametros.getMapaCentroLatitud(),
-                    CargarParametros.getMapaCentroLongitud(),
-                    CargarParametros.getMapaZoom()));
+                    latitudInicial,
+                    longitudInicial,
+                    zoomInicial));
         } catch (Exception e) {
             e.printStackTrace();
         }

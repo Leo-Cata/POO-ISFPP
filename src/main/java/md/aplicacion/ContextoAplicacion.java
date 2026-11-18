@@ -157,6 +157,35 @@ public class ContextoAplicacion {
 	}
 
 	/**
+	 * Obtiene la latitud del centro inicial del mapa.
+	 *
+	 * @return latitud configurada.
+	 */
+	public static double getMapaCentroLatitud() {
+		return CargarParametros.getMapaCentroLatitud();
+	}
+
+	/**
+	 * Obtiene la longitud del centro inicial del mapa.
+	 *
+	 * @return longitud configurada.
+	 */
+	public static double getMapaCentroLongitud() {
+		return CargarParametros.getMapaCentroLongitud();
+	}
+
+	/**
+	 * Obtiene el nivel de zoom inicial del mapa.
+	 *
+	 * @return zoom configurado.
+	 */
+	public static int getMapaZoom() {
+		return CargarParametros.getMapaZoom();
+	}
+
+	/**
+	 * Obtiene el usuario que inició sesión.
+	 * /**
 	 * Obtiene el usuario que inició sesión.
 	 *
 	 * @return el usuario autenticado, o null si no hay ninguno.

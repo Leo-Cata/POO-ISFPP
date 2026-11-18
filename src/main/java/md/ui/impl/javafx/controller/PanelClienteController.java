@@ -106,8 +106,12 @@ public class PanelClienteController {
 	public void initialize() {
 		resource = ContextoAplicacion.getMensajes();
 
-		// Instancia el adaptador pasando la referencia del WebView
-		visualizador = new VisualizadorRutasLeaflet(mapaView);
+		// Instancia el visualizador con los parámetros iniciales del mapa.
+		visualizador = new VisualizadorRutasLeaflet(
+				mapaView,
+				ContextoAplicacion.getMapaCentroLatitud(),
+				ContextoAplicacion.getMapaCentroLongitud(),
+				ContextoAplicacion.getMapaZoom());
 
 		visualizador.configurarSeleccion(this::recibirPuntoMapa);
 
