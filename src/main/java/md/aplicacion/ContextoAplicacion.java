@@ -56,7 +56,10 @@ public class ContextoAplicacion {
 		try {
 
 			// Creamos el motor vial configurado.
-			nuevoMotor = PlanificadorRutasFactory.crear();
+			nuevoMotor = PlanificadorRutasFactory.crear(
+					CargarParametros.getMotorRutas(),
+					CargarParametros.getArchivoOsm(),
+					CargarParametros.getDirectorioCacheRutas());
 
 			// Creamos el validador con los parámetros geográficos configurados.
 			nuevoValidador = new ValidacionUbicaciones(
