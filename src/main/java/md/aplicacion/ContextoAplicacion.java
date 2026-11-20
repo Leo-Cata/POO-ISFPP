@@ -3,11 +3,14 @@ package md.aplicacion;
 import java.io.FileNotFoundException;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.HashMap;
+import java.util.Map;
 
 import md.datos.dao.DAOException;
 import md.datos.dao.DAOFactory;
 import md.logica.GeneradorUbicacionesViales;
 import md.logica.GestorViajes;
+import md.logica.GestorCicloViajeCliente;
 import md.logica.ValidacionUbicaciones;
 import md.modelo.Usuario;
 import md.rutas.api.PlanificadorRutas;
@@ -25,18 +28,20 @@ public class ContextoAplicacion {
 	private static ResourceBundle mensajes;
 	private static Usuario usuarioLogeado; // mantiene el usuario logeado
 	private static GestorViajes gestorViajes;
+	// Mantiene un coordinador independiente por usuario para que el ciclo
+	// automático de sus viajes continúe aunque cierre sesión o cierre el panel.
+	private static final Map<Usuario, GestorCicloViajeCliente> ciclosPorUsuario = new HashMap<>(); 
 	private static PlanificadorRutas motorVial; // conserva la instancia del motor de rutas que creamos mediante
 												// PlanificadorRutasFactory
 	private static GeneradorUbicacionesViales generadorUbicaciones;
 	private static ValidacionUbicaciones validadorUbicaciones;
 
 	/**
-	 * Carga los datos iniciales y prepara los recursos viales
-	 * necesarios para iniciar la aplicación.
+	 * Carga los datos iniciales y prepara los recursos viales necesarios para
+	 * iniciar la aplicación.
 	 */
 
-	public static void inicializar(DAOFactory persistencia)
-			throws DAOException, FileNotFoundException {
+	public static void inicializar(DAOFactory persistencia) throws DAOException, FileNotFoundException {
 
 		if (persistencia == null) {
 			throw new IllegalArgumentException("La persistencia no puede ser null.");
@@ -56,39 +61,27 @@ public class ContextoAplicacion {
 		try {
 
 			// Creamos el motor vial configurado.
-			nuevoMotor = PlanificadorRutasFactory.crear(
-					CargarParametros.getMotorRutas(),
-					CargarParametros.getArchivoOsm(),
-					CargarParametros.getDirectorioCacheRutas());
+			nuevoMotor = PlanificadorRutasFactory.crear(CargarParametros.getMotorRutas(),
+					CargarParametros.getArchivoOsm(), CargarParametros.getDirectorioCacheRutas());
 
 			// Creamos el validador con los parámetros geográficos configurados.
-			nuevoValidador = new ValidacionUbicaciones(
-					CargarParametros.getToleranciaAjusteMetros(),
-					CargarParametros.getLatitudMin(),
-					CargarParametros.getLatitudMax(),
-					CargarParametros.getLongitudMin(),
-					CargarParametros.getLongitudMax());
+			nuevoValidador = new ValidacionUbicaciones(CargarParametros.getToleranciaAjusteMetros(),
+					CargarParametros.getLatitudMin(), CargarParametros.getLatitudMax(),
+					CargarParametros.getLongitudMin(), CargarParametros.getLongitudMax());
 
 			// Creamos el generador de ubicaciones compartido,
 			// utilizando el motor vial y el validador.
-			nuevoGenerador = new GeneradorUbicacionesViales(
-					nuevoMotor,
-					nuevoValidador,
-					CargarParametros.getLatitudMin(),
-					CargarParametros.getLatitudMax(),
-					CargarParametros.getLongitudMin(),
-					CargarParametros.getLongitudMax());
+			nuevoGenerador = new GeneradorUbicacionesViales(nuevoMotor, nuevoValidador,
+					CargarParametros.getLatitudMin(), CargarParametros.getLatitudMax(),
+					CargarParametros.getLongitudMin(), CargarParametros.getLongitudMax());
 
 			// Asignamos ubicaciones iniciales a los vehículos de todos los conductores.
 			InicializadorVehiculos inicializadorVehiculos = new InicializadorVehiculos(nuevoGenerador);
 			inicializadorVehiculos.inicializar(nuevosDatos.getUsuarios());
 
 			// Creamos el gestor de viajes con los parámetros de configuración.
-			nuevoGestor = new GestorViajes(
-					nuevosDatos.getUsuarios(),
-					nuevoMotor,
-					CargarParametros.getVelocidadMediaKmH(),
-					CargarParametros.getCostoCancelacionViajeAceptado());
+			nuevoGestor = new GestorViajes(nuevosDatos.getUsuarios(), nuevoMotor,
+					CargarParametros.getVelocidadMediaKmH(), CargarParametros.getCostoCancelacionViajeAceptado());
 
 		} catch (RuntimeException e) {
 
@@ -124,9 +117,7 @@ public class ContextoAplicacion {
 
 		locale = new Locale(idioma, pais);
 
-		mensajes = ResourceBundle.getBundle(
-				"ui.i18n.labels",
-				locale);
+		mensajes = ResourceBundle.getBundle("ui.i18n.labels", locale);
 	}
 
 	/**
@@ -184,9 +175,8 @@ public class ContextoAplicacion {
 	}
 
 	/**
-	 * Obtiene el usuario que inició sesión.
-	 * /**
-	 * Obtiene el usuario que inició sesión.
+	 * Obtiene el usuario que inició sesión. /** Obtiene el usuario que inició
+	 * sesión.
 	 *
 	 * @return el usuario autenticado, o null si no hay ninguno.
 	 */
@@ -233,9 +223,72 @@ public class ContextoAplicacion {
 	}
 
 	/**
-	 * Cierra el motor vial y libera sus recursos.
+	 * Obtiene el coordinador del ciclo de viaje correspondiente a un usuario.
+	 *
+	 * Si el usuario todavía no tiene un coordinador asociado, crea uno utilizando
+	 * la instancia compartida de GestorViajes y lo guarda para reutilizarlo en
+	 * futuras consultas.
+	 *
+	 * @param usuario usuario al que pertenece el ciclo de viaje.
+	 * @return coordinador asociado al usuario.
+	 * @throws IllegalArgumentException si el usuario recibido es null.
+	 * @throws IllegalStateException    si GestorViajes todavía no fue inicializado.
 	 */
-	public static void cerrar() {
+	public static synchronized GestorCicloViajeCliente getGestorCicloViajeCliente(Usuario usuario) {
+
+		if (usuario == null) {
+			throw new IllegalArgumentException("El usuario no puede ser null.");
+		}
+
+		if (gestorViajes == null) {
+			throw new IllegalStateException("El gestor de viajes no está inicializado.");
+		}
+
+		GestorCicloViajeCliente ciclo = ciclosPorUsuario.get(usuario);
+
+		if (ciclo == null) {
+			ciclo = new GestorCicloViajeCliente(gestorViajes);
+			ciclosPorUsuario.put(usuario, ciclo);
+		}
+
+		return ciclo;
+	}
+	
+	/**
+	 * Busca el coordinador previamente asociado a un cliente,
+	 * sin crear una nueva instancia.
+	 *
+	 * @param cliente usuario cliente cuyo coordinador se desea buscar.
+	 * @return coordinador existente o null si el cliente todavía no tiene uno.
+	 */
+	public static synchronized GestorCicloViajeCliente buscarGestorCicloViajeCliente(
+	        Usuario cliente) {
+
+	    if (cliente == null) {
+	        return null;
+	    }
+
+	    return ciclosPorUsuario.get(cliente);
+	}
+
+	/**
+	 * Cierra los coordinadores de los ciclos de viaje y libera los recursos
+	 * administrados por el contexto de aplicación.
+	 *
+	 * Primero detiene todos los coordinadores y luego cierra el motor vial,
+	 * respetando el orden de cierre de los componentes y sus dependencias.
+	 *
+	 * También elimina las referencias a los coordinadores almacenados.
+	 */
+	public static synchronized void cerrar() {
+
+		// Se detienen todos los ciclos automáticos antes de cerrar el motor vial,
+		// ya que sus tareas pueden utilizar los servicios de planificación de rutas.
+		for (GestorCicloViajeCliente ciclo : ciclosPorUsuario.values()) {
+			ciclo.close();
+		}
+
+		ciclosPorUsuario.clear();
 
 		if (motorVial != null) {
 			try {
@@ -258,8 +311,7 @@ public class ContextoAplicacion {
 	 */
 	public static GeneradorUbicacionesViales getGeneradorUbicaciones() {
 		if (generadorUbicaciones == null) {
-			throw new IllegalStateException(
-					"El generador de ubicaciones todavía no fue inicializado.");
+			throw new IllegalStateException("El generador de ubicaciones todavía no fue inicializado.");
 		}
 
 		return generadorUbicaciones;

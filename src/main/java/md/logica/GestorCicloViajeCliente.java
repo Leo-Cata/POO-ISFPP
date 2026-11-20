@@ -6,6 +6,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import md.modelo.EstadoViaje;
 import md.modelo.Viaje;
 import md.rutas.api.RutaNoDisponibleException;
 
@@ -112,7 +113,7 @@ public class GestorCicloViajeCliente implements AutoCloseable {
         this.cancelado = false;
 
         // Informa que el viaje se encuentra solicitado.
-        notificadorCambio.accept(viaje);
+        notificarCambio(viaje);
 
         // Programa el intento de aceptación después de 20 segundos.
         tareaPendiente = ejecutor.schedule(
@@ -122,21 +123,25 @@ public class GestorCicloViajeCliente implements AutoCloseable {
     }
 
     /**
-     * Intenta asignar un conductor al viaje.
+     * Intenta asignar un conductor al viaje solicitado.
      *
-     * Si no hay conductores disponibles, el viaje queda rechazado.
-     * Si se acepta, se conserva el resultado para utilizar sus rutas.
+     * Comprueba que el ciclo siga activo y que el viaje permanezca
+     * en estado SOLICITADO antes de procesar la aceptación.
+     *
+     * Si se acepta, conserva el resultado para utilizar sus rutas
+     * en las siguientes etapas del ciclo.
      */
     private synchronized void intentarAceptacion() {
-        if (cancelado || cerrado) {
-            return;
-        }
+    	if (cancelado || cerrado || viajeActual == null
+    	        || viajeActual.estadoActual() != EstadoViaje.SOLICITADO) {
+    	    return;
+    	}
 
         try {
             resultadoSolicitud = gestorViajes.procesarAceptacionViaje(viajeActual);
 
             // Se informa tanto la aceptación como el rechazo.
-            notificadorCambio.accept(viajeActual);
+            notificarCambio(viajeActual);
 
             if (resultadoSolicitud == null) {
                 // El viaje fue rechazado porque no se encontró un conductor.
@@ -150,21 +155,17 @@ public class GestorCicloViajeCliente implements AutoCloseable {
         } catch (RutaNoDisponibleException e) {
 
             // GestorViajes rechaza el viaje cuando no puede planificar las rutas.
-            notificadorCambio.accept(viajeActual);
+        	notificarCambio(viajeActual);
 
-            if (notificadorError != null) {
-                notificadorError.accept(
-                        new IllegalStateException(
-                                "No se pudo calcular la ruta del viaje.", e));
-            }
+        	notificarError(
+        	        new IllegalStateException(
+        	                "No se pudo calcular la ruta del viaje.", e));
 
             viajeActual = null;
             resultadoSolicitud = null;
 
         } catch (RuntimeException e) {
-            if (notificadorError != null) {
-                notificadorError.accept(e);
-            }
+        	notificarError(e);
         }
     }
 
@@ -185,11 +186,17 @@ public class GestorCicloViajeCliente implements AutoCloseable {
 
     /**
      * Inicia el viaje cuando el conductor llega al origen.
+     *
+     * Solo ejecuta la transición si el ciclo sigue activo y el viaje
+     * permanece en estado ACEPTADO. Así evita repetir un inicio que
+     * ya se haya realizado manualmente.
      */
     private synchronized void iniciarTraslado() {
-        if (cancelado || cerrado) {
-            return;
-        }
+    	if (cancelado || cerrado || viajeActual == null
+    	        || resultadoSolicitud == null
+    	        || viajeActual.estadoActual() != EstadoViaje.ACEPTADO) {
+    	    return;
+    	}
 
         try {
             boolean iniciado = gestorViajes.procesarInicioViaje(
@@ -200,14 +207,12 @@ public class GestorCicloViajeCliente implements AutoCloseable {
                         "No se pudo iniciar el viaje.");
             }
 
-            notificadorCambio.accept(viajeActual);
+            notificarCambio(viajeActual);
 
             programarTraslado();
 
         } catch (RuntimeException e) {
-            if (notificadorError != null) {
-                notificadorError.accept(e);
-            }
+        	notificarError(e);
         }
     }
 
@@ -228,11 +233,17 @@ public class GestorCicloViajeCliente implements AutoCloseable {
 
     /**
      * Finaliza el viaje cuando se cumple el tiempo estimado de traslado.
+     *
+     * Solo ejecuta la transición si el ciclo sigue activo y el viaje
+     * permanece en estado INICIADO. Evita finalizar nuevamente un viaje
+     * que ya fue completado o cancelado manualmente.
      */
     private synchronized void finalizarTraslado() {
-        if (cancelado || cerrado) {
-            return;
-        }
+    	if (cancelado || cerrado || viajeActual == null
+    	        || resultadoSolicitud == null
+    	        || viajeActual.estadoActual() != EstadoViaje.INICIADO) {
+    	    return;
+    	}
         try {
             boolean finalizado = gestorViajes.procesarFinalizacionViaje(
                     resultadoSolicitud.conductor());
@@ -243,16 +254,14 @@ public class GestorCicloViajeCliente implements AutoCloseable {
             }
 
             // Informa al controlador que el viaje finalizó.
-            notificadorCambio.accept(viajeActual);
+            notificarCambio(viajeActual);
 
             // Libera las referencias al viaje terminado.
             viajeActual = null;
             resultadoSolicitud = null;
 
         } catch (RuntimeException e) {
-            if (notificadorError != null) {
-                notificadorError.accept(e);
-            }
+        	notificarError(e);
         }
     }
 
@@ -300,6 +309,67 @@ public class GestorCicloViajeCliente implements AutoCloseable {
         notificadorError = null;
 
         ejecutor.shutdownNow();
+    }
+    
+    /**
+     * Notifica a la pantalla conectada que se produjo un cambio en el viaje.
+     *
+     * Si no hay ninguna pantalla conectada, no realiza ninguna acción.
+     *
+     * @param viaje viaje cuyo estado o información cambió.
+     */
+    private synchronized void notificarCambio(Viaje viaje) {
+        if (notificadorCambio != null) {
+            notificadorCambio.accept(viaje);
+        }
+    }
+    
+    /**
+     * Informa a la pantalla conectada que ocurrió un error durante
+     * la coordinación del ciclo de viaje.
+     *
+     * Si no hay ninguna pantalla conectada, el error no se comunica
+     * mediante la interfaz.
+     *
+     * @param error excepción que describe el problema ocurrido.
+     */
+    private synchronized void notificarError(RuntimeException error) {
+        if (notificadorError != null) {
+            notificadorError.accept(error);
+        }
+    }
+    
+    /**
+     * Asocia los notificadores de la pantalla que recibirá los cambios
+     * y errores producidos durante el ciclo del viaje.
+     *
+     * @param notificadorCambio función que recibe los cambios del viaje.
+     * @param notificadorError función que recibe los errores; puede ser null.
+     * @throws IllegalArgumentException si el notificador de cambios es null.
+     */
+    public synchronized void conectarNotificadores(
+            Consumer<Viaje> notificadorCambio,
+            Consumer<RuntimeException> notificadorError) {
+
+        if (notificadorCambio == null) {
+            throw new IllegalArgumentException(
+                    "El notificador de cambios no puede ser null.");
+        }
+
+        this.notificadorCambio = notificadorCambio;
+        this.notificadorError = notificadorError;
+    }
+    
+    /**
+     * Desvincula los notificadores de la pantalla actual.
+     *
+     * No cancela el viaje ni sus tareas programadas.
+     * El coordinador continúa ejecutando el ciclo automático
+     * aunque no haya una pantalla conectada.
+     */
+    public synchronized void desconectarNotificadores() {
+        this.notificadorCambio = null;
+        this.notificadorError = null;
     }
 
 }
