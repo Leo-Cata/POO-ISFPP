@@ -30,7 +30,7 @@ public class ContextoAplicacion {
 	private static GestorViajes gestorViajes;
 	// Mantiene un coordinador independiente por usuario para que el ciclo
 	// automático de sus viajes continúe aunque cierre sesión o cierre el panel.
-	private static final Map<Usuario, GestorCicloViajeCliente> ciclosPorUsuario = new HashMap<>(); 
+	private static final Map<Usuario, GestorCicloViajeCliente> ciclosPorUsuario = new HashMap<>();
 	private static PlanificadorRutas motorVial; // conserva la instancia del motor de rutas que creamos mediante
 												// PlanificadorRutasFactory
 	private static GeneradorUbicacionesViales generadorUbicaciones;
@@ -247,28 +247,28 @@ public class ContextoAplicacion {
 		GestorCicloViajeCliente ciclo = ciclosPorUsuario.get(usuario);
 
 		if (ciclo == null) {
-			ciclo = new GestorCicloViajeCliente(gestorViajes);
+			ciclo = new GestorCicloViajeCliente(gestorViajes, CargarParametros.getEsperaAceptacionSegundos(),
+					CargarParametros.getMilisegundosRealesPorMinuto());
 			ciclosPorUsuario.put(usuario, ciclo);
 		}
 
 		return ciclo;
 	}
-	
+
 	/**
-	 * Busca el coordinador previamente asociado a un cliente,
-	 * sin crear una nueva instancia.
+	 * Busca el coordinador previamente asociado a un cliente, sin crear una nueva
+	 * instancia.
 	 *
 	 * @param cliente usuario cliente cuyo coordinador se desea buscar.
 	 * @return coordinador existente o null si el cliente todavía no tiene uno.
 	 */
-	public static synchronized GestorCicloViajeCliente buscarGestorCicloViajeCliente(
-	        Usuario cliente) {
+	public static synchronized GestorCicloViajeCliente buscarGestorCicloViajeCliente(Usuario cliente) {
 
-	    if (cliente == null) {
-	        return null;
-	    }
+		if (cliente == null) {
+			return null;
+		}
 
-	    return ciclosPorUsuario.get(cliente);
+		return ciclosPorUsuario.get(cliente);
 	}
 
 	/**
