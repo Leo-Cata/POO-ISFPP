@@ -25,6 +25,7 @@ public class GeneradorPasajeros implements Runnable {
     private final long intervaloMs;
     private final GestorViajes cotizador;
     private final Random random = new Random();
+    private final GestorCancelaciones gestorCancelaciones;
 
     /**
      * @param pasajeros            usuarios sin perfil de conductor.
@@ -39,7 +40,7 @@ public class GeneradorPasajeros implements Runnable {
             Despachador despachador,
             GeneradorUbicacionesViales generadorUbicaciones,
             long intervaloMs,
-            GestorViajes gestorViajes) {
+            GestorViajes gestorViajes, GestorCancelaciones gestorCancelaciones) {
         if (pasajeros == null || pasajeros.isEmpty() || servicios == null || servicios.isEmpty()
                 || despachador == null || generadorUbicaciones == null) {
             throw new IllegalArgumentException("Faltan pasajeros, servicios o dependencias.");
@@ -53,6 +54,7 @@ public class GeneradorPasajeros implements Runnable {
         this.generadorUbicaciones = generadorUbicaciones;
         this.intervaloMs = intervaloMs;
         this.cotizador = gestorViajes;
+        this.gestorCancelaciones = gestorCancelaciones;
     }
 
     @Override
@@ -81,6 +83,7 @@ public class GeneradorPasajeros implements Runnable {
 
             Viaje viaje = new Viaje(pasajero, origen, destino, servicio);
             despachador.solicitar(viaje, cotizacion);
+            gestorCancelaciones.programar(viaje);
         } catch (IllegalStateException e) {
             // No se encontró un punto vial válido: se descarta este pedido
             // no se lanza la excepcion para que no se corte la simulacion

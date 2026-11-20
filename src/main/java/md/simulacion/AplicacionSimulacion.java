@@ -89,6 +89,7 @@ public class AplicacionSimulacion {
             Estadisticas estadisticas = new Estadisticas();
             Despachador despachador = new Despachador(datos.getUsuarios(), ContextoAplicacion.getMotorVial(),
                     politica, esperaMaximaMs, estadisticas);
+            GestorCancelaciones gestorCancelaciones = new GestorCancelaciones(despachador);
 
             System.out.println("====================================================");
             System.out.println("           SIMULACIÓN DE MOVILIDAD DIGITAL");
@@ -113,7 +114,7 @@ public class AplicacionSimulacion {
                         despachador,
                         generadorUbicaciones,
                         intervaloMs,
-                        gestorViajes));
+                        gestorViajes, gestorCancelaciones));
                 for (Usuario conductor : conductores) {
                     hilos.execute(new ConductorSimulado(conductor, despachador, factor)); // y para conductores
                 }
@@ -122,6 +123,7 @@ public class AplicacionSimulacion {
             } finally {
                 // Primero se corta el despachador, después se espera a los hilos
                 despachador.cerrar();
+                gestorCancelaciones.cerrar();
                 hilos.shutdown();
                 if (!hilos.awaitTermination(30, TimeUnit.SECONDS)) {
                     hilos.shutdownNow();

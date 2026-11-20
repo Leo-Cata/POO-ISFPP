@@ -26,7 +26,7 @@ public class GestorCicloViajeCliente implements AutoCloseable {
     private static final long ESPERA_ACEPTACION_SEGUNDOS = 10;
 
     // Tiempo real equivalente a un minuto estimado por el motor de rutas.
-    private static final long MILISEGUNDOS_REALES_POR_MINUTO = 10000;
+    private static final long MILISEGUNDOS_REALES_POR_MINUTO = 5000;
 
     // Gestor encargado de ejecutar las operaciones reales del negocio.
     private final GestorViajes gestorViajes;
@@ -53,6 +53,8 @@ public class GestorCicloViajeCliente implements AutoCloseable {
     private Consumer<RuntimeException> notificadorError;
 
     // Indica si el ciclo actual fue cancelado.
+    // se utiliza volatile para que todos los hilos al leer el booleano, lean la
+    // ultima version actualizada
     private volatile boolean cancelado;
 
     /**
@@ -74,6 +76,8 @@ public class GestorCicloViajeCliente implements AutoCloseable {
         // Al ser daemon, no impide que la aplicación finalice.
         this.ejecutor = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread hilo = new Thread(r, "ciclo-viaje-cliente");
+            // Se establece como hilo daemon para que no impida la finalización de la
+            // aplicación.
             hilo.setDaemon(true);
             return hilo;
         });
@@ -81,6 +85,7 @@ public class GestorCicloViajeCliente implements AutoCloseable {
 
     /**
      * Inicia el ciclo temporal de un viaje solicitado.
+     * Solo permite que se ejecute uno a la vez
      *
      * @param viaje             viaje que se va a coordinar.
      * @param notificadorCambio acción ejecutada cuando cambia el estado.
@@ -114,7 +119,7 @@ public class GestorCicloViajeCliente implements AutoCloseable {
         // Informa que el viaje se encuentra solicitado.
         notificadorCambio.accept(viaje);
 
-        // Programa el intento de aceptación después de 20 segundos.
+        // Programa el intento de aceptación después de x segundos.
         tareaPendiente = ejecutor.schedule(
                 this::intentarAceptacion,
                 ESPERA_ACEPTACION_SEGUNDOS,
