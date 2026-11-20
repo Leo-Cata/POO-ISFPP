@@ -138,7 +138,10 @@ public class GestorViajes {
 		}
 
 		Cotizacion cotizacion = calcularCotizacion(servicio, origen, destino);
-
+		// Los bloqueos son necesarios porque GestorViajes debe permitir que
+		// varios hilos trabajen concurrentemente, pero evitar que dos de ellos
+		// ejecuten simultáneamente operaciones que modifiquen los mismos datos
+		// y puedan generar inconsistencias.
 		BloqueoViajes.LOCK.lock();
 		try {
 			if (deudasPendientes.containsKey(clienteUsuario)) {

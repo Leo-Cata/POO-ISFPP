@@ -58,6 +58,13 @@ public class Despachador {
     private final Random random = new Random();
 
     /** Solicitudes que todavía no tienen un conductor asignado. */
+    // Se utiliza LinkedList en lugar de ArrayBlockingQueue porque el despachador
+    // no solamente almacena y extrae viajes, sino que también necesita recorrer
+    // las solicitudes pendientes y eliminar viajes específicos cuando son
+    // asignados, cancelados o vencen. Estas operaciones se adaptan mejor a
+    // las necesidades de administración de la lista de viajes pendientes.
+    // ABQ no esta hecho para principalmente para recorrer elementos, eliminar
+    // cierto elemento, etc
     private final LinkedList<Viaje> pendientes = new LinkedList<>();
 
     /** Momento en que se publicó cada solicitud pendiente. */
@@ -134,6 +141,8 @@ public class Despachador {
                     return libre;
                 }
                 // Espera con tiempo límite para poder revisar los viajes vencidos
+                // Si transcurren 200 ms, vuelve a comprobar las condiciones
+                // a no ser que otro hilo despierte a cambio con cambio.signalAll()
                 cambio.await(REVISION_MS, TimeUnit.MILLISECONDS);
             }
             return null;
@@ -148,6 +157,8 @@ public class Despachador {
      * un conductor o venza el tiempo máximo de espera.
      */
     public boolean solicitar(Viaje viaje, GestorViajes.Cotizacion cotizacion) {
+        // el primer getCliente accede al USUARIO asociado a ese viaje
+        // el segundo al perfil de cliente del usuario
         if (viaje == null || cotizacion == null
                 || viaje.getCliente() == null
                 || viaje.getCliente().getCliente() == null) {
@@ -182,7 +193,7 @@ public class Despachador {
             }
 
             imprimirEstadoBloqueado();
-            cambio.signalAll();
+            cambio.signalAll(); // se despiertan los otros metodos en await
             return true;
         } finally {
             lock.unlock();
@@ -198,6 +209,8 @@ public class Despachador {
             throw new IllegalArgumentException("El conductor no puede ser null.");
         }
 
+        // permite que el hilo pueda ser interrumpido, por ejemplo, cuando se desea
+        // finalizar la simnulacion
         lock.lockInterruptibly();
         try {
             while (true) {
@@ -298,6 +311,7 @@ public class Despachador {
             viaje.finalizar(LocalDateTime.now(), calificacionAleatoria(), calificacionAleatoria());
             Usuario conductor = viaje.getConductor();
             if (conductor != null) {
+                // si no existe una llave asociada al conductor, se crea, sino se le suma 1
                 viajesPorConductor.merge(conductor, 1, Integer::sum);
                 enAtencion.remove(conductor, viaje);
             }
@@ -381,6 +395,8 @@ public class Despachador {
                     + nombre(viaje.getCliente()) + ". Quién canceló: " + actor
                     + ". Estado anterior: " + estadoAnterior + ". Motivo: " + motivo + ".");
 
+            // cada conductor es su propio hilo, si se cancela un viaje el mismo vuelve a
+            // esperar que se le asigne otro viaje
             asignarPendientes();
             cambio.signalAll();
             imprimirEstadoBloqueado();
@@ -463,11 +479,11 @@ public class Despachador {
     }
 
     private void asignarPendientes() {
-        Iterator<Viaje> it = pendientes.iterator();
-        while (it.hasNext()) {
-            Viaje viaje = it.next();
+        Iterator<Viaje> iterador = pendientes.iterator();
+        while (iterador.hasNext()) {
+            Viaje viaje = iterador.next();
             if (intentarAsignar(viaje)) {
-                it.remove();
+                iterador.remove();
                 instanteSolicitud.remove(viaje);
                 cambio.signalAll();
             }
@@ -475,6 +491,8 @@ public class Despachador {
     }
 
     private boolean intentarAsignar(Viaje viaje) {
+        // Se obtiene los conductores que pueden ofrecer el servicio solicitado por ese
+        // viaje
         List<Usuario> candidatos = new ArrayList<>(movilidad.obtenerConductoresCompatibles(viaje.getServicio()));
 
         while (!candidatos.isEmpty()) {
@@ -508,10 +526,27 @@ public class Despachador {
             case SORTEO -> candidatos.get(random.nextInt(candidatos.size()));
             case CERCANIA -> masCercano(candidatos, origen);
             case ROTACION -> {
-                int minimo = candidatos.stream().mapToInt(this::viajesDe).min().orElse(0);
-                List<Usuario> menosViajes = candidatos.stream()
-                        .filter(c -> viajesDe(c) == minimo)
-                        .toList();
+                int minimo = Integer.MAX_VALUE;
+
+                // Buscar la menor cantidad de viajes realizados.
+                for (Usuario conductor : candidatos) {
+                    int cantidad = viajesDe(conductor);
+
+                    if (cantidad < minimo) {
+                        minimo = cantidad;
+                    }
+                }
+
+                // Obtener los conductores que tienen esa cantidad mínima.
+                List<Usuario> menosViajes = new ArrayList<>();
+
+                for (Usuario conductor : candidatos) {
+                    if (viajesDe(conductor) == minimo) {
+                        menosViajes.add(conductor);
+                    }
+                }
+
+                // Si hay varios, elegir al más cercano.
                 yield masCercano(menosViajes, origen);
             }
         };
@@ -519,6 +554,7 @@ public class Despachador {
 
     private Usuario masCercano(List<Usuario> candidatos, Ubicacion origen) {
         Usuario mejor = null;
+        // se utiliza inf+ para que cualquier distancia sea valida
         double menorDistancia = Double.POSITIVE_INFINITY;
         for (Usuario candidato : candidatos) {
             Ubicacion posicion = candidato.getConductor().getVehiculoActivo().getUbicacion();
@@ -540,20 +576,20 @@ public class Despachador {
 
     private void expirarViajesVencidos() {
         long ahora = System.currentTimeMillis();
-        Iterator<Viaje> it = pendientes.iterator();
+        Iterator<Viaje> iterador = pendientes.iterator();
         boolean huboVencimientos = false;
-        while (it.hasNext()) {
-            Viaje viaje = it.next();
+        while (iterador.hasNext()) {
+            Viaje viaje = iterador.next();
             Long inicio = instanteSolicitud.get(viaje);
             if (viaje.estadoActual() != EstadoViaje.SOLICITADO) {
                 // Limpia viajes que hayan sido cancelados desde otro componente.
-                it.remove();
+                iterador.remove();
                 instanteSolicitud.remove(viaje);
                 cotizaciones.remove(viaje.getId());
                 rutasPorViaje.remove(viaje.getId());
                 huboVencimientos = true;
             } else if (inicio != null && ahora - inicio >= esperaMaximaMs) {
-                it.remove();
+                iterador.remove();
                 instanteSolicitud.remove(viaje);
                 viaje.rechazar(LocalDateTime.now());
                 cotizaciones.remove(viaje.getId());

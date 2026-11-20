@@ -17,8 +17,6 @@ import java.util.Properties;
  * Esta clase es independiente de la configuración general
  * de la aplicación.
  *
- * @author
- * @version 1.0
  */
 public final class ConfiguracionSimulacion {
 
@@ -54,6 +52,8 @@ public final class ConfiguracionSimulacion {
 
     /**
      * Constructor privado para impedir la creación de instancias.
+     * de manera = new ConfiguracionSimulacion ya que contiene atributos y metodos
+     * estaticos
      */
     private ConfiguracionSimulacion() {
     }
@@ -94,7 +94,8 @@ public final class ConfiguracionSimulacion {
     public static String getPolitica() {
         return leerClave(CLAVE_POLITICA)
                 .trim()
-                .toUpperCase(Locale.ROOT);
+                .toUpperCase(Locale.ROOT); // Locale.ROOT asegura que las palabras, las cuales son identificadores
+                                           // tecnicos no sean traducidas
     }
 
     /**

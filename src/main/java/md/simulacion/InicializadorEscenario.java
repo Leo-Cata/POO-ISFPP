@@ -27,7 +27,7 @@ public class InicializadorEscenario {
             }
 
             if (usuario.getConductor() == null) {
-                continue;
+                continue; // si el usuario no es conductor, salta a la isguiente iteracion
             }
 
             usuario.cambiarRolActivo(RolUsuario.CONDUCTOR);

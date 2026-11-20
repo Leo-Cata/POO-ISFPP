@@ -27,7 +27,6 @@ import md.modelo.Usuario;
 public class AplicacionSimulacion {
     /**
      * Punto de entrada de la simulación por consola.
-     * <p>
      * Carga los datos, separa a los usuarios en conductores y pasajeros, lanza un
      * hilo virtual por conductor y un hilo generador de pasajeros, deja correr la
      * simulación el tiempo configurado y al final cierra el {@link Despachador}
@@ -47,7 +46,9 @@ public class AplicacionSimulacion {
             DAOFactory persistencia = DAOLoader.getFactory();
             ContextoAplicacion.inicializar(persistencia);
 
-            var datos = ContextoAplicacion.getDatosIniciales();
+            var datos = ContextoAplicacion.getDatosIniciales(); // el compilador infiere el tipo, solamente sirve como
+                                                                // variable local
+
             // Preparamos el estado de los conductores para la simulación.
             // Las ubicaciones de sus vehículos ya fueron asignadas por ContextoAplicacion.
             GeneradorUbicacionesViales generadorUbicaciones = ContextoAplicacion.getGeneradorUbicaciones();
@@ -69,12 +70,12 @@ public class AplicacionSimulacion {
                 }
             }
             if (conductores.isEmpty() || pasajeros.isEmpty() || datos.getServicios().isEmpty()) {
-                throw new IllegalStateException("Hacen falta conductores, pasajeros y servicios para simular.");
+                throw new IllegalStateException("Hacen falta conductores, pasajeros y/o servicios para simular.");
             }
             /**
              * Obtiene los parámetros necesarios para ejecutar la simulación.
              */
-            long duracionMs = ConfiguracionSimulacion.getDuracionSegundos() * 1000L;
+            long duracionMs = ConfiguracionSimulacion.getDuracionSegundos() * 1000L; // L indica que es de tipo long
 
             double factor = ConfiguracionSimulacion.getFactorAceleracion();
 
@@ -103,9 +104,10 @@ public class AplicacionSimulacion {
 
             // Un hilo virtual por tarea: un hilo por conductor, más el generador de
             // pasajeros
-            ExecutorService hilos = Executors.newVirtualThreadPerTaskExecutor();
+            ExecutorService hilos = Executors.newVirtualThreadPerTaskExecutor(); // crea ejecutor de hilos virtuales con
+                                                                                 // mejor rendimiento
             try {
-                hilos.execute(new GeneradorPasajeros(
+                hilos.execute(new GeneradorPasajeros( // envia la tarea encargada de generar pasajeros
                         pasajeros,
                         datos.getServicios(),
                         despachador,
@@ -113,10 +115,10 @@ public class AplicacionSimulacion {
                         intervaloMs,
                         gestorViajes));
                 for (Usuario conductor : conductores) {
-                    hilos.execute(new ConductorSimulado(conductor, despachador, factor));
+                    hilos.execute(new ConductorSimulado(conductor, despachador, factor)); // y para conductores
                 }
 
-                Thread.sleep(duracionMs);
+                Thread.sleep(duracionMs); // tiempo de duracion de la simulacion
             } finally {
                 // Primero se corta el despachador, después se espera a los hilos
                 despachador.cerrar();

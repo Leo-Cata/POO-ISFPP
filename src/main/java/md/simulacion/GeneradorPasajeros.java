@@ -83,6 +83,7 @@ public class GeneradorPasajeros implements Runnable {
             despachador.solicitar(viaje, cotizacion);
         } catch (IllegalStateException e) {
             // No se encontró un punto vial válido: se descarta este pedido
+            // no se lanza la excepcion para que no se corte la simulacion
         }
     }
 }

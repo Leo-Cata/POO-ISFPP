@@ -6,8 +6,7 @@ import md.rutas.api.RutasViaje;
 
 /**
  * Hilo de un conductor. Espera a que el Despachador le asigne un viaje y para
- * cada
- * uno:
+ * cada uno
  * 
  * recorre el acercamiento: desde donde está hasta el pasajero;
  * inicia el viaje (el pasajero sube);
@@ -53,9 +52,12 @@ public class ConductorSimulado implements Runnable {
 
             RecorridoVehiculo recorrido = new RecorridoVehiculo(viaje.getVehiculo(), factorAceleracion);
 
-            boolean llegóAlPasajero = recorrido.recorrer(
-                    rutas.acercamiento(), () -> despachador.sigueActivo(viaje));
-            if (!llegóAlPasajero) {
+            boolean llegoAlPasajero = recorrido.recorrer(
+                    rutas.acercamiento(), () -> despachador.sigueActivo(viaje)); // funcion lambda, funciona de manera
+                                                                                 // "cuando necesites consultar si el
+                                                                                 // viaje sigue activo, consultar a
+                                                                                 // despachador.sigueactivo"
+            if (!llegoAlPasajero) { // se ejecuta al terminar la simulacion del recorrido
                 return;
             }
 
