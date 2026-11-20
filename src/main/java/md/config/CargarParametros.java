@@ -29,6 +29,8 @@ public class CargarParametros {
 	private static final String CLAVE_ARCHIVO_OSM = "rutas.osm";
 	private static final String CLAVE_CACHE_RUTAS = "rutas.cache";
 	private static final String CLAVE_VELOCIDAD_MEDIA = "viaje.velocidad.media.kmh";
+	private static final String CLAVE_ESPERA_ACEPTACION_SEGUNDOS = "viaje.ciclo.espera.aceptacion.segundos";
+	private static final String CLAVE_MILISEGUNDOS_REALES_POR_MINUTO = "viaje.ciclo.milisegundos.reales.por.minuto";
 	private static final String CLAVE_COSTO_CANCELACION_VIEJE_ACEPTADO = "costo.cancelacion.aceptado";
 	private static final String CLAVE_MAPA_CENTRO_LAT = "mapa.centro.latitud";
 	private static final String CLAVE_MAPA_CENTRO_LON = "mapa.centro.longitud";
@@ -38,17 +40,19 @@ public class CargarParametros {
 	// despues.
 	private static final Properties properties = new Properties();
 
-	private static String origenDatos;
-	private static String appUiType;
-	private static String appLanguage;
-	private static String appCountry;
-	private static double latitudMin;
-	private static double latitudMax;
-	private static double longitudMin;
-	private static double longitudMax;
-	private static double costoCancelacionViajeAceptado;
-	private static double velocidadMediaKmH;
-	private static double toleranciaAjusteMetros;
+	private static final String origenDatos;
+	private static final String appUiType;
+	private static final String appLanguage;
+	private static final String appCountry;
+	private static final double latitudMin;
+	private static final double latitudMax;
+	private static final double longitudMin;
+	private static final double longitudMax;
+	private static final double costoCancelacionViajeAceptado;
+	private static final double velocidadMediaKmH;
+	private static final long esperaAceptacionSegundos;
+	private static final long milisegundosRealesPorMinuto;
+	private static final double toleranciaAjusteMetros;
 
 	/**
 	 * Carga y procesa los parámetros de configuración de la aplicación desde el
@@ -98,9 +102,14 @@ public class CargarParametros {
 		velocidadMediaKmH = Double.parseDouble(leerClave(properties, CLAVE_VELOCIDAD_MEDIA));
 
 		if (!Double.isFinite(velocidadMediaKmH) || velocidadMediaKmH <= 0) {
-			throw new IllegalStateException(
-					"La velocidad media debe ser un número positivo.");
+			throw new IllegalStateException("La velocidad media debe ser un número positivo.");
 		}
+		
+		esperaAceptacionSegundos =
+		        leerEntero(CLAVE_ESPERA_ACEPTACION_SEGUNDOS);
+
+		milisegundosRealesPorMinuto =
+		        leerEntero(CLAVE_MILISEGUNDOS_REALES_POR_MINUTO);
 	}
 
 	/**
@@ -124,7 +133,6 @@ public class CargarParametros {
 			throw new ExceptionInInitializerError("Error al leer " + nombre + ": " + e.getMessage());
 		}
 	}
-	
 
 	/**
 	 * Lee una clave del archivo de configuración y verifica que exista.
@@ -137,8 +145,8 @@ public class CargarParametros {
 	private static String leerClave(Properties prop, String clave) {
 		String valor = prop.getProperty(clave);
 		if (valor == null || valor.trim().isEmpty()) {
-			throw new IllegalStateException("La clave '" + clave + "' no existe o está mal escrita en "
-					+ ARCHIVO_BASE + " o en el archivo de la ciudad.");
+			throw new IllegalStateException("La clave '" + clave + "' no existe o está mal escrita en " + ARCHIVO_BASE
+					+ " o en el archivo de la ciudad.");
 		}
 		return valor;
 	}
@@ -195,7 +203,7 @@ public class CargarParametros {
 	public static double getToleranciaAjusteMetros() {
 		return toleranciaAjusteMetros;
 	}
-	
+
 	/** Latitud del centro con que se abre el mapa. */
 	public static double getMapaCentroLatitud() {
 		double lat = leerDecimal(CLAVE_MAPA_CENTRO_LAT);
@@ -238,11 +246,31 @@ public class CargarParametros {
 	public static double getVelocidadMediaKmH() {
 		return velocidadMediaKmH;
 	}
+	
+	/**
+	 * Obtiene el tiempo de espera antes de intentar aceptar automáticamente
+	 * un viaje.
+	 *
+	 * @return tiempo de espera expresado en segundos.
+	 */
+	public static long getEsperaAceptacionSegundos() {
+	    return esperaAceptacionSegundos;
+	}
+
+	/**
+	 * Obtiene la equivalencia en milisegundos reales de un minuto estimado
+	 * de duración del viaje.
+	 *
+	 * @return milisegundos reales correspondientes a un minuto estimado.
+	 */
+	public static long getMilisegundosRealesPorMinuto() {
+	    return milisegundosRealesPorMinuto;
+	}
 
 	public static double getCostoCancelacionViajeAceptado() {
 		return costoCancelacionViajeAceptado;
 	}
-	
+
 	private static double leerDecimal(String clave) {
 		try {
 			return Double.parseDouble(leerClave(properties, clave).trim());
@@ -250,7 +278,7 @@ public class CargarParametros {
 			throw new IllegalStateException("La clave '" + clave + "' debe ser un número.");
 		}
 	}
-	
+
 	private static long leerEntero(String clave) {
 		String valor = leerClave(properties, clave).trim();
 		try {

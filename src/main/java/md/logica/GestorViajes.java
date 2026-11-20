@@ -635,4 +635,41 @@ public class GestorViajes {
 			BloqueoViajes.LOCK.unlock();
 		}
 	}
+
+	/**
+	 * Consulta el último viaje del cliente si está finalizado y todavía
+	 * no fue calificado.
+	 *
+	 * @param cliente usuario cuyo último viaje se desea consultar.
+	 * @return el último viaje sin calificar, o null si no cumple las condiciones.
+	 */
+	public Viaje consultarUltimoViajeFinalizado(Usuario cliente) {
+
+		if (cliente == null || cliente.getRolActivo() != RolUsuario.CLIENTE
+				|| cliente.getCliente() == null) {
+			throw new IllegalArgumentException("Se requiere un usuario con perfil de cliente.");
+		}
+
+		BloqueoViajes.LOCK.lock();
+		try {
+			var viajes = cliente.getCliente().getViajes();
+
+			if (viajes.isEmpty()) {
+				return null;
+			}
+
+			Viaje ultimoViaje = viajes.get(viajes.size() - 1);
+
+			if (ultimoViaje.estadoActual() == EstadoViaje.FINALIZADO
+					&& calificacionServicio
+							.obtenerCalificacionCliente(ultimoViaje) == CalificacionViaje.NO_CALIFICADO) {
+				return ultimoViaje;
+			}
+
+			return null;
+
+		} finally {
+			BloqueoViajes.LOCK.unlock();
+		}
+	}
 }

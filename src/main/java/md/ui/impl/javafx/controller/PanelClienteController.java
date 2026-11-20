@@ -31,8 +31,6 @@ import md.ui.api.VisualizadorMapa;
 import md.ui.impl.javafx.controller.util.AlertaUtil;
 import md.ui.impl.javafx.map.VisualizadorRutasLeaflet;
 import md.ui.impl.javafx.util.NavegadorVistas;
-
-// Eliminar ambos imports para no utilizar la simulación.
 import javafx.application.Platform;
 import md.logica.GestorCicloViajeCliente;
 
@@ -86,9 +84,7 @@ public class PanelClienteController {
 
 	// Gestores encargados del procesamiento del viaje.
 	private GestorViajes gestor;
-	private GestorCicloViajeCliente cicloViajeCliente; // Eliminar el atributo
-	// cicloViajeCliente para no utilizar la
-	// simulación.
+	private GestorCicloViajeCliente cicloViajeCliente;
 	private GestorViajes.Cotizacion cotizacion;
 
 	// variables de ubicacion para cotizar/solicitar
@@ -105,21 +101,24 @@ public class PanelClienteController {
 
 	private boolean solicitudEnProceso;
 
+	// Indica si esta instancia del controlador representa una pantalla activa.
+	private boolean pantallaActiva;
+
 	/**
-	 * Inicializa el panel del cliente: carga el mapa, registra la selección de
-	 * puntos por clic, activa la espera del origen, carga los servicios en el combo
-	 * y crea el {@link GestorViajes}. Lo invoca JavaFX después de cargar el FXML.
+	 * Inicializa el panel del cliente: configura el mapa, carga los servicios,
+	 * obtiene los gestores compartidos por la aplicación y conecta las
+	 * notificaciones del ciclo automático de viajes.
+	 *
+	 * También recupera el viaje activo del cliente, si existe. Lo invoca JavaFX
+	 * después de cargar el FXML.
 	 */
 	@FXML
 	public void initialize() {
 		resource = ContextoAplicacion.getMensajes();
 
 		// Instancia el visualizador con los parámetros iniciales del mapa.
-		visualizador = new VisualizadorRutasLeaflet(
-				mapaView,
-				ContextoAplicacion.getMapaCentroLatitud(),
-				ContextoAplicacion.getMapaCentroLongitud(),
-				ContextoAplicacion.getMapaZoom());
+		visualizador = new VisualizadorRutasLeaflet(mapaView, ContextoAplicacion.getMapaCentroLatitud(),
+				ContextoAplicacion.getMapaCentroLongitud(), ContextoAplicacion.getMapaZoom());
 
 		visualizador.configurarSeleccion(this::recibirPuntoMapa);
 
@@ -146,24 +145,35 @@ public class PanelClienteController {
 			}
 		});
 
+		// Recupera el usuario que inició sesión.
+		cliente = ContextoAplicacion.getUsuarioLogeado();
+
 		// Obtiene el gestor de viajes compartido por la aplicación.
 		gestor = ContextoAplicacion.getGestorViajes();
 
-		// Crea el coordinador del ciclo temporal del viaje.
-		cicloViajeCliente = new GestorCicloViajeCliente(gestor); // Eliminar la
-		// inicialización del coordinador para no
-		// utilizar la simulación.
+		// Obtiene el coordinador correspondiente al cliente.
+		cicloViajeCliente = ContextoAplicacion.getGestorCicloViajeCliente(cliente);
 
-		// Recupera el usuario logueado y su posible viaje activo.
-		cliente = ContextoAplicacion.getUsuarioLogeado();
-		viajeActual = cliente != null ? gestor.consultarViajeActivo(cliente) : null;
+		pantallaActiva = true;
+
+		// Conecta las notificaciones de esta pantalla al coordinador.
+		cicloViajeCliente.conectarNotificadores(viaje -> actualizarVistaPorCambio(viaje),
+				error -> mostrarErrorCiclo(error));
+
+		// Recupera el posible viaje activo del cliente.
+		viajeActual = gestor.consultarViajeActivo(cliente);
 
 		// al iniciar, se desactiva el boton de solicitar viaje
 		botonClienteSolicitar.setDisable(true);
 
-		// Muestra la información si el cliente tiene un viaje activo.
+		// Si no hay un viaje activo, consulta el último finalizado sin calificar.
+		if (viajeActual == null) {
+			viajeActual = gestor.consultarUltimoViajeFinalizado(cliente);
+		}
+
+		// Recupera la información y reconstruye el recorrido si existe un viaje activo.
 		if (viajeActual != null) {
-			mostrarOcultarInfoViaje(true);
+			actualizarVistaPorCambio(viajeActual);
 		} else {
 			mostrarOcultarInfoViaje(false);
 		}
@@ -182,8 +192,7 @@ public class PanelClienteController {
 
 		if (deuda) {
 			clienteLabelCancelacion.setVisible(true);
-			clienteCostoPagar.setText(
-					String.format("$%.2f", gestor.obtenerDeudaPendiente(cliente)));
+			clienteCostoPagar.setText(String.format("$%.2f", gestor.obtenerDeudaPendiente(cliente)));
 			clienteCostoPagar.setVisible(true);
 			clienteBotonCancelacionPagar.setVisible(true);
 			clienteBotonCancelacionPagar.setDisable(false);
@@ -195,8 +204,8 @@ public class PanelClienteController {
 	private void recibirPuntoMapa(String tipo, Ubicacion ubicacionClick) {
 		Ubicacion sobreCalle;
 		try {
-			sobreCalle = ContextoAplicacion.getValidadorUbicaciones()
-					.validarYAjustar(ubicacionClick, ContextoAplicacion.getMotorVial());
+			sobreCalle = ContextoAplicacion.getValidadorUbicaciones().validarYAjustar(ubicacionClick,
+					ContextoAplicacion.getMotorVial());
 		} catch (Exception e) {
 			AlertaUtil.mostrarAlerta(resource.getString("client.alert.invalidLocation"), e.getMessage());
 			visualizador.activarSeleccion(tipo);
@@ -272,10 +281,9 @@ public class PanelClienteController {
 	 * @return true si existe un viaje solicitado, aceptado o iniciado
 	 */
 	private boolean tieneViajeEnCurso() {
-		return viajeActual != null
-				&& (viajeActual.estadoActual() == EstadoViaje.SOLICITADO
-						|| viajeActual.estadoActual() == EstadoViaje.ACEPTADO
-						|| viajeActual.estadoActual() == EstadoViaje.INICIADO);
+		return viajeActual != null && (viajeActual.estadoActual() == EstadoViaje.SOLICITADO
+				|| viajeActual.estadoActual() == EstadoViaje.ACEPTADO
+				|| viajeActual.estadoActual() == EstadoViaje.INICIADO);
 	}
 
 	/**
@@ -298,10 +306,9 @@ public class PanelClienteController {
 	}
 
 	/**
-	 * Registra el viaje solicitado por el cliente.
-	 * Comprueba que no existan deudas pendientes y que la solicitud
-	 * haya sido cotizada. El registro se realiza en un hilo de fondo
-	 * para no bloquear la interfaz.
+	 * Registra el viaje solicitado por el cliente. Comprueba que no existan deudas
+	 * pendientes y que la solicitud haya sido cotizada. El registro se realiza en
+	 * un hilo de fondo para no bloquear la interfaz.
 	 *
 	 * El viaje queda inicialmente en estado SOLICITADO.
 	 *
@@ -317,8 +324,7 @@ public class PanelClienteController {
 		}
 
 		// Verificamos que se haya cotizado el viaje.
-		if (cotizacion == null || origenActual == null
-				|| destinoActual == null || servicio == null) {
+		if (cotizacion == null || origenActual == null || destinoActual == null || servicio == null) {
 
 			botonClienteSolicitar.setDisable(true);
 
@@ -341,8 +347,7 @@ public class PanelClienteController {
 
 			@Override
 			protected Viaje call() throws Exception {
-				return gestor.registrarSolicitudViaje(
-						clienteActual, servicioActual, origen, destino);
+				return gestor.registrarSolicitudViaje(clienteActual, servicioActual, origen, destino);
 			}
 		};
 
@@ -355,8 +360,7 @@ public class PanelClienteController {
 			if (viajeActual == null) {
 				actualizarBotonesSolicitud();
 
-				AlertaUtil.mostrarAlerta(
-						resource.getString("login.alert.attention"),
+				AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
 						"No se pudo registrar la solicitud del viaje.");
 				return;
 			}
@@ -364,69 +368,10 @@ public class PanelClienteController {
 			// La cotización ya fue utilizada.
 			cotizacion = null;
 
-			// Mostramos inicialmente el estado SOLICITADO.
-			mostrarOcultarInfoViaje(true);
-			// Dibuja el recorrido solicitado por el cliente.
-			dibujarRuta(
-					origen,
-					destino,
-					null,
-					origen,
-					destino,
-					servicioActual.getTipoVehiculo());
-			// Para desactivar la simulación, eliminar el bloque
-			// Inicia el ciclo temporal del viaje.
-			cicloViajeCliente.iniciar(
-					viajeActual,
-					viaje -> Platform.runLater(() -> {
-						viajeActual = viaje;
-						mostrarOcultarInfoViaje(true);
-
-						switch (viaje.estadoActual()) {
-
-							case ACEPTADO -> {
-								Vehiculo vehiculo = viaje.getVehiculo();
-
-								if (vehiculo != null && vehiculo.getUbicacion() != null) {
-									Ubicacion ubicacionConductor = vehiculo.getUbicacion();
-
-									dibujarRuta(
-											ubicacionConductor,
-											origen,
-											ubicacionConductor,
-											origen,
-											null,
-											vehiculo.getTipoVehiculo());
-								}
-							}
-
-							case INICIADO -> {
-								Vehiculo vehiculo = viaje.getVehiculo();
-
-								dibujarRuta(
-										origen,
-										destino,
-										null,
-										origen,
-										destino,
-										vehiculo != null
-												? vehiculo.getTipoVehiculo()
-												: servicioActual.getTipoVehiculo());
-							}
-
-							case FINALIZADO, RECHAZADO -> {
-								visualizador.limpiarRutas();
-
-							}
-
-							default -> {
-								// No se modifica el mapa.
-							}
-						}
-					}),
-					error -> Platform.runLater(() -> AlertaUtil.mostrarAlerta(
-							resource.getString("login.alert.attention"),
-							error.getMessage())));
+			// Inicia el ciclo temporal del viaje y establece las notificaciones
+			// que actualizarán la pantalla cuando se produzcan cambios.
+			cicloViajeCliente.iniciar(viajeActual, viaje -> actualizarVistaPorCambio(viaje),
+					error -> mostrarErrorCiclo(error));
 
 		});
 
@@ -438,8 +383,7 @@ public class PanelClienteController {
 
 			Throwable error = tarea.getException();
 
-			AlertaUtil.mostrarAlerta(
-					resource.getString("login.alert.attention"),
+			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
 					error != null ? error.getMessage() : "Error al solicitar el viaje.");
 		});
 
@@ -454,8 +398,11 @@ public class PanelClienteController {
 	@FXML
 	void handleCerrarSesion(ActionEvent event) {
 
-		cicloViajeCliente.close(); // Eliminar esta llamada para no utilizar la
-		// simulación.
+		// Impide que las actualizaciones pendientes modifiquen esta pantalla.
+		pantallaActiva = false;
+
+		// Desvincula las notificaciones sin detener el ciclo automático.
+		cicloViajeCliente.desconectarNotificadores();
 
 		ContextoAplicacion.setUsuarioLogeado(null);
 
@@ -481,8 +428,7 @@ public class PanelClienteController {
 		servicio = comboServicios.getValue();
 
 		// Verificamos que estén completos todos los datos.
-		if (origenActual == null || destinoActual == null
-				|| servicio == null) {
+		if (origenActual == null || destinoActual == null || servicio == null) {
 
 			AlertaUtil.mostrarAlerta(resource.getString("login.alert.attention"),
 					resource.getString("client.error.missingData"));
@@ -539,23 +485,20 @@ public class PanelClienteController {
 			String motivo = clienteTextfieldCancelar.getText();
 
 			if (viaje == null || motivo == null || motivo.isBlank()) {
-				AlertaUtil.mostrarAlerta(
-						resource.getString("client.unable.cancel.title"),
+				AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"),
+						resource.getString("client.unable.cancel.text"));
+				return;
+			}
+
+			// Ejecuta la cancelación real del viaje.
+			if (!gestor.procesarCancelacionViaje(cliente, motivo)) {
+				AlertaUtil.mostrarAlerta(resource.getString("client.unable.cancel.title"),
 						resource.getString("client.unable.cancel.text"));
 				return;
 			}
 
 			// Detiene las transiciones automáticas pendientes.
-			cicloViajeCliente.cancelar(); // Eliminar esta llamada para no utilizar la
-			// simulación.
-
-			// Ejecuta la cancelación real del viaje.
-			if (!gestor.procesarCancelacionViaje(cliente, motivo)) {
-				AlertaUtil.mostrarAlerta(
-						resource.getString("client.unable.cancel.title"),
-						resource.getString("client.unable.cancel.text"));
-				return;
-			}
+			cicloViajeCliente.cancelar();
 
 			// Se obtiene el costo antes de limpiar el estado.
 			double costoCancelacion = gestor.obtenerCostoCancelacion(viaje);
@@ -608,59 +551,50 @@ public class PanelClienteController {
 		Usuario usuario = ContextoAplicacion.getUsuarioLogeado();
 
 		if (usuario == null || usuario.getCliente() == null) {
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.WARNING,
-					resource.getString("login.alert.attention"),
+			AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, resource.getString("login.alert.attention"),
 					resource.getString("viaje.error.sin_viaje_iniciado"));
 			return;
 		}
 
 		try {
-			if (viajeActual == null
-					|| (viajeActual.estadoActual() != EstadoViaje.INICIADO
-							&& viajeActual.estadoActual() != EstadoViaje.FINALIZADO)) {
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.WARNING,
-						resource.getString("login.alert.attention"),
+			if (viajeActual == null || (viajeActual.estadoActual() != EstadoViaje.INICIADO
+					&& viajeActual.estadoActual() != EstadoViaje.FINALIZADO)) {
+				AlertaUtil.mostrarAlerta(Alert.AlertType.WARNING, resource.getString("login.alert.attention"),
 						resource.getString("viaje.error.sin_viaje_iniciado"));
 				return;
 			}
 
 			if (gestor.obtenerCalificacionCliente(viajeActual) != CalificacionViaje.NO_CALIFICADO) {
-				AlertaUtil.mostrarAlerta(
-						Alert.AlertType.INFORMATION,
-						resource.getString("calificacion.titulo"),
+				AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, resource.getString("calificacion.titulo"),
 						resource.getString("calificacion.error.ya_calificado"));
 				return;
 			}
 
-			ButtonType botonMalo = new ButtonType(
-					resource.getString("calificacion.opcion.malo"), ButtonBar.ButtonData.OK_DONE);
+			ButtonType botonMalo = new ButtonType(resource.getString("calificacion.opcion.malo"),
+					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonRegular = new ButtonType(
-					resource.getString("calificacion.opcion.regular"), ButtonBar.ButtonData.OK_DONE);
+			ButtonType botonRegular = new ButtonType(resource.getString("calificacion.opcion.regular"),
+					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonBueno = new ButtonType(
-					resource.getString("calificacion.opcion.bueno"), ButtonBar.ButtonData.OK_DONE);
+			ButtonType botonBueno = new ButtonType(resource.getString("calificacion.opcion.bueno"),
+					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonMuyBueno = new ButtonType(
-					resource.getString("calificacion.opcion.muy_bueno"), ButtonBar.ButtonData.OK_DONE);
+			ButtonType botonMuyBueno = new ButtonType(resource.getString("calificacion.opcion.muy_bueno"),
+					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonExcelente = new ButtonType(
-					resource.getString("calificacion.opcion.excelente"), ButtonBar.ButtonData.OK_DONE);
+			ButtonType botonExcelente = new ButtonType(resource.getString("calificacion.opcion.excelente"),
+					ButtonBar.ButtonData.OK_DONE);
 
-			ButtonType botonNoCalificar = new ButtonType(
-					resource.getString("calificacion.opcion.no_calificar"), ButtonBar.ButtonData.CANCEL_CLOSE);
+			ButtonType botonNoCalificar = new ButtonType(resource.getString("calificacion.opcion.no_calificar"),
+					ButtonBar.ButtonData.CANCEL_CLOSE);
 
 			Alert dialogo = new Alert(Alert.AlertType.CONFIRMATION);
 			dialogo.setTitle(resource.getString("calificacion.titulo"));
 			dialogo.setHeaderText(null);
 			dialogo.setContentText(resource.getString("calificacion.seleccione"));
 
-			ButtonType[] opciones = {
-					botonMalo, botonRegular, botonBueno,
-					botonMuyBueno, botonExcelente, botonNoCalificar
-			};
+			ButtonType[] opciones = { botonMalo, botonRegular, botonBueno, botonMuyBueno, botonExcelente,
+					botonNoCalificar };
 
 			dialogo.getButtonTypes().setAll(opciones);
 
@@ -695,17 +629,13 @@ public class PanelClienteController {
 
 			gestor.calificarComoCliente(usuario, viajeActual, calificacion);
 
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.INFORMATION,
-					resource.getString("calificacion.titulo"),
+			AlertaUtil.mostrarAlerta(Alert.AlertType.INFORMATION, resource.getString("calificacion.titulo"),
 					resource.getString("calificacion.mensaje.registrada"));
 
 			mostrarOcultarInfoViaje(true);
 
 		} catch (IllegalArgumentException | IllegalStateException e) {
-			AlertaUtil.mostrarAlerta(
-					Alert.AlertType.ERROR,
-					resource.getString("login.alert.attention"),
+			AlertaUtil.mostrarAlerta(Alert.AlertType.ERROR, resource.getString("login.alert.attention"),
 					resource.getString("calificacion.error.registro"));
 		}
 	}
@@ -717,8 +647,7 @@ public class PanelClienteController {
 		}
 
 		// El estado siempre se muestra, independientemente de que haya conductor.
-		clienteViajeEstadoActual.setText(
-				obtenerTextoEstado(viajeActual.estadoActual()));
+		clienteViajeEstadoActual.setText(obtenerTextoEstado(viajeActual.estadoActual()));
 
 		Usuario conductor = viajeActual.getConductor();
 
@@ -778,12 +707,10 @@ public class PanelClienteController {
 		clienteViajeEstadoTitulo.setVisible(true);
 		EstadoViaje estado = viajeActual.estadoActual();
 
-		boolean puedeCancelar = estado == EstadoViaje.SOLICITADO
-				|| estado == EstadoViaje.ACEPTADO
+		boolean puedeCancelar = estado == EstadoViaje.SOLICITADO || estado == EstadoViaje.ACEPTADO
 				|| estado == EstadoViaje.INICIADO;
 
-		boolean puedeCalificar = (estado == EstadoViaje.INICIADO
-				|| estado == EstadoViaje.FINALIZADO)
+		boolean puedeCalificar = (estado == EstadoViaje.INICIADO || estado == EstadoViaje.FINALIZADO)
 				&& gestor.obtenerCalificacionCliente(viajeActual) == CalificacionViaje.NO_CALIFICADO;
 
 		clienteCancelarViaje.setVisible(puedeCancelar);
@@ -834,23 +761,115 @@ public class PanelClienteController {
 		return resource.getString(clave);
 	}
 
-	private void dibujarRuta(
-			Ubicacion desde,
-			Ubicacion hasta,
-			Ubicacion conductor,
-			Ubicacion origen,
-			Ubicacion destino,
+	private void dibujarRuta(Ubicacion desde, Ubicacion hasta, Ubicacion conductor, Ubicacion origen, Ubicacion destino,
 			TipoVehiculo tipoVehiculo) {
 
 		try {
-			var ruta = ContextoAplicacion.getMotorVial()
-					.calcular(desde, hasta, tipoVehiculo);
+			var ruta = ContextoAplicacion.getMotorVial().calcular(desde, hasta, tipoVehiculo);
 
-			visualizador.mostrarRuta(
-					ruta.geometria(), conductor, origen, destino);
+			visualizador.mostrarRuta(ruta.geometria(), conductor, origen, destino);
 
 		} catch (Exception e) {
 			System.err.println("No se pudo calcular la ruta: " + e.getMessage());
 		}
+	}
+
+	/**
+	 * Actualiza la información del viaje y el recorrido mostrado en el mapa cuando
+	 * el coordinador informa un cambio de estado.
+	 *
+	 * Las modificaciones de la interfaz se ejecutan mediante Platform.runLater para
+	 * garantizar que se realicen en el hilo de JavaFX.
+	 *
+	 * Los datos del recorrido se recuperan del propio viaje para no depender de
+	 * variables locales de una solicitud anterior.
+	 * 
+	 * Si la pantalla fue cerrada antes de ejecutarse la actualización,
+	 * descarta la notificación.
+	 *
+	 * @param viaje viaje actualizado que se desea mostrar.
+	 */
+	private void actualizarVistaPorCambio(Viaje viaje) {
+
+		Platform.runLater(() -> {
+
+			// Evita actualizar una pantalla que ya fue cerrada.
+			if (!pantallaActiva) {
+				return;
+			}
+
+			viajeActual = viaje;
+			mostrarOcultarInfoViaje(true);
+
+			// Recupera los datos del recorrido directamente desde el viaje.
+			Ubicacion origen = viaje.getOrigen();
+			Ubicacion destino = viaje.getDestino();
+			Servicio servicioViaje = viaje.getServicio();
+
+			TipoVehiculo tipoVehiculo = servicioViaje != null ? servicioViaje.getTipoVehiculo() : null;
+
+			switch (viaje.estadoActual()) {
+
+				case SOLICITADO -> {
+					// Muestra nuevamente el recorrido solicitado por el cliente.
+					if (origen != null && destino != null && tipoVehiculo != null) {
+						dibujarRuta(origen, destino, null, origen, destino, tipoVehiculo);
+					}
+				}
+
+				case ACEPTADO -> {
+					Vehiculo vehiculo = viaje.getVehiculo();
+
+					if (vehiculo != null && vehiculo.getUbicacion() != null && origen != null) {
+
+						Ubicacion ubicacionConductor = vehiculo.getUbicacion();
+
+						dibujarRuta(ubicacionConductor, origen, ubicacionConductor, origen, null,
+								vehiculo.getTipoVehiculo());
+					}
+				}
+
+				case INICIADO -> {
+					Vehiculo vehiculo = viaje.getVehiculo();
+
+					TipoVehiculo tipo = vehiculo != null ? vehiculo.getTipoVehiculo() : tipoVehiculo;
+
+					if (origen != null && destino != null && tipo != null) {
+						dibujarRuta(origen, destino, null, origen, destino, tipo);
+					}
+				}
+
+				case FINALIZADO, RECHAZADO, CANCELADO -> {
+					visualizador.limpiarRutas();
+				}
+
+				default -> {
+					// No se modifica el mapa.
+				}
+			}
+		});
+	}
+
+	/**
+	 * Muestra en la interfaz los errores producidos durante la coordinación
+	 * automática del ciclo de viaje.
+	 *
+	 * La alerta se ejecuta en el hilo de JavaFX. Si la pantalla fue cerrada
+	 * antes de ejecutarse, se descarta la notificación.
+	 *
+	 * @param error excepción que describe el problema ocurrido.
+	 */
+	private void mostrarErrorCiclo(RuntimeException error) {
+
+		Platform.runLater(() -> {
+
+			if (!pantallaActiva) {
+				return;
+			}
+
+			AlertaUtil.mostrarAlerta(
+					resource.getString("login.alert.attention"),
+					error.getMessage());
+		});
 	}
 }
